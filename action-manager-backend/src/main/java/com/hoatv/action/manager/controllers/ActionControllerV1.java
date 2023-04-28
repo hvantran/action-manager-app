@@ -11,6 +11,7 @@ import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -41,10 +42,11 @@ public class ActionControllerV1 {
     }
 
     @LoggingMonitor
-    @PostMapping(value = "/{hash}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> addNewJob(@PathVariable("hash") String hash, @RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
-        String jobId = actionManagerService.addJobToAction(hash, jobDefinitionDTO);
-        return ResponseEntity.ok(Map.of("jobId", jobId));
+    @PostMapping(value = "/{hash}/jobs/new", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> addNewJobs(@PathVariable("hash") String hash,
+                                        @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
+        String actionId = actionManagerService.addJobsToAction(hash, jobDefinitionDTOs);
+        return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
     @LoggingMonitor
@@ -52,6 +54,7 @@ public class ActionControllerV1 {
     public ResponseEntity<?> getAllActionsWithPaging(
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
+
         Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getAllActionsWithPaging(PageRequest.of(pageIndex, pageSize, defaultSorting));
@@ -99,6 +102,7 @@ public class ActionControllerV1 {
     public ResponseEntity<?> getActions(@RequestParam("search") String search,
                                         @RequestParam("pageIndex") @Min(0) int pageIndex,
                                         @RequestParam("pageSize") @Min(0) int pageSize) {
+
         Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getAllActionsWithPaging(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
@@ -109,6 +113,7 @@ public class ActionControllerV1 {
     public ResponseEntity<?> getJobsFromAction(@PathVariable("hash") String actionId,
                                                @RequestParam("pageIndex") @Min(0) int pageIndex,
                                                @RequestParam("pageSize") @Min(0) int pageSize) {
+
         Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting));

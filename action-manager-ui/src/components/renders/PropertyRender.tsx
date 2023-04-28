@@ -58,7 +58,7 @@ export default function PropertyRender(props: any) {
                     key={property.propName}
                     name={property.propName}
                     disabled={property.disabled}
-                    checked={value}
+                    checked={value === '' ? false : value}
                     {...property.propExtraProperties}
                     onChange={switcherFieldMeta.onChangeEvent} />
             )

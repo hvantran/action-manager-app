@@ -23,17 +23,20 @@ import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Service
 @MetricProvider(application = MetricProviders.OTHER_APPLICATION, category = "action-manager-stats-data")
@@ -163,11 +166,11 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor
-    public String addJobToAction (String actionId, JobDefinitionDTO jobDefinitionDTO) {
-        ActionExecutionContext actionExecutionContext = getActionExecutionContextForNewJob(actionId, jobDefinitionDTO);
+    public String addJobsToAction (String actionId, List<JobDefinitionDTO> jobDefinitionDTOs) {
+        ActionExecutionContext actionExecutionContext = getActionExecutionContextForNewJobs(actionId, jobDefinitionDTOs);
         jobManagerService.processBulkJobs(actionExecutionContext);
         actionStatistics.numberOfActions.incrementAndGet();
-        return actionExecutionContext.getJobDocumentPairs().get(0).getKey().getHash();
+        return actionId;
     }
 
     @Override
@@ -217,27 +220,39 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         });
     }
 
-    private ActionExecutionContext getActionExecutionContextForNewJob (String actionId, JobDefinitionDTO jobDefinitionDTO) {
+    private ActionExecutionContext getActionExecutionContextForNewJobs (String actionId,
+                                                                        List<JobDefinitionDTO> jobDefinitionDTOs) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
         ActionDocument actionDocument = actionDocumentOptional
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
         ActionStatisticsDocument actionStatisticsDocument = actionStatisticsDocumentRepository.findByActionId(actionId);
-        Pair<JobDocument, JobResultDocument> jobDocumentJobResultDocumentPair =
-                jobManagerService.initialJobs(jobDefinitionDTO, actionDocument.getHash());
 
-        int scheduledJobIncrease = jobDefinitionDTO.isScheduled() ? 1 : 0;
+        List<Pair<JobDocument, JobResultDocument>> jobDocumentPairs = getJobDocumentPairs(jobDefinitionDTOs, actionDocument);
+        LOGGER.info("ActionExecutionContext: jobDocumentPairs - {}", jobDocumentPairs);
+
+        long scheduledJobIncreases = jobDefinitionDTOs.stream().filter(JobDefinitionDTO::isScheduled).count();
         long numberOfScheduleJobs = actionStatisticsDocument.getNumberOfScheduleJobs();
-        actionStatisticsDocument.setNumberOfScheduleJobs(numberOfScheduleJobs + scheduledJobIncrease);
-        actionStatisticsDocument.setNumberOfJobs(actionStatisticsDocument.getNumberOfJobs() + 1);
+        actionStatisticsDocument.setNumberOfScheduleJobs(numberOfScheduleJobs + scheduledJobIncreases);
+        long numberOfJobs = actionStatisticsDocument.getNumberOfJobs();
+        actionStatisticsDocument.setNumberOfJobs(numberOfJobs + jobDefinitionDTOs.size());
         actionStatisticsDocumentRepository.save(actionStatisticsDocument);
 
         CheckedConsumer<JobStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
         return ActionExecutionContext.builder()
                 .actionDocument(actionDocument)
                 .actionStatisticsDocument(actionStatisticsDocument)
-                .jobDocumentPairs(Collections.singletonList(jobDocumentJobResultDocumentPair))
+                .jobDocumentPairs(jobDocumentPairs)
                 .onCompletedJobCallback(onCompletedJobCallback)
                 .build();
+    }
+
+    private List<Pair<JobDocument, JobResultDocument>> getJobDocumentPairs (List<JobDefinitionDTO> jobDefinitionDTOs, ActionDocument actionDocument) {
+        CheckedFunction<JobDefinitionDTO, Pair<JobDocument, JobResultDocument>> initialJobFunction =
+                jobDefinitionDTO -> jobManagerService.initialJobs(jobDefinitionDTO, actionDocument.getHash());
+        List<Pair<JobDocument, JobResultDocument>> jobDocumentPairs = jobDefinitionDTOs.stream()
+                .map(initialJobFunction)
+                .toList();
+        return jobDocumentPairs;
     }
 
 
@@ -271,11 +286,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         LOGGER.info("ActionExecutionContext: actionStatisticsDocument - {}", actionStatisticsDocument);
 
         List<JobDefinitionDTO> definitionJobs = actionDefinition.getJobs();
-        CheckedFunction<JobDefinitionDTO, Pair<JobDocument, JobResultDocument>> initialJobFunction =
-                jobDefinitionDTO -> jobManagerService.initialJobs(jobDefinitionDTO, actionDocument.getHash());
-        List<Pair<JobDocument, JobResultDocument>> jobDocumentPairs = definitionJobs.stream()
-                .map(initialJobFunction)
-                .toList();
+        List<Pair<JobDocument, JobResultDocument>> jobDocumentPairs = getJobDocumentPairs(definitionJobs, actionDocument);
         LOGGER.info("ActionExecutionContext: jobDocumentPairs - {}", jobDocumentPairs);
 
         CheckedConsumer<JobStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);

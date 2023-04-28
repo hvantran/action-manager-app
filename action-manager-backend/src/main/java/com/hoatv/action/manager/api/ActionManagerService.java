@@ -3,6 +3,7 @@ package com.hoatv.action.manager.api;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -24,6 +25,5 @@ public interface ActionManagerService {
 
     boolean replayAction(String hash);
 
-    String addJobToAction (String actionId, JobDefinitionDTO jobDefinitionDTO);
-
+    String addJobsToAction (String hash, List<JobDefinitionDTO> jobDefinitionDTOs);
 }

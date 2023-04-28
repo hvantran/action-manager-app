@@ -94,20 +94,7 @@ export default function ActionJobTable(props: any) {
             minWidth: 200,
             align: 'left',
             format: (value: string) => (<TextTruncate text={value} maxTextLength={100}/>)
-        },
-        // {
-        //     id: 'actions',
-        //     label: '',
-        //     align: 'left',
-        //     actions: [{
-        //         actionIcon: <ReadMoreIcon />,
-        //         actionLabel: "Job details",
-        //         actionName: "gotoJobDetail",
-        //         onClick: (row: JobOverview) => {
-        //             return () => navigate(`/jobs/${row.hash}`)
-        //         }
-        //     }]
-        // }
+        }
     ];
 
     const loadRelatedJobsAsync = async (pageIndex: number, pageSize: number) => {

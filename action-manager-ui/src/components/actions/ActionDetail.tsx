@@ -3,12 +3,13 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
+import AddIcon from '@mui/icons-material/Add';
 import { Box, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { red } from '@mui/material/colors';
+import { green, red } from '@mui/material/colors';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ACTION_MANAGER_API_URL, ActionDetails, ROOT_BREADCRUMB } from '../AppConstants';
 import { DialogMetadata, PageEntityMetadata, RestClient, SnackbarAlertMetadata, SnackbarMessage } from '../GenericConstants';
@@ -141,6 +142,13 @@ export default function ActionDetail() {
         actionLabel: "Delete action",
         actionName: "deleteAction",
         onClick: () => () => setDeleteConfirmationDialogOpen(true)
+      },
+      {
+        actionIcon: <AddIcon />,
+        properties: { sx: { color: green[800] } },
+        actionLabel: "Add Jobs",
+        actionName: "addAction",
+        onClick: () => () => navigate("/actions/" + actionId + "/jobs/new")
       }
     ],
     properties: [
