@@ -2,11 +2,15 @@ package com.hoatv.action.manager.collections;
 
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
-import lombok.*;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.UUID;
 
 @Document("actions")
 @Getter
@@ -38,6 +42,7 @@ public class ActionDocument {
 
     public static ActionDefinitionDTO toActionDefinition(ActionDocument actionDocument) {
         return ActionDefinitionDTO.builder()
+                .hash(actionDocument.getHash())
                 .actionName(actionDocument.getActionName())
                 .isFavorite(actionDocument.isFavorite())
                 .actionDescription(actionDocument.getActionDescription())

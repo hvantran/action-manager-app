@@ -2,6 +2,7 @@ package com.hoatv.action.manager.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoatv.action.manager.api.JobManagerService;
+import com.hoatv.action.manager.api.JobResultImmutable;
 import com.hoatv.action.manager.collections.JobDocument;
 import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.dtos.*;
@@ -336,7 +337,7 @@ public class JobManagerServiceImpl implements JobManagerService {
 
             Map<String, Object> jobExecutionContext = new HashMap<>(configurationMap);
             jobExecutionContext.put("templateEngine", templateEngine);
-            JobResult jobResult = scriptEngineService.execute(jobContent, jobExecutionContext);
+            JobResultImmutable jobResult = scriptEngineService.execute(jobContent, jobExecutionContext);
             processOutputTargets(jobDocument, jobName, jobResult);
 
             JobStatus nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ? JobStatus.FAILURE : JobStatus.SUCCESS;
@@ -360,7 +361,9 @@ public class JobManagerServiceImpl implements JobManagerService {
         jobManagementStatistics.numberOfActiveJobs.decrementAndGet();
     }
 
-    private void updateJobResultDocument(JobResultDocument jobResultDocument, JobStatus nextJobStatus, long startedAt, String jobResult) {
+    private void updateJobResultDocument(JobResultDocument jobResultDocument,
+                                         JobStatus nextJobStatus,
+                                         long startedAt, String jobResult) {
         long endedAt = DateTimeUtils.getCurrentEpochTimeInMillisecond();
         jobResultDocument.setJobState(JobState.COMPLETED);
         jobResultDocument.setJobStatus(nextJobStatus);
@@ -370,22 +373,38 @@ public class JobManagerServiceImpl implements JobManagerService {
         jobResultDocumentRepository.save(jobResultDocument);
     }
 
-    private void processOutputTargets(JobDocument jobDocument, String jobName, JobResult jobResult) {
+    private void processOutputTargets(JobDocument jobDocument, String jobName, JobResultImmutable jobResult) {
         List<String> jobOutputTargets = jobDocument.getOutputTargets();
         jobOutputTargets.forEach(target -> {
             JobOutputTarget jobOutputTarget = JobOutputTarget.valueOf(target);
             switch (jobOutputTarget) {
                 case CONSOLE -> LOGGER.info("Async job: {} result: {}", jobName, jobResult);
-                case METRIC -> {
-                    ArrayList<MetricTag> metricTags = new ArrayList<>();
-                    MetricTag metricTag = new MetricTag(jobResult.getData());
-                    metricTag.setAttributes(Map.of("name", JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName));
-                    metricTags.add(metricTag);
-                    metricService.setMetric(jobDocument.getHash(), metricTags);
-                }
+                case METRIC -> processOutputData(jobDocument, jobResult, jobName);
                 default -> throw new AppException("Unsupported output target " + target);
             }
         });
+    }
+
+    private void processOutputData(JobDocument jobDocument, JobResultImmutable jobResult, String jobName) {
+        ArrayList<MetricTag> metricTags = new ArrayList<>();
+        if (jobResult instanceof JobResult singleJobResult) {
+            MetricTag metricTag = new MetricTag(singleJobResult.getData());
+            metricTag.setAttributes(Map.of("name", JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName));
+            metricTags.add(metricTag);
+            metricService.setMetric(jobDocument.getHash(), metricTags);
+            return;
+        }
+
+        if (jobResult instanceof JobResultDict jobResultDict) {
+            Map<String, String> multipleJobResultMap = jobResultDict.getData();
+            multipleJobResultMap.forEach((name, value) -> {
+                MetricTag metricTag = new MetricTag(value);
+                metricTag.setAttributes(Map.of("name", JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName + "-" + name));
+                metricTags.add(metricTag);
+                metricService.setMetric(jobDocument.getHash(), metricTags);
+            });
+            return;
+        }
     }
 
     private void processAsync(JobDocument jobDocument, JobResultDocument jobResultDocument,

@@ -5,12 +5,12 @@ import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
+import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -38,6 +38,13 @@ public class ActionControllerV1 {
     public ResponseEntity<?> executeAction(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
         String actionId = actionManagerService.processAction(actionDefinition);
         return ResponseEntity.ok(Map.of("actionId", actionId));
+    }
+
+    @LoggingMonitor
+    @PostMapping(value = "/{hash}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> addNewJob(@PathVariable("hash") String hash, @RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
+        String jobId = actionManagerService.addJobToAction(hash, jobDefinitionDTO);
+        return ResponseEntity.ok(Map.of("jobId", jobId));
     }
 
     @LoggingMonitor

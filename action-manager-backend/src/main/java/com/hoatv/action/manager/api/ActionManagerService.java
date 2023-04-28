@@ -2,6 +2,7 @@ package com.hoatv.action.manager.api;
 
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
+import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,4 +23,7 @@ public interface ActionManagerService {
     void deleteAction(String hash);
 
     boolean replayAction(String hash);
+
+    String addJobToAction (String actionId, JobDefinitionDTO jobDefinitionDTO);
+
 }
