@@ -12,6 +12,7 @@ import JobSummary from './components/jobs/JobSummary';
 
 
 function App() {
+  window._env_={}
   return (
     <ThemeProvider theme={DEFAULT_THEME}>
       <Stack spacing={4}>

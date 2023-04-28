@@ -67,8 +67,7 @@ export default function ActionCreation() {
       {
         propName: 'isAsync',
         propLabel: 'Asynchronous',
-        propValue: true,
-        propDefaultValue: true,
+        propValue: false,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4, sx: { pl: 5 } },
         valueElementProperties: { xs: 8 },
@@ -76,7 +75,12 @@ export default function ActionCreation() {
         switcherFieldMeta: {
           onChangeEvent: function (event, propValue) {
             let propName = event.target.name;
-            setStepMetadatas(onchangeStepDefault(propName, propValue))
+            let jobIndex = propName.replace('isAsync', '');
+            setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
+              if (propertyMetadata.propName === `jobCategory${jobIndex}`) {
+                propertyMetadata.disabled = !propValue;
+              }
+            }));
           }
         }
       },
@@ -102,6 +106,7 @@ export default function ActionCreation() {
       {
         propName: 'jobCategory',
         propLabel: 'Category',
+        disabled: true,
         propValue: JOB_CATEGORY_VALUES[0],
         propDefaultValue: JOB_CATEGORY_VALUES[0],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
@@ -120,7 +125,7 @@ export default function ActionCreation() {
       {
         propName: 'isScheduledJob',
         propLabel: 'Supported schedule',
-        propValue: true,
+        propValue: false,
         layoutProperties: { xs: 6 },
         labelElementProperties: { xs: 4 },
         valueElementProperties: { xs: 8 },
@@ -129,8 +134,9 @@ export default function ActionCreation() {
         switcherFieldMeta: {
           onChangeEvent: function (event, propValue) {
             let propName = event.target.name;
+            let jobIndex = propName.replace('isScheduledJob', '');
             setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
-              if (propertyMetadata.propName === 'scheduleInterval') {
+              if (propertyMetadata.propName === `scheduleInterval${jobIndex}`) {
                 propertyMetadata.disabled = !propValue;
               }
             }));
@@ -315,16 +321,19 @@ export default function ActionCreation() {
         {
           propName: 'isAsync',
           propLabel: 'Asynchronous',
-          propValue: true,
+          propValue: false,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
           labelElementProperties: { xs: 4, sx: { pl: 5 } },
           valueElementProperties: { xs: 8 },
-          propDefaultValue: true,
           propType: PropType.Switcher,
           switcherFieldMeta: {
             onChangeEvent: function (event, propValue) {
               let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue))
+              setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
+                if (propertyMetadata.propName === 'jobCategory') {
+                  propertyMetadata.disabled = !propValue;
+                }
+              }));
             }
           }
         },
@@ -350,6 +359,7 @@ export default function ActionCreation() {
         {
           propName: 'jobCategory',
           propLabel: 'Category',
+          disabled: true,
           propValue: JOB_CATEGORY_VALUES[0],
           propDefaultValue: JOB_CATEGORY_VALUES[0],
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },

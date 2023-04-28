@@ -14,5 +14,14 @@ WORKDIR /usr/share/nginx/html/
 RUN rm -rf ./*
 COPY --from=builder /app/build .
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+COPY ./env.sh .
+COPY .env .
 
+# Add bash
+RUN apk add --no-cache bash
+
+# Make our shell script executable
+RUN chmod +x env.sh
+
+# Start Nginx server
+CMD ["/bin/bash", "-c", "./env.sh && nginx -g \"daemon off;\""]

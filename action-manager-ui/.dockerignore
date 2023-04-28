@@ -3,3 +3,4 @@ node_modules
 Dockerfile
 package-lock.json
 Dockerfile.dev
+public/env-config.js

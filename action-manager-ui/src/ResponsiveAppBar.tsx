@@ -19,7 +19,9 @@ import Typography from '@mui/material/Typography';
 import { alpha, styled } from '@mui/material/styles';
 import * as React from 'react';
 
-const pages = JSON.parse(`${process.env.REACT_APP_PAGES}`);
+const APP_ENVIRONMENT_VARIABLES = window._env_;
+
+const pages = JSON.parse(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_PAGES}`);
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -144,34 +146,34 @@ export default function PrimarySearchAppBar() {
         justifyContent="center"
         style={{ minHeight: '50vh' }}>
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${process.env.REACT_APP_TEMPLATE_MANAGER_FRONTEND_URL}/templates`)}>
-            <img alt={process.env.REACT_APP_TEMPLATE_MANAGER_NAME} src='/template-manager.jpg' width={70} />
+          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_FRONTEND_URL}/templates`)}>
+            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME} src='/template-manager.jpg' width={70} />
             <Typography variant="caption" display="block" gutterBottom>
-              {process.env.REACT_APP_TEMPLATE_MANAGER_NAME}
+              {APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${process.env.REACT_APP_ACTION_MANAGER_FRONTEND_URL}/actions`)}>
-            <img alt={process.env.REACT_APP_ACTION_MANAGER_NAME} src='/action-manager.png' width={70} />
+          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_FRONTEND_URL}/actions`)}>
+            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_NAME} src='/action-manager.png' width={70} />
             <Typography variant="caption" display="block" gutterBottom>
-              {process.env.REACT_APP_ACTION_MANAGER_NAME}
+              {APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_NAME}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${process.env.REACT_APP_ECOMMERCE_MANAGER_FRONTEND_URL}/`)}>
-            <img alt={process.env.REACT_APP_ECOMMERCE_MANAGER_NAME} src='/ecommerce-stats.png' width={70} />
+          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ECOMMERCE_MANAGER_FRONTEND_URL}/`)}>
+            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ECOMMERCE_MANAGER_NAME} src='/ecommerce-stats.png' width={70} />
             <Typography variant="caption" display="block" gutterBottom>
-              {process.env.REACT_APP_ECOMMERCE_MANAGER_NAME}
+              {APP_ENVIRONMENT_VARIABLES.REACT_APP_ECOMMERCE_MANAGER_NAME}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${process.env.REACT_APP_ENDPOINT_MANAGER_FRONTEND_URL}/endpoints`)}>
-            <img alt={process.env.REACT_APP_ENDPOINT_MANAGER_NAME} src='/rest-api.png' width={70} />
+          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_FRONTEND_URL}/endpoints`)}>
+            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME} src='/rest-api.png' width={70} />
             <Typography variant="caption" display="block" gutterBottom>
-              {process.env.REACT_APP_ENDPOINT_MANAGER_NAME}
+              {APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME}
             </Typography>
           </Paper>
         </Grid>
@@ -250,7 +252,7 @@ export default function PrimarySearchAppBar() {
             component="div"
             sx={{ display: { xs: 'none', sm: 'block' } }}
           >
-            {process.env.REACT_APP_NAME}
+            {APP_ENVIRONMENT_VARIABLES.REACT_APP_NAME}
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page: any) => (
