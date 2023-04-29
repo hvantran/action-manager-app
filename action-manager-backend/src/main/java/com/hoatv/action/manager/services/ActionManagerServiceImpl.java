@@ -23,6 +23,7 @@ import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -262,12 +263,19 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
         ActionStatisticsDocument actionStatisticsDocument = actionStatisticsDocumentRepository.findByActionId(actionId);
         List<Pair<JobDocument, JobResultDocument>> jobDocumentPairs = jobManagerService.getOneTimeJobsFromAction(actionId);
+        List<Pair<JobDocument, JobResultDocument>> scheduledJobDocumentPairs = jobManagerService.getScheduledJobsFromAction(actionId);
+        scheduledJobDocumentPairs.forEach(p -> {
+            JobDocument jobDocument = p.getKey();
+            jobDocument.setScheduled(false);
+            jobDocument.setAsync(true);
+        });
         CheckedConsumer<JobStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
-
+        List<Pair<JobDocument, JobResultDocument>> jobDocumentProcessPairs = new ArrayList<>(jobDocumentPairs);
+        jobDocumentProcessPairs.addAll(scheduledJobDocumentPairs);
         return ActionExecutionContext.builder()
                 .actionDocument(actionDocument)
                 .actionStatisticsDocument(actionStatisticsDocument)
-                .jobDocumentPairs(jobDocumentPairs)
+                .jobDocumentPairs(jobDocumentProcessPairs)
                 .onCompletedJobCallback(onCompletedJobCallback)
                 .build();
     }

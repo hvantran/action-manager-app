@@ -244,11 +244,18 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    public List<Pair<JobDocument, JobResultDocument>> getScheduledJobsFromAction (String actionId) {
+        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndActionId(actionId);
+        List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
+        return getJobDocumentPairs(jobDocuments, jobResultDocuments);
+    }
+
+    @Override
     @LoggingMonitor
     public void deleteJobsByActionId(String actionId) {
         LOGGER.info("Deleted the job result documents belong to action {}", actionId);
-        List<JobDocumentRepository.JobId> jobIds = jobDocumentRepository.findByIsScheduledTrueAndActionId(actionId);
-        List<String> jobIdStrings = jobIds.stream().map(JobDocumentRepository.JobId::getHash).toList();
+        List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndActionId(actionId);
+        List<String> jobIdStrings = jobIds.stream().map(JobDocument::getHash).toList();
 
         scheduledJobRegistry.entrySet().stream()
                 .filter(p -> jobIdStrings.contains(p.getKey()))

@@ -25,6 +25,7 @@ public interface JobManagerService {
     List<Pair<JobDocument, JobResultDocument>> getScheduleJobPairs();
     Pair<JobDocument, JobResultDocument> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId);
     List<Pair<JobDocument, JobResultDocument>> getJobsFromAction(String actionId);
+    List<Pair<JobDocument, JobResultDocument>> getScheduledJobsFromAction(String actionId);
     List<Pair<JobDocument, JobResultDocument>> getOneTimeJobsFromAction(String actionId);
     void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument, Consumer<JobStatus> callback);
 
