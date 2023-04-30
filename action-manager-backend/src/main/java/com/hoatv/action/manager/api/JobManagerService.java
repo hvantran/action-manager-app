@@ -6,7 +6,9 @@ import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.dtos.JobStatus;
 import com.hoatv.action.manager.services.ActionExecutionContext;
+import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.ultilities.Pair;
+import java.util.function.BiConsumer;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,7 +29,7 @@ public interface JobManagerService {
     List<Pair<JobDocument, JobResultDocument>> getJobsFromAction(String actionId);
     List<Pair<JobDocument, JobResultDocument>> getScheduledJobsFromAction(String actionId);
     List<Pair<JobDocument, JobResultDocument>> getOneTimeJobsFromAction(String actionId);
-    void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument, Consumer<JobStatus> callback);
+    void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument, BiConsumer<JobStatus, JobStatus> callback);
 
     Page<JobOverviewDTO> getJobs(PageRequest pageRequest);
 }

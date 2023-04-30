@@ -10,6 +10,7 @@ import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.exceptions.AppException;
+import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.TemplateEngineEnum;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
@@ -25,6 +26,7 @@ import com.hoatv.task.mgmt.services.ScheduleTaskMgmtService;
 import com.hoatv.task.mgmt.services.TaskFactory;
 import com.hoatv.task.mgmt.services.TaskMgmtServiceV1;
 import jakarta.annotation.PostConstruct;
+import java.util.function.BiConsumer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
@@ -286,7 +288,8 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument, Consumer<JobStatus> callback) {
+    public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
+                           BiConsumer<JobStatus, JobStatus> callback) {
         jobManagementStatistics.totalNumberOfJobs.incrementAndGet();
         if (jobDocument.isScheduled()) {
             ScheduledFuture<?> scheduledFuture = processScheduleJob(jobDocument, jobResultDocument, callback);
@@ -301,7 +304,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     private ScheduledFuture<?> processScheduleJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                                                  Consumer<JobStatus> callback) {
+                                                  BiConsumer<JobStatus, JobStatus> callback) {
         Callable<Void> jobProcessRunnable = () -> {
             processSync(jobDocument, jobResultDocument, callback);
             return null;
@@ -318,9 +321,14 @@ public class JobManagerServiceImpl implements JobManagerService {
         return scheduledFuture;
     }
 
-    private void processSync(JobDocument jobDocument, JobResultDocument jobResultDocument, Consumer<JobStatus> onJobStatusChange) {
+    private void processSync(JobDocument jobDocument, JobResultDocument jobResultDocument,
+                             BiConsumer<JobStatus, JobStatus> onJobStatusChange) {
+
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
+
         long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
+        JobStatus prevJobStatus = jobResultDocument.getJobStatus();
+
         try {
             if (jobResultDocument.getStartedAt() == 0) {
                 jobResultDocument.setStartedAt(currentEpochTimeInMillisecond);
@@ -349,21 +357,21 @@ public class JobManagerServiceImpl implements JobManagerService {
 
             JobStatus nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ? JobStatus.FAILURE : JobStatus.SUCCESS;
             updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobResult.getException());
-            processJobResultCallback(jobDocument, onJobStatusChange, nextJobStatus);
+            processJobResultCallback(onJobStatusChange, prevJobStatus, nextJobStatus);
         } catch (Exception exception) {
             LOGGER.error("An exception occurred while processing job", exception);
             updateJobResultDocument(jobResultDocument, JobStatus.FAILURE, currentEpochTimeInMillisecond, exception.getMessage());
-            processJobResultCallback(jobDocument, onJobStatusChange, JobStatus.FAILURE);
+            processJobResultCallback(onJobStatusChange, prevJobStatus, JobStatus.FAILURE);
         }
     }
 
-    private void processJobResultCallback(JobDocument jobDocument,
-                                          Consumer<JobStatus> onJobStatusChange, JobStatus nextJobStatus) {
-        if (!jobDocument.isScheduled()) {
-            onJobStatusChange.accept(nextJobStatus);
-            if (nextJobStatus == JobStatus.FAILURE) {
-                jobManagementStatistics.numberOfFailureJobs.incrementAndGet();
-            }
+    private void processJobResultCallback(BiConsumer<JobStatus, JobStatus> onJobStatusChange,
+                                          JobStatus prevJobStatus,
+                                          JobStatus nextJobStatus) {
+
+        onJobStatusChange.accept(prevJobStatus, nextJobStatus);
+        if (nextJobStatus == JobStatus.FAILURE) {
+            jobManagementStatistics.numberOfFailureJobs.incrementAndGet();
         }
         jobManagementStatistics.numberOfActiveJobs.decrementAndGet();
     }
@@ -415,7 +423,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     private void processAsync(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                              Consumer<JobStatus> callback) {
+                              BiConsumer<JobStatus, JobStatus> callback) {
         Runnable jobProcessRunnable = () -> processSync(jobDocument, jobResultDocument, callback);
         if (jobDocument.getJobCategory() == JobCategory.CPU) {
             LOGGER.info("Using CPU threads to execute job: {}", jobDocument.getJobName());
