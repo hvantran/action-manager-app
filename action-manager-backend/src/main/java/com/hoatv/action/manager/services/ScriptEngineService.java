@@ -49,7 +49,10 @@ public class ScriptEngineService {
 
         Invocable invocable = (Invocable) scriptEngine;
         Launcher launcher = invocable.getInterface(klass);
+
+        launcher.preExecute();
         LOGGER.info("Executing the job {}", launcher);
-        return launcher.execute();
+        Object executed = launcher.execute();
+        return (T) launcher.postExecute(executed);
     }
 }

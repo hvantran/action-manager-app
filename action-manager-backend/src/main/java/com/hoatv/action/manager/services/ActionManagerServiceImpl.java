@@ -16,7 +16,6 @@ import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.ActionStatisticsDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.services.BiCheckedConsumer;
-import com.hoatv.fwk.common.services.CheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedFunction;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
 import com.hoatv.fwk.common.ultilities.Pair;
@@ -30,6 +29,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -54,6 +55,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     private final JobManagerService jobManagerService;
 
     private final ActionStatistics actionStatistics;
+
+    private final Semaphore actionStatisticUpdaterFlag = new Semaphore(1);
 
     @Autowired
     public ActionManagerServiceImpl (ActionDocumentRepository actionDocumentRepository,
@@ -310,36 +313,67 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private BiCheckedConsumer<JobStatus, JobStatus> onCompletedJobCallback (ActionStatisticsDocument actionStatisticsDocument) {
         return (prevJobStatus, currentJobStatus) -> {
+            LOGGER.info("Prev status: {} -> Next status: {}", prevJobStatus, currentJobStatus);
             if (prevJobStatus == currentJobStatus) {
                 return;
             }
 
-            long numberOfJobs = actionStatisticsDocument.getNumberOfJobs();
-            long numberOfFailureJobs = actionStatisticsDocument.getNumberOfFailureJobs();
-            long numberOfSuccessJobs = actionStatisticsDocument.getNumberOfSuccessJobs();
+            if (actionStatisticUpdaterFlag.tryAcquire(5000, TimeUnit.MILLISECONDS)) {
+                try {
+                    long numberOfJobs = actionStatisticsDocument.getNumberOfJobs();
+                    long numberOfFailureJobs = actionStatisticsDocument.getNumberOfFailureJobs();
+                    long numberOfSuccessJobs = actionStatisticsDocument.getNumberOfSuccessJobs();
 
-            AtomicInteger numberOfSuccessCounter = new AtomicInteger(0);
-            AtomicInteger numberOfFailureCounter = new AtomicInteger(0);
+                    JobStatusCounter result =
+                            getJobStatusCounter(prevJobStatus, currentJobStatus, numberOfFailureJobs, numberOfSuccessJobs);
 
-            if (Objects.isNull(prevJobStatus)) {
-                if (Objects.requireNonNull(currentJobStatus) == JobStatus.SUCCESS) {
-                    numberOfSuccessCounter.incrementAndGet();
-                } else {
-                    numberOfFailureCounter.incrementAndGet();
+                    actionStatisticsDocument.setNumberOfSuccessJobs(result.nextNumberOfSuccessJobs());
+                    actionStatisticsDocument.setNumberOfFailureJobs(result.nextNumberOfFailureJobs());
+
+                    long currentProcessedJobs = numberOfFailureJobs + numberOfSuccessJobs;
+                    actionStatisticsDocument.setPercentCompleted((double) currentProcessedJobs * 100 / numberOfJobs);
+
+                    actionStatisticsDocumentRepository.save(actionStatisticsDocument);
+                } finally {
+                    actionStatisticUpdaterFlag.release();
                 }
-            } else if (prevJobStatus == JobStatus.FAILURE && currentJobStatus == JobStatus.SUCCESS) {
+            } else {
+                LOGGER.error("Cannot get lock on completed job callback function");
+            }
+        };
+    }
+
+    private static JobStatusCounter getJobStatusCounter (JobStatus prevJobStatus, JobStatus currentJobStatus,
+                                                         long numberOfFailureJobs, long numberOfSuccessJobs) {
+        AtomicInteger numberOfSuccessCounter = new AtomicInteger(0);
+        AtomicInteger numberOfFailureCounter = new AtomicInteger(0);
+
+        if (Objects.isNull(prevJobStatus)) {
+            if (Objects.requireNonNull(currentJobStatus) == JobStatus.SUCCESS) {
                 numberOfSuccessCounter.incrementAndGet();
-                numberOfFailureCounter.decrementAndGet();
-            }  else {
-                numberOfSuccessCounter.decrementAndGet();
+            } else {
                 numberOfFailureCounter.incrementAndGet();
             }
+        } else if (prevJobStatus == JobStatus.FAILURE && currentJobStatus == JobStatus.SUCCESS) {
+            numberOfSuccessCounter.incrementAndGet();
+            numberOfFailureCounter.decrementAndGet();
+        } else {
+            numberOfSuccessCounter.decrementAndGet();
+            numberOfFailureCounter.incrementAndGet();
+        }
 
-            actionStatisticsDocument.setNumberOfSuccessJobs(numberOfSuccessJobs + numberOfSuccessCounter.get());
-            actionStatisticsDocument.setNumberOfFailureJobs(numberOfFailureJobs + numberOfFailureCounter.get());
-            long currentProcessedJobs =  numberOfFailureJobs + numberOfSuccessJobs;
-            actionStatisticsDocument.setPercentCompleted((double) currentProcessedJobs * 100 / numberOfJobs);
-            actionStatisticsDocumentRepository.save(actionStatisticsDocument);
-        };
+        LOGGER.info("Number of success counter: {}, number of failure counter: {}",
+                numberOfSuccessCounter.get(),
+                numberOfFailureCounter.get());
+
+        long nextNumberOfSuccessJobs = numberOfSuccessJobs + numberOfSuccessCounter.get();
+        long nextNumberOfFailureJobs = numberOfFailureJobs + numberOfFailureCounter.get();
+        LOGGER.info("Number of success jobs: {}, number of failure jobs: {}",
+                nextNumberOfSuccessJobs,
+                nextNumberOfFailureJobs);
+        return new JobStatusCounter(nextNumberOfSuccessJobs, nextNumberOfFailureJobs);
+    }
+
+    private record JobStatusCounter(long nextNumberOfSuccessJobs, long nextNumberOfFailureJobs) {
     }
 }

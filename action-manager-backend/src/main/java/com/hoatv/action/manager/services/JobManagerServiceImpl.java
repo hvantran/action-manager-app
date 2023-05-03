@@ -5,12 +5,16 @@ import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.api.JobResultImmutable;
 import com.hoatv.action.manager.collections.JobDocument;
 import com.hoatv.action.manager.collections.JobResultDocument;
-import com.hoatv.action.manager.dtos.*;
+import com.hoatv.action.manager.dtos.JobCategory;
+import com.hoatv.action.manager.dtos.JobDefinitionDTO;
+import com.hoatv.action.manager.dtos.JobOutputTarget;
+import com.hoatv.action.manager.dtos.JobOverviewDTO;
+import com.hoatv.action.manager.dtos.JobState;
+import com.hoatv.action.manager.dtos.JobStatus;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.exceptions.AppException;
-import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.TemplateEngineEnum;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
@@ -26,7 +30,22 @@ import com.hoatv.task.mgmt.services.ScheduleTaskMgmtService;
 import com.hoatv.task.mgmt.services.TaskFactory;
 import com.hoatv.task.mgmt.services.TaskMgmtServiceV1;
 import jakarta.annotation.PostConstruct;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
@@ -36,17 +55,6 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
-import java.util.AbstractMap.SimpleEntry;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Service
 @MetricProvider(application = JobManagerServiceImpl.ACTION_MANAGER, category = MetricProviders.MetricCategories.STATS_DATA_CATEGORY)
@@ -328,6 +336,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
         long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
         JobStatus prevJobStatus = jobResultDocument.getJobStatus();
+        JobStatus nextJobStatus = JobStatus.FAILURE;
+        String jobException = null;
 
         try {
             if (jobResultDocument.getStartedAt() == 0) {
@@ -355,13 +365,15 @@ public class JobManagerServiceImpl implements JobManagerService {
             JobResultImmutable jobResult = scriptEngineService.execute(jobContent, jobExecutionContext);
             processOutputTargets(jobDocument, jobName, jobResult);
 
-            JobStatus nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ? JobStatus.FAILURE : JobStatus.SUCCESS;
-            updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobResult.getException());
-            processJobResultCallback(onJobStatusChange, prevJobStatus, nextJobStatus);
+            nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ? JobStatus.FAILURE : JobStatus.SUCCESS;
+            jobException = jobResult.getException();
+
         } catch (Exception exception) {
             LOGGER.error("An exception occurred while processing job", exception);
-            updateJobResultDocument(jobResultDocument, JobStatus.FAILURE, currentEpochTimeInMillisecond, exception.getMessage());
-            processJobResultCallback(onJobStatusChange, prevJobStatus, JobStatus.FAILURE);
+            jobException = exception.getMessage();
+        } finally {
+            updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobException);
+            processJobResultCallback(onJobStatusChange, prevJobStatus, nextJobStatus);
         }
     }
 
@@ -394,31 +406,38 @@ public class JobManagerServiceImpl implements JobManagerService {
             JobOutputTarget jobOutputTarget = JobOutputTarget.valueOf(target);
             switch (jobOutputTarget) {
                 case CONSOLE -> LOGGER.info("Async job: {} result: {}", jobName, jobResult);
-                case METRIC -> processOutputData(jobDocument, jobResult, jobName);
+                case METRIC -> processOutputData(jobResult, jobName);
                 default -> throw new AppException("Unsupported output target " + target);
             }
         });
     }
 
-    private void processOutputData(JobDocument jobDocument, JobResultImmutable jobResult, String jobName) {
+    private void processOutputData(JobResultImmutable jobResult, String jobName) {
         ArrayList<MetricTag> metricTags = new ArrayList<>();
+        String metricNamePrefix = JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName;
         if (jobResult instanceof JobResult singleJobResult) {
             MetricTag metricTag = new MetricTag(singleJobResult.getData());
-            metricTag.setAttributes(Map.of("name", JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName));
+            metricTag.setAttributes(Map.of("name", metricNamePrefix));
             metricTags.add(metricTag);
-            metricService.setMetric(jobDocument.getHash(), metricTags);
+            metricService.setMetric(metricNamePrefix, metricTags);
             return;
         }
 
         if (jobResult instanceof JobResultDict jobResultDict) {
             Map<String, String> multipleJobResultMap = jobResultDict.getData();
+            LOGGER.info("Reset all metric values for related job {} back to 0", metricNamePrefix);
+            List<ComplexValue> regexMetrics = metricService.getRegexMetrics(metricNamePrefix + ".*");
+            regexMetrics.stream().flatMap(p -> p.getTags().stream())
+                    .peek(p -> LOGGER.info("Reset metric {} value to 0", p.getAttributes().get("name")))
+                    .forEach(p -> p.setValue("0"));
+
             multipleJobResultMap.forEach((name, value) -> {
                 MetricTag metricTag = new MetricTag(value);
-                metricTag.setAttributes(Map.of("name", JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName + "-" + name));
+                String metricName = metricNamePrefix + "-" + name;
+                metricTag.setAttributes(Map.of("name", metricName));
                 metricTags.add(metricTag);
-                metricService.setMetric(jobDocument.getHash(), metricTags);
+                metricService.setMetric(metricName, metricTags);
             });
-            return;
         }
     }
 
