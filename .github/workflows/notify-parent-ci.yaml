@@ -28,3 +28,19 @@ jobs:
           git add --all
           git commit -m "Update action-manager-app submodules" || echo "No changes to commit"
           git push
+      - name: Github REST API Call to make backend service build
+        env:
+          CI_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          PARENT_REPO: project-management
+          PARENT_BRANCH: main
+          WORKFLOW_ID: action-manager-backend-ci.yaml
+        run: |
+          curl -fL --retry 3 -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${{ env.CI_TOKEN }}" https://api.github.com/repos/${{ env.PARENT_REPO }}/actions/workflows/${{ env.WORKFLOW_ID }}/dispatches -d '{"ref":"${{ env.PARENT_BRANCH }}"}'
+      - name: Github REST API Call to make ui service build
+        env:
+          CI_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          PARENT_REPO: project-management
+          PARENT_BRANCH: main
+          WORKFLOW_ID: action-manager-ui-ci.yaml
+        run: |
+          curl -fL --retry 3 -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${{ env.CI_TOKEN }}" https://api.github.com/repos/${{ env.PARENT_REPO }}/actions/workflows/${{ env.WORKFLOW_ID }}/dispatches -d '{"ref":"${{ env.PARENT_BRANCH }}"}'
