@@ -18,7 +18,7 @@ import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedFunction;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
-import com.hoatv.fwk.common.ultilities.KeyedLockFactory;
+import com.hoatv.fwk.common.ultilities.GenericKeyedLock;
 import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
@@ -57,7 +57,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private final ActionStatistics actionStatistics;
 
-    private final KeyedLockFactory.KeyedLock jobStatusUpdaterLocks;
+    private final GenericKeyedLock<String> jobStatusUpdaterLocks;
 
 
     @Autowired
@@ -68,7 +68,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         this.jobManagerService = jobManagerService;
         this.actionStatistics = new ActionStatistics();
         this.actionStatisticsDocumentRepository = actionStatisticsDocumentRepository;
-        this.jobStatusUpdaterLocks = KeyedLockFactory.newKeyLock();
+        this.jobStatusUpdaterLocks = new GenericKeyedLock<>();
     }
 
     private static class ActionStatistics {
