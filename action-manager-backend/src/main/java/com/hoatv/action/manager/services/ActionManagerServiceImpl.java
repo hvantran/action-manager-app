@@ -18,6 +18,7 @@ import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedFunction;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
+import com.hoatv.fwk.common.ultilities.KeyedLockFactory;
 import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
@@ -56,7 +57,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private final ActionStatistics actionStatistics;
 
-    private final Semaphore actionStatisticUpdaterFlag = new Semaphore(1);
+    private final KeyedLockFactory.KeyedLock jobStatusUpdaterLocks;
+
 
     @Autowired
     public ActionManagerServiceImpl (ActionDocumentRepository actionDocumentRepository,
@@ -66,6 +68,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         this.jobManagerService = jobManagerService;
         this.actionStatistics = new ActionStatistics();
         this.actionStatisticsDocumentRepository = actionStatisticsDocumentRepository;
+        this.jobStatusUpdaterLocks = KeyedLockFactory.newKeyLock();
     }
 
     private static class ActionStatistics {
@@ -318,7 +321,10 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 return;
             }
 
-            if (actionStatisticUpdaterFlag.tryAcquire(5000, TimeUnit.MILLISECONDS)) {
+            String documentHash = actionStatisticsDocument.getHash();
+            jobStatusUpdaterLocks.putIfAbsent(documentHash, new Semaphore(1, true));
+
+            if (jobStatusUpdaterLocks.tryAcquire(documentHash,5000, TimeUnit.MILLISECONDS)) {
                 try {
                     long numberOfJobs = actionStatisticsDocument.getNumberOfJobs();
                     long numberOfFailureJobs = actionStatisticsDocument.getNumberOfFailureJobs();
@@ -335,7 +341,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
                     actionStatisticsDocumentRepository.save(actionStatisticsDocument);
                 } finally {
-                    actionStatisticUpdaterFlag.release();
+                    jobStatusUpdaterLocks.release(documentHash);
                 }
             } else {
                 LOGGER.error("Cannot get lock on completed job callback function");
