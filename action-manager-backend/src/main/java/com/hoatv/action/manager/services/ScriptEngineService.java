@@ -31,6 +31,7 @@ public class ScriptEngineService {
         return execute(JobLauncher.class, scriptContent, executionContext);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T execute(Class<? extends Launcher> klass, String scriptContent,
                                Map<String, Object> executionContext) {
         ScriptEngine scriptEngine = ScriptEngineFactory.GRAAL_JS.getScriptEngine();

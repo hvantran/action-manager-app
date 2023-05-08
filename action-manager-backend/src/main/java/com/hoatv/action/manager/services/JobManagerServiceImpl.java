@@ -93,8 +93,8 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Autowired
-    public JobManagerServiceImpl(ScriptEngineService scriptEngineService, JobDocumentRepository jobDocumentRepository,
-                                 JobExecutionResultDocumentRepository jobResultDocumentRepository) {
+    public JobManagerServiceImpl (ScriptEngineService scriptEngineService, JobDocumentRepository jobDocumentRepository,
+                                  JobExecutionResultDocumentRepository jobResultDocumentRepository) {
         this.scriptEngineService = scriptEngineService;
         this.jobDocumentRepository = jobDocumentRepository;
         this.jobResultDocumentRepository = jobResultDocumentRepository;
@@ -117,7 +117,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @PostConstruct
-    public void init() {
+    public void init () {
         Example<JobDocument> jobEx = Example.of(JobDocument.builder().isScheduled(false).build());
         long numberOfJobs = jobDocumentRepository.count(jobEx);
         jobManagementStatistics.totalNumberOfJobs.set(numberOfJobs);
@@ -127,58 +127,58 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX)
-    public Collection<ComplexValue> getMetricValues() {
+    public Collection<ComplexValue> getMetricValues () {
         return metricService.getMetrics().values();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-jobs")
-    public long getTotalNumberOfJobs() {
+    public long getTotalNumberOfJobs () {
         return jobManagementStatistics.totalNumberOfJobs.get();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-failure-jobs")
-    public long getTotalNumberOfFailureJobs() {
+    public long getTotalNumberOfFailureJobs () {
         return jobManagementStatistics.numberOfFailureJobs.get();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-activate-jobs")
-    public long getTotalNumberOfActiveJobs() {
+    public long getTotalNumberOfActiveJobs () {
         return jobManagementStatistics.numberOfActiveJobs.get();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-active-schedule-jobs")
-    public long getNumberOfScheduleJobs() {
+    public long getNumberOfScheduleJobs () {
         return scheduleTaskMgmtService.getActiveTasks();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-available-schedule-jobs")
-    public long getNumberOfAvailableScheduleJobs() {
+    public long getNumberOfAvailableScheduleJobs () {
         return scheduleTaskMgmtService.getConcurrentAccountLocks().availablePermits();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-available-cpu-jobs")
-    public long getNumberOfAvailableCPUJobs() {
+    public long getNumberOfAvailableCPUJobs () {
         return cpuTaskMgmtService.getConcurrentAccountLocks().availablePermits();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-available-io-jobs")
-    public long getNumberOfAvailableIOJobs() {
+    public long getNumberOfAvailableIOJobs () {
         return ioTaskMgmtService.getConcurrentAccountLocks().availablePermits();
     }
 
 
-    private List<JobResultDocument> getJobResultDocuments(Page<JobDocument> jobDocuments) {
+    private List<JobResultDocument> getJobResultDocuments (Page<JobDocument> jobDocuments) {
         List<String> jobIds = jobDocuments.stream().map(JobDocument::getHash).toList();
         return jobResultDocumentRepository.findByJobIdIn(jobIds);
     }
 
-    private List<JobResultDocument> getJobResultDocuments(List<JobDocument> jobDocuments) {
+    private List<JobResultDocument> getJobResultDocuments (List<JobDocument> jobDocuments) {
         List<String> jobIds = jobDocuments.stream().map(JobDocument::getHash).toList();
         return jobResultDocumentRepository.findByJobIdIn(jobIds);
     }
 
-    private List<Pair<JobDocument, JobResultDocument>> getJobDocumentPairs(List<JobDocument> jobDocuments,
-                                                                           List<JobResultDocument> jobResultDocuments) {
+    private List<Pair<JobDocument, JobResultDocument>> getJobDocumentPairs (List<JobDocument> jobDocuments,
+                                                                            List<JobResultDocument> jobResultDocuments) {
         Map<String, JobResultDocument> jobResultMapping = jobResultDocuments.stream()
                 .map(p -> new SimpleEntry<>(p.getJobId(), p))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
@@ -188,30 +188,30 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    public long count(Example<JobDocument> example) {
+    public long count (Example<JobDocument> example) {
         return jobDocumentRepository.count(example);
     }
 
     @Override
-    public List<Pair<JobDocument, JobResultDocument>> getScheduleJobPairs() {
+    public List<Pair<JobDocument, JobResultDocument>> getScheduleJobPairs () {
         List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrue();
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(scheduledJobDocuments);
         return getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments);
     }
 
     @Override
-    public Page<JobOverviewDTO> getJobs(PageRequest pageRequest) {
+    public Page<JobOverviewDTO> getJobs (PageRequest pageRequest) {
         Page<JobDocument> jobDocuments = jobDocumentRepository.findAll(pageRequest);
         return getJobOverviewDTOs(jobDocuments);
     }
 
     @Override
-    public Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest) {
+    public Page<JobOverviewDTO> getJobsFromAction (String actionId, PageRequest pageRequest) {
         Page<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId, pageRequest);
         return getJobOverviewDTOs(jobDocuments);
     }
 
-    private Page<JobOverviewDTO> getJobOverviewDTOs(Page<JobDocument> jobDocuments) {
+    private Page<JobOverviewDTO> getJobOverviewDTOs (Page<JobDocument> jobDocuments) {
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
 
         return jobDocuments.map(jobDocument -> {
@@ -240,14 +240,14 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    public List<Pair<JobDocument, JobResultDocument>> getJobsFromAction(String actionId) {
+    public List<Pair<JobDocument, JobResultDocument>> getJobsFromAction (String actionId) {
         List<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments);
     }
 
     @Override
-    public List<Pair<JobDocument, JobResultDocument>> getOneTimeJobsFromAction(String actionId) {
+    public List<Pair<JobDocument, JobResultDocument>> getOneTimeJobsFromAction (String actionId) {
         List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndActionId(actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments);
@@ -262,7 +262,7 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor
-    public void deleteJobsByActionId(String actionId) {
+    public void deleteJobsByActionId (String actionId) {
         LOGGER.info("Deleted the job result documents belong to action {}", actionId);
         List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndActionId(actionId);
         List<String> jobIdStrings = jobIds.stream().map(JobDocument::getHash).toList();
@@ -280,12 +280,12 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    public void processBulkJobs(List<ActionExecutionContext> actionExecutionContexts) {
+    public void processBulkJobs (List<ActionExecutionContext> actionExecutionContexts) {
         actionExecutionContexts.forEach(this::processBulkJobs);
     }
 
     @Override
-    public void processBulkJobs(ActionExecutionContext actionExecutionContext) {
+    public void processBulkJobs (ActionExecutionContext actionExecutionContext) {
         List<Pair<JobDocument, JobResultDocument>> jobDocumentTriplets =
                 actionExecutionContext.getJobDocumentPairs();
         jobDocumentTriplets.forEach(pair -> {
@@ -296,8 +296,8 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                           BiConsumer<JobStatus, JobStatus> callback) {
+    public void processJob (JobDocument jobDocument, JobResultDocument jobResultDocument,
+                            BiConsumer<JobStatus, JobStatus> callback) {
         jobManagementStatistics.totalNumberOfJobs.incrementAndGet();
         if (jobDocument.isScheduled()) {
             ScheduledFuture<?> scheduledFuture = processScheduleJob(jobDocument, jobResultDocument, callback);
@@ -311,8 +311,8 @@ public class JobManagerServiceImpl implements JobManagerService {
         processSync(jobDocument, jobResultDocument, callback);
     }
 
-    private ScheduledFuture<?> processScheduleJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                                                  BiConsumer<JobStatus, JobStatus> callback) {
+    private ScheduledFuture<?> processScheduleJob (JobDocument jobDocument, JobResultDocument jobResultDocument,
+                                                   BiConsumer<JobStatus, JobStatus> callback) {
         Callable<Void> jobProcessRunnable = () -> {
             processSync(jobDocument, jobResultDocument, callback);
             return null;
@@ -329,8 +329,8 @@ public class JobManagerServiceImpl implements JobManagerService {
         return scheduledFuture;
     }
 
-    private void processSync(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                             BiConsumer<JobStatus, JobStatus> onJobStatusChange) {
+    private void processSync (JobDocument jobDocument, JobResultDocument jobResultDocument,
+                              BiConsumer<JobStatus, JobStatus> onJobStatusChange) {
 
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
 
@@ -377,9 +377,9 @@ public class JobManagerServiceImpl implements JobManagerService {
         }
     }
 
-    private void processJobResultCallback(BiConsumer<JobStatus, JobStatus> onJobStatusChange,
-                                          JobStatus prevJobStatus,
-                                          JobStatus nextJobStatus) {
+    private void processJobResultCallback (BiConsumer<JobStatus, JobStatus> onJobStatusChange,
+                                           JobStatus prevJobStatus,
+                                           JobStatus nextJobStatus) {
 
         onJobStatusChange.accept(prevJobStatus, nextJobStatus);
         if (nextJobStatus == JobStatus.FAILURE) {
@@ -388,9 +388,9 @@ public class JobManagerServiceImpl implements JobManagerService {
         jobManagementStatistics.numberOfActiveJobs.decrementAndGet();
     }
 
-    private void updateJobResultDocument(JobResultDocument jobResultDocument,
-                                         JobStatus nextJobStatus,
-                                         long startedAt, String jobResult) {
+    private void updateJobResultDocument (JobResultDocument jobResultDocument,
+                                          JobStatus nextJobStatus,
+                                          long startedAt, String jobResult) {
         long endedAt = DateTimeUtils.getCurrentEpochTimeInMillisecond();
         jobResultDocument.setJobState(JobState.COMPLETED);
         jobResultDocument.setJobStatus(nextJobStatus);
@@ -400,7 +400,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         jobResultDocumentRepository.save(jobResultDocument);
     }
 
-    private void processOutputTargets(JobDocument jobDocument, String jobName, JobResultImmutable jobResult) {
+    private void processOutputTargets (JobDocument jobDocument, String jobName, JobResultImmutable jobResult) {
         List<String> jobOutputTargets = jobDocument.getOutputTargets();
         jobOutputTargets.forEach(target -> {
             JobOutputTarget jobOutputTarget = JobOutputTarget.valueOf(target);
@@ -412,7 +412,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         });
     }
 
-    private void processOutputData(JobResultImmutable jobResult, String jobName) {
+    private void processOutputData (JobResultImmutable jobResult, String jobName) {
         ArrayList<MetricTag> metricTags = new ArrayList<>();
         String metricNamePrefix = JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName;
         if (jobResult instanceof JobResult singleJobResult) {
@@ -441,8 +441,8 @@ public class JobManagerServiceImpl implements JobManagerService {
         }
     }
 
-    private void processAsync(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                              BiConsumer<JobStatus, JobStatus> callback) {
+    private void processAsync (JobDocument jobDocument, JobResultDocument jobResultDocument,
+                               BiConsumer<JobStatus, JobStatus> callback) {
         Runnable jobProcessRunnable = () -> processSync(jobDocument, jobResultDocument, callback);
         if (jobDocument.getJobCategory() == JobCategory.CPU) {
             LOGGER.info("Using CPU threads to execute job: {}", jobDocument.getJobName());
@@ -455,7 +455,7 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor
-    public Pair<JobDocument, JobResultDocument> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId) {
+    public Pair<JobDocument, JobResultDocument> initialJobs (JobDefinitionDTO jobDefinitionDTO, String actionId) {
         JobDocument jobDocument = jobDocumentRepository.save(JobDocument.fromJobDefinition(jobDefinitionDTO, actionId));
         JobResultDocument.JobResultDocumentBuilder jobResultDocumentBuilder = JobResultDocument.builder()
                 .jobState(JobState.INITIAL)

@@ -255,7 +255,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 .build();
     }
 
-    private List<Pair<JobDocument, JobResultDocument>> getJobDocumentPairs (List<JobDefinitionDTO> jobDefinitionDTOs, ActionDocument actionDocument) {
+    private List<Pair<JobDocument, JobResultDocument>> getJobDocumentPairs (List<JobDefinitionDTO> jobDefinitionDTOs,
+                                                                            ActionDocument actionDocument) {
         CheckedFunction<JobDefinitionDTO, Pair<JobDocument, JobResultDocument>> initialJobFunction =
                 jobDefinitionDTO -> jobManagerService.initialJobs(jobDefinitionDTO, actionDocument.getHash());
         return jobDefinitionDTOs.stream()
@@ -324,7 +325,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             String documentHash = actionStatisticsDocument.getHash();
             jobStatusUpdaterLocks.putIfAbsent(documentHash, new Semaphore(1, true));
 
-            if (jobStatusUpdaterLocks.tryAcquire(documentHash,5000, TimeUnit.MILLISECONDS)) {
+            if (jobStatusUpdaterLocks.tryAcquire(documentHash, 5000, TimeUnit.MILLISECONDS)) {
                 try {
                     long numberOfJobs = actionStatisticsDocument.getNumberOfJobs();
                     long numberOfFailureJobs = actionStatisticsDocument.getNumberOfFailureJobs();
@@ -368,7 +369,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             numberOfFailureCounter.incrementAndGet();
         }
 
-        LOGGER.info("Number of success counter: {}, number of failure counter: {}",
+        LOGGER.info("Number of increase success jobs: {}, number of increase failure jobs: {}",
                 numberOfSuccessCounter.get(),
                 numberOfFailureCounter.get());
 
