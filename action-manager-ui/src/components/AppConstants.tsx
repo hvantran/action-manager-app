@@ -18,6 +18,8 @@ let Configuration = Java.type('com.jayway.jsonpath.Configuration');
 let DocumentContext = Java.type('com.jayway.jsonpath.DocumentContext');
 let JsonPath = Java.type('com.jayway.jsonpath.JsonPath');
 let String = Java.type('java.lang.String');
+let Duration = Java.type('java.time.Duration');
+let ChronoUnit = Java.type('java.time.temporal.ChronoUnit');
 let JSONObject = Java.type('net.minidev.json.JSONObject');
 
 let HttpClient = Java.type('java.net.http.HttpClient');
@@ -37,7 +39,16 @@ let HttpClientService = Java.type('com.hoatv.fwk.common.services.HttpClientServi
 
 const NEWRELIC_API_KEY = ''
 
-function execute() {
+function preExecute() {
+    return null;
+}
+
+function execute(preExecuteReturnValues) {
+}
+
+
+function postExecute(result, preExecuteReturnValues) {
+    reutrn result;
 }
 
 
@@ -49,8 +60,8 @@ function sendNewRelicQuery(targetURL, newRelicQuery) {
    );
 }
 
-function sendHttpGETRequest(targetURL, headers, queryData) {
-    let httpClient = HttpClient.newBuilder().build();
+function sendHttpGETRequest(targetURL, headers) {
+    let httpClient = HttpClient.newBuilder().timeout(Duaration.of(1000, ChronoUnit.SECONDS)).build();
     let requestParams = RequestParams.builder(targetURL, httpClient)
         .method(HttpMethod.GET)
         .headers(headers)
@@ -62,7 +73,7 @@ function sendHttpGETRequest(targetURL, headers, queryData) {
 }
 
 function sendHttpPOSTRequest(targetURL, headers, queryData) {
-    let httpClient = HttpClient.newBuilder().build();
+    let httpClient = HttpClient.newBuilder().timeout(Duaration.of(1000, ChronoUnit.SECONDS)).build();
     let requestParams = RequestParams.builder(targetURL, httpClient)
         .method(HttpMethod.POST)
         .headers(headers)

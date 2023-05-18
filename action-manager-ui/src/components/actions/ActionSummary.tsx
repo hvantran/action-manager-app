@@ -114,15 +114,6 @@ export default function ActionSummary() {
           }
         },
         {
-          actionIcon: <DeleteIcon />,
-          properties: {sx:{color: red[800]}},
-          actionLabel: "Delete action",
-          actionName: "deleteAction",
-          onClick: (row: ActionOverview) => {
-            return () => deleteAction(row.hash)
-          }
-        },
-        {
           actionIcon: <StarBorderIcon />,
           actionLabel: "Favorite action",
           visible: (row: ActionOverview) => !row.isFavorite,
@@ -141,6 +132,15 @@ export default function ActionSummary() {
             return () => setFavoriteAction(row.hash, false);
           }
         },
+        {
+          actionIcon: <DeleteIcon />,
+          properties: {sx:{color: red[800]}},
+          actionLabel: "Delete action",
+          actionName: "deleteAction",
+          onClick: (row: ActionOverview) => {
+            return () => deleteAction(row.hash)
+          }
+        }
       ]
     }
   ];

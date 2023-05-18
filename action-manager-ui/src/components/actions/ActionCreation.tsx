@@ -2,6 +2,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import AddTaskTwoToneIcon from '@mui/icons-material/AddTaskTwoTone';
 import ArrowBackTwoToneIcon from '@mui/icons-material/ArrowBackTwoTone';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import { Stack } from '@mui/material';
 import { blue, green } from '@mui/material/colors';
 
@@ -515,6 +516,23 @@ export default function ActionCreation() {
     setStepMetadatas(initialStepMetadatas);
   }, [])
 
+  const dryRunAction = async () => {
+    let action: ActionDefinition = getActionFromStepper(stepMetadatas);
+
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(action)
+    };
+
+    const targetURL = `${ACTION_MANAGER_API_URL}/dryRun`;
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
+      return { 'message': "Dry run action successfully", key: new Date().getTime() } as SnackbarMessage;
+    }, async (response: Response) => {
+      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
   const getActionFromStepper = (currentStepMetadata: Array<StepMetadata>) => {
     const actionStepIndex = 0;
     let actionMetadata = currentStepMetadata.at(actionStepIndex);
@@ -614,7 +632,15 @@ export default function ActionCreation() {
       </LinkBreadcrumd>,
       <Typography key="3" color="text.primary">new</Typography>
     ],
-    stepMetadatas: stepMetadatas
+    stepMetadatas: stepMetadatas,
+    pageEntityActions: [      
+      {
+        actionIcon: <EngineeringIcon />,
+        actionLabel: "Dry run",
+        actionName: "dryRunAction",
+        onClick: () => dryRunAction
+      }
+    ]
   }
 
 
