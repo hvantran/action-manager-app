@@ -1,9 +1,11 @@
+import { PropertyMetadata, StepMetadata } from "./GenericConstants"
+
 export const ROOT_BREADCRUMB = 'Actions'
 export const JOB_CATEGORY_VALUES = ["IO", "CPU"]
 export const JOB_OUTPUT_TARGET_VALUES = ["CONSOLE", "METRIC"]
 export const JOB_SCHEDULE_TIME_SELECTION = [0, 5, 10, 20, 30, 60]
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
-export const JOB_MANAGER_API_URL: string =  `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
+export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
 let Collectors = Java.type('java.util.stream.Collectors');
 let StreamSupport = Java.type('java.util.stream.StreamSupport');
@@ -73,7 +75,6 @@ function sendHttpPOSTRequest(targetURL, headers, queryData) {
 }
 `
 
-
 export interface JobDefinition {
     name: string | undefined
     category: 'NORMAL' | 'SYSTEM' | undefined
@@ -127,4 +128,17 @@ export interface JobOverview {
     elapsedTime: number
     updatedAt: number
     schedule: boolean
+}
+
+export interface JobDetailMetadata {
+    name: string | undefined
+    category: 'NORMAL' | 'SYSTEM' | undefined
+    description: string | undefined
+    configurations: string | undefined
+    content: string | undefined
+    isAsync: boolean | undefined
+    isScheduled: boolean | undefined
+    outputTargets: Array<String> | undefined
+    scheduleInterval: number | undefined
+    createdAt?: number | undefined
 }

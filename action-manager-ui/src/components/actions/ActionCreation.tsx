@@ -8,10 +8,20 @@ import { blue, green } from '@mui/material/colors';
 import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { ActionDefinition, ACTION_MANAGER_API_URL, DEFAULT_JOB_CONTENT, JobDefinition, JOB_CATEGORY_VALUES, JOB_OUTPUT_TARGET_VALUES, JOB_SCHEDULE_TIME_SELECTION, ROOT_BREADCRUMB } from '../AppConstants';
+import {
+  ActionDefinition,
+  ACTION_MANAGER_API_URL,
+  DEFAULT_JOB_CONTENT,
+  JobDefinition,
+  JOB_CATEGORY_VALUES,
+  JOB_OUTPUT_TARGET_VALUES,
+  JOB_SCHEDULE_TIME_SELECTION,
+  ROOT_BREADCRUMB
+} from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import SnackbarAlert from '../common/SnackbarAlert';
 import {
+  onchangeStepDefault,
   PageEntityMetadata,
   PropertyMetadata,
   PropType,
@@ -623,27 +633,4 @@ export default function ActionCreation() {
       <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
     </Stack>
   );
-
-  function onchangeStepDefault(propName: string, propValue: any, stepMetadataCallback?: (stepMetadata: StepMetadata) => void,
-    propertyCallback?: (property: PropertyMetadata) => void): React.SetStateAction<StepMetadata[]> {
-    return previous => {
-      return [...previous].map((stepMetadata) => {
-        let properties = stepMetadata.properties.map(prop => {
-          if (prop.propName === propName) {
-            prop.propValue = propValue;
-          }
-          if (propertyCallback) {
-            propertyCallback(prop);
-          }
-          return prop;
-        });
-
-        stepMetadata.properties = properties;
-        if (stepMetadataCallback) {
-          stepMetadataCallback(stepMetadata);
-        }
-        return stepMetadata;
-      });
-    };
-  }
 }

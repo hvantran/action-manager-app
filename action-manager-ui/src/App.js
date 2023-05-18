@@ -10,6 +10,7 @@ import ActionSummary from './components/actions/ActionSummary';
 import ErrorPage from './components/common/ErrorPage';
 import JobSummary from './components/jobs/JobSummary';
 import JobCreation from './components/jobs/JobCreation';
+import JobDetail from './components/jobs/JobDetail';
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
           <Route path='/actions' element={<ActionSummary />}></Route>
           <Route path='/actions/:actionId' element={<ActionDetail />}></Route>
           <Route path='/actions/:actionId/jobs/new' element={<JobCreation />}></Route>
+          <Route path='/actions/:actionId/jobs/:jobId' element={<JobDetail />}></Route>
           <Route path='/actions/new' element={<ActionCreation />}></Route>
           <Route path='jobs' element={<JobSummary />}></Route>
         </Routes>

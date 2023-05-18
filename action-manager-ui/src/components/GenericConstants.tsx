@@ -26,6 +26,40 @@ export function WithLink(to: any, children: any) {
     return <Link to={to}>{children}</Link>
 };
 
+export function onchangeStepDefault(propName: string, propValue: any, stepMetadataCallback?: (stepMetadata: StepMetadata) => void,
+    propertyCallback?: (property: PropertyMetadata) => void): React.SetStateAction<StepMetadata[]> {
+    return previous => {
+        return [...previous].map((stepMetadata) => {
+            let properties = stepMetadata.properties.map(prop => {
+                if (prop.propName === propName) {
+                    prop.propValue = propValue;
+                }
+                if (propertyCallback) {
+                    propertyCallback(prop);
+                }
+                return prop;
+            });
+
+            stepMetadata.properties = properties;
+            if (stepMetadataCallback) {
+                stepMetadataCallback(stepMetadata);
+            }
+            return stepMetadata;
+        });
+    };
+}
+
+export function onChangeProperty(propName: string, propValue: any): React.SetStateAction<PropertyMetadata[]> {
+  return previous => {
+    return [...previous].map((prop) => {
+      if (prop.propName === propName) {
+        prop.propValue = propValue;
+      }
+      return prop;
+    });
+  };
+}
+
 export class RestClient {
     setCircleProcessOpen: (value: boolean) => void
     setMessageInfo: (message: SnackbarMessage) => void

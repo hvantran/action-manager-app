@@ -71,7 +71,7 @@ export default function PageRender(props: PageEntityMetadata) {
     if (propertiesMetadata) {
         nodes.push((
             <Box sx={{ px: '100px' }}>
-                <Grid spacing={2} sx={{ py: 1 }}>
+                <Grid container spacing={2} sx={{ py: 1 }}>
                     {propertiesMetadata
                         .map((propertyMeta, index) => {
                             return (

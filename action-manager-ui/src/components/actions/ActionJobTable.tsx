@@ -6,24 +6,27 @@ import {
     PagingResult, RestClient, SnackbarMessage, TableMetadata
 } from '../GenericConstants';
 
+
+import { useNavigate } from 'react-router-dom';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
-import { ACTION_MANAGER_API_URL } from '../AppConstants';
+import { ACTION_MANAGER_API_URL, JobOverview } from '../AppConstants';
 import JobStatus from '../common/JobStatus';
 import TextTruncate from '../common/TextTruncate';
 import PageEntityRender from '../renders/PageEntityRender';
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
 
 
 export default function ActionJobTable(props: any) {
 
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
     const targetAction = props.actionId
     const setCircleProcessOpen = props.setCircleProcessOpen;
     const replayFlag = props.replayFlag;
     const setMessageInfo = props.setMessageInfo;
     const setOpenError = props.setOpenError;
     const setOpenSuccess = props.setOpenSuccess;
-    let initialPagingResult: PagingResult = { totalElements: 0, content: []};
+    let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
     const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
     const [pageIndex, setPageIndex] = React.useState(0);
     const [pageSize, setPageSize] = React.useState(10);
@@ -44,14 +47,14 @@ export default function ActionJobTable(props: any) {
             label: 'Status',
             minWidth: 100,
             align: 'left',
-            format: (value: string) => (<JobStatus status={value}/>)
+            format: (value: string) => (<JobStatus status={value} />)
         },
         {
             id: 'schedule',
             label: 'Type',
             minWidth: 100,
             align: 'left',
-            format: (value: boolean) => value ? (<ScheduleIcon/>): (<TimesOneMobiledataIcon/>)
+            format: (value: boolean) => value ? (<ScheduleIcon />) : (<TimesOneMobiledataIcon />)
         },
         {
             id: 'startedAt',
@@ -93,7 +96,22 @@ export default function ActionJobTable(props: any) {
             label: 'Failure Notes',
             minWidth: 200,
             align: 'left',
-            format: (value: string) => (<TextTruncate text={value} maxTextLength={100}/>)
+            format: (value: string) => (<TextTruncate text={value} maxTextLength={100} />)
+        },
+        {
+            id: 'actions',
+            label: '',
+            align: 'right',
+            actions: [
+                {
+                    actionIcon: <ReadMoreIcon />,
+                    actionLabel: "Action details",
+                    actionName: "gotoActionDetail",
+                    onClick: (row: JobOverview) => {
+                        return () => navigate(`/actions/${targetAction}/jobs/${row.hash}`)
+                    }
+                }
+            ]
         }
     ];
 
@@ -107,11 +125,11 @@ export default function ActionJobTable(props: any) {
 
         const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(targetAction)}/jobs?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}`;
         await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-          let responseJSON = await response.json() as PagingResult;
-          setPagingResult(responseJSON);
-          return { 'message': 'Loading jobs sucessfully!!!', key: new Date().getTime() } as SnackbarMessage;
+            let responseJSON = await response.json() as PagingResult;
+            setPagingResult(responseJSON);
+            return { 'message': 'Loading jobs sucessfully!!!', key: new Date().getTime() } as SnackbarMessage;
         }, async (response: Response) => {
-          return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
+            return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
         });
     }
 

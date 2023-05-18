@@ -11,7 +11,15 @@ import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ACTION_MANAGER_API_URL, DEFAULT_JOB_CONTENT, JOB_CATEGORY_VALUES, JOB_OUTPUT_TARGET_VALUES, JOB_SCHEDULE_TIME_SELECTION, JobDefinition, ROOT_BREADCRUMB } from '../AppConstants';
+import {
+  ACTION_MANAGER_API_URL,
+  DEFAULT_JOB_CONTENT,
+  JOB_CATEGORY_VALUES,
+  JOB_OUTPUT_TARGET_VALUES,
+  JOB_SCHEDULE_TIME_SELECTION,
+  JobDefinition,
+  ROOT_BREADCRUMB,
+} from '../AppConstants';
 import {
   PageEntityMetadata,
   PropType,
@@ -21,7 +29,8 @@ import {
   SnackbarMessage,
   SpeedDialActionMetadata,
   StepMetadata,
-  WithLink
+  WithLink,
+  onchangeStepDefault
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import SnackbarAlert from '../common/SnackbarAlert';
@@ -517,16 +526,16 @@ export default function JobCreation() {
         actionName: "saveJob",
         onClick: () => async () => {
           let jobDefinitions: Array<JobDefinition> = getJobDetails(stepMetadatas);
-  
+
           const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(jobDefinitions)
           };
-  
+
           const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/new`;
           await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-            navigate("/actions/"+actionId);
+            navigate("/actions/" + actionId);
             return undefined;
           }, async (response: Response) => {
             return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
@@ -553,27 +562,4 @@ export default function JobCreation() {
       <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
     </Stack>
   );
-
-  function onchangeStepDefault(propName: string, propValue: any, stepMetadataCallback?: (stepMetadata: StepMetadata) => void,
-    propertyCallback?: (property: PropertyMetadata) => void): React.SetStateAction<StepMetadata[]> {
-    return previous => {
-      return [...previous].map((stepMetadata) => {
-        let properties = stepMetadata.properties.map(prop => {
-          if (prop.propName === propName) {
-            prop.propValue = propValue;
-          }
-          if (propertyCallback) {
-            propertyCallback(prop);
-          }
-          return prop;
-        });
-
-        stepMetadata.properties = properties;
-        if (stepMetadataCallback) {
-          stepMetadataCallback(stepMetadata);
-        }
-        return stepMetadata;
-      });
-    };
-  }
 }
