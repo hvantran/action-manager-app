@@ -8,6 +8,7 @@ import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
+import com.hoatv.fwk.common.ultilities.ObjectUtils;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -118,5 +119,12 @@ public class ActionControllerV1 {
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
+    }
+
+    @LoggingMonitor
+    @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> dryRun(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
+        actionManagerService.dryRunAction(actionDefinition);
+        return ResponseEntity.noContent().build();
     }
 }

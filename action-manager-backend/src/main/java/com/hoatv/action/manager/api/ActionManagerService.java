@@ -26,4 +26,6 @@ public interface ActionManagerService {
     boolean replayAction(String hash);
 
     String addJobsToAction (String hash, List<JobDefinitionDTO> jobDefinitionDTOs);
+
+    void dryRunAction (ActionDefinitionDTO actionDefinition);
 }

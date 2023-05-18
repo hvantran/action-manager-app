@@ -1,5 +1,6 @@
 package com.hoatv.action.manager.collections;
 
+import com.hoatv.action.manager.api.JobImmutable;
 import com.hoatv.action.manager.dtos.JobCategory;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
@@ -18,7 +19,7 @@ import java.util.UUID;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class JobDocument {
+public class JobDocument implements JobImmutable {
 
     @Id
     @Builder.Default
@@ -50,9 +51,9 @@ public class JobDocument {
                 .jobDescription(jobDefinitionDTO.getJobDescription())
                 .configurations(jobDefinitionDTO.getConfigurations())
                 .jobContent(jobDefinitionDTO.getJobContent())
-                .jobCategory(JobCategory.valueOf(jobDefinitionDTO.getJobCategory()))
+                .jobCategory(jobDefinitionDTO.getJobCategory())
                 .isAsync(jobDefinitionDTO.isAsync())
-                .scheduleUnit(jobDefinitionDTO.getScheduleTimeUnit())
+                .scheduleUnit(jobDefinitionDTO.getScheduleUnit())
                 .isScheduled(jobDefinitionDTO.isScheduled())
                 .scheduleInterval(jobDefinitionDTO.getScheduleInterval())
                 .outputTargets(jobDefinitionDTO.getOutputTargets())
@@ -67,11 +68,11 @@ public class JobDocument {
                 .jobDescription(jobDocument.getJobDescription())
                 .configurations(jobDocument.getConfigurations())
                 .jobContent(jobDocument.getJobContent())
-                .jobCategory(jobDocument.getJobCategory().name())
+                .jobCategory(jobDocument.getJobCategory())
                 .outputTargets(jobDocument.getOutputTargets())
                 .isScheduled(jobDocument.isScheduled())
                 .scheduleInterval(jobDocument.getScheduleInterval())
-                .scheduleTimeUnit(jobDocument.getScheduleUnit())
+                .scheduleUnit(jobDocument.getScheduleUnit())
                 .createdAt(jobDocument.getCreatedAt())
                 .isAsync(jobDocument.isAsync())
                 .build();

@@ -2,6 +2,7 @@ package com.hoatv.action.manager.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hoatv.action.manager.api.JobImmutable;
 import com.hoatv.springboot.common.validation.ValueOfEnum;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
-public class JobDefinitionDTO {
+public class JobDefinitionDTO implements JobImmutable {
 
     @JsonProperty("hash")
     private String hash;
@@ -29,8 +30,7 @@ public class JobDefinitionDTO {
     @Setter
     @Builder.Default
     @JsonProperty("category")
-    @ValueOfEnum(JobCategory.class)
-    private String jobCategory = JobCategory.IO.name();
+    private JobCategory jobCategory = JobCategory.IO;
 
     @Setter
     @JsonProperty("content")
@@ -56,7 +56,7 @@ public class JobDefinitionDTO {
 
     @Builder.Default
     @JsonProperty("scheduleTimeUnit")
-    private String scheduleTimeUnit = TimeUnit.MINUTES.name();
+    private String scheduleUnit = TimeUnit.MINUTES.name();
 
     @Setter
     @JsonProperty("outputTargets")

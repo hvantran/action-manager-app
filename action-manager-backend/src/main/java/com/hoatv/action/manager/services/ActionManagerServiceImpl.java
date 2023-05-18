@@ -165,6 +165,11 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    public void dryRunAction (ActionDefinitionDTO actionDefinition) {
+        actionDefinition.getJobs().forEach(jobManagerService::processNonePersistenceJob);
+    }
+
+    @Override
     @LoggingMonitor
     public String processAction (ActionDefinitionDTO actionDefinition) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContext(actionDefinition);
@@ -364,6 +369,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         } else if (prevJobStatus == JobStatus.FAILURE && currentJobStatus == JobStatus.SUCCESS) {
             numberOfSuccessCounter.incrementAndGet();
             numberOfFailureCounter.decrementAndGet();
+        } else if (prevJobStatus == JobStatus.PENDING && currentJobStatus == JobStatus.SUCCESS) {
+            numberOfSuccessCounter.incrementAndGet();
         } else {
             numberOfSuccessCounter.decrementAndGet();
             numberOfFailureCounter.incrementAndGet();

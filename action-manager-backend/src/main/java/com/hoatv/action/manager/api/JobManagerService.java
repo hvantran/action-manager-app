@@ -28,6 +28,8 @@ public interface JobManagerService {
 
     List<Pair<JobDocument, JobResultDocument>> getScheduleJobPairs ();
 
+    void processNonePersistenceJob(JobDefinitionDTO jobDocument);
+
     Pair<JobDocument, JobResultDocument> initialJobs (JobDefinitionDTO jobDefinitionDTO, String actionId);
 
     List<Pair<JobDocument, JobResultDocument>> getJobsFromAction (String actionId);

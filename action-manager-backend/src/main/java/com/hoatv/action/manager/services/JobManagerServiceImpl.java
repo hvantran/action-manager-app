@@ -1,9 +1,9 @@
 package com.hoatv.action.manager.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hoatv.action.manager.api.JobImmutable;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.api.JobResultImmutable;
-import com.hoatv.action.manager.collections.ActionDocument;
 import com.hoatv.action.manager.collections.JobDocument;
 import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.dtos.JobCategory;
@@ -18,9 +18,11 @@ import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.exceptions.AppException;
+import com.hoatv.fwk.common.exceptions.InvalidArgumentException;
 import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.TemplateEngineEnum;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
+import com.hoatv.fwk.common.ultilities.ObjectUtils;
 import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
@@ -47,6 +49,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -311,7 +314,7 @@ public class JobManagerServiceImpl implements JobManagerService {
             processAsync(jobDocument, jobResultDocument, callback);
             return;
         }
-        processSync(jobDocument, jobResultDocument, callback);
+        processPersistenceJob(jobDocument, jobResultDocument, callback);
     }
 
     @Override
@@ -322,26 +325,59 @@ public class JobManagerServiceImpl implements JobManagerService {
         return JobDocument.jobDetailDTO(jobDocument);
     }
 
-    private ScheduledFuture<?> processScheduleJob (JobDocument jobDocument, JobResultDocument jobResultDocument,
-                                                   BiConsumer<JobStatus, JobStatus> callback) {
-        Callable<Void> jobProcessRunnable = () -> {
-            processSync(jobDocument, jobResultDocument, callback);
-            return null;
-        };
-        String jobName = jobDocument.getJobName();
-        TimeUnit timeUnit = TimeUnit.valueOf(jobDocument.getScheduleUnit());
-        long scheduleIntervalInMs = timeUnit.toMillis(jobDocument.getScheduleInterval());
-        TaskEntry taskEntry = new TaskEntry(jobName, ACTION_MANAGER, jobProcessRunnable, 0, scheduleIntervalInMs);
-        ScheduledFuture<?> scheduledFuture = scheduleTaskMgmtService.scheduleFixedRateTask(taskEntry, 1000, TimeUnit.MILLISECONDS);
-        if (Objects.isNull(scheduledFuture)) {
-            LOGGER.error("Reached to maximum number of schedule thread, no more thread to process {}", jobName);
-            return null;
-        }
-        return scheduledFuture;
+    @Override
+    @LoggingMonitor
+    public Pair<JobDocument, JobResultDocument> initialJobs (JobDefinitionDTO jobDefinitionDTO, String actionId) {
+        JobDocument jobDocument = jobDocumentRepository.save(JobDocument.fromJobDefinition(jobDefinitionDTO, actionId));
+        JobResultDocument.JobResultDocumentBuilder jobResultDocumentBuilder = JobResultDocument.builder()
+                .jobState(JobState.INITIAL)
+                .jobStatus(JobStatus.PENDING)
+                .actionId(actionId)
+                .createdAt(DateTimeUtils.getCurrentEpochTimeInSecond())
+                .jobId(jobDocument.getHash());
+        JobResultDocument jobResultDocument = jobResultDocumentRepository.save(jobResultDocumentBuilder.build());
+        return Pair.of(jobDocument, jobResultDocument);
     }
 
-    private void processSync (JobDocument jobDocument, JobResultDocument jobResultDocument,
-                              BiConsumer<JobStatus, JobStatus> onJobStatusChange) {
+    @Override
+    public void processNonePersistenceJob(JobDefinitionDTO jobDocument) {
+        Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
+        ObjectUtils.checkThenThrow(jobDocument.isScheduled(),
+                () -> argumentChecker.apply("Schedule jobs is not supported by dry run jobs"));
+        List<String> outputTargets = jobDocument.getOutputTargets();
+        boolean isContainConsoleOutputOnly = outputTargets.size() == 1 && outputTargets.contains(JobOutputTarget.CONSOLE.name());
+        ObjectUtils.checkThenThrow(!isContainConsoleOutputOnly,
+                () -> argumentChecker.apply("Target output metric is not supported by dry run jobs"));
+
+        try {
+            JobResultImmutable jobResultImmutable = process(jobDocument);
+            LOGGER.info("Job result: {}", jobResultImmutable);
+        } catch (Exception exception) {
+            LOGGER.error("An exception occurred while processing job", exception);
+        }
+    }
+
+    private JobResultImmutable process(JobImmutable jobImmutable) {
+        String jobName = jobImmutable.getJobName();
+        String templateName = String.format("%s-%s", jobName, jobImmutable.getJobCategory());
+        String configurations = jobImmutable.getConfigurations();
+        @SuppressWarnings("unchecked")
+        CheckedSupplier<Map<String, Object>> configurationToMapSupplier =
+                () -> objectMapper.readValue(configurations, Map.class);
+        Map<String, Object> configurationMap = configurationToMapSupplier.get();
+
+        String defaultTemplateEngine = DEFAULT_CONFIGURATIONS.get(TEMPLATE_ENGINE_NAME);
+        String templateEngineName = (String) configurationMap.getOrDefault(TEMPLATE_ENGINE_NAME, defaultTemplateEngine);
+        TemplateEngineEnum templateEngine = TemplateEngineEnum.getTemplateEngineFromName(templateEngineName);
+        String jobContent = templateEngine.process(templateName, jobImmutable.getJobContent(), configurationMap);
+
+        Map<String, Object> jobExecutionContext = new HashMap<>(configurationMap);
+        jobExecutionContext.put("templateEngine", templateEngine);
+        return scriptEngineService.execute(jobContent, jobExecutionContext);
+    }
+
+    private void processPersistenceJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
+                                       BiConsumer<JobStatus, JobStatus> onJobStatusChange) {
 
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
 
@@ -358,23 +394,8 @@ public class JobManagerServiceImpl implements JobManagerService {
             jobResultDocument.setJobStatus(JobStatus.PROCESSING);
             jobResultDocumentRepository.save(jobResultDocument);
 
-            String jobName = jobDocument.getJobName();
-            String templateName = String.format("%s-%s", jobName, jobDocument.getJobCategory());
-            String configurations = jobDocument.getConfigurations();
-            @SuppressWarnings("unchecked")
-            CheckedSupplier<Map<String, Object>> configurationToMapSupplier =
-                    () -> objectMapper.readValue(configurations, Map.class);
-            Map<String, Object> configurationMap = configurationToMapSupplier.get();
-
-            String defaultTemplateEngine = DEFAULT_CONFIGURATIONS.get(TEMPLATE_ENGINE_NAME);
-            String templateEngineName = (String) configurationMap.getOrDefault(TEMPLATE_ENGINE_NAME, defaultTemplateEngine);
-            TemplateEngineEnum templateEngine = TemplateEngineEnum.getTemplateEngineFromName(templateEngineName);
-            String jobContent = templateEngine.process(templateName, jobDocument.getJobContent(), configurationMap);
-
-            Map<String, Object> jobExecutionContext = new HashMap<>(configurationMap);
-            jobExecutionContext.put("templateEngine", templateEngine);
-            JobResultImmutable jobResult = scriptEngineService.execute(jobContent, jobExecutionContext);
-            processOutputTargets(jobDocument, jobName, jobResult);
+            JobResultImmutable jobResult = process(jobDocument);
+            processOutputTargets(jobDocument, jobDocument.getJobName(), jobResult);
 
             nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ? JobStatus.FAILURE : JobStatus.SUCCESS;
             jobException = jobResult.getException();
@@ -386,6 +407,36 @@ public class JobManagerServiceImpl implements JobManagerService {
             updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobException);
             processJobResultCallback(onJobStatusChange, prevJobStatus, nextJobStatus);
         }
+    }
+
+    private ScheduledFuture<?> processScheduleJob (JobDocument jobDocument, JobResultDocument jobResultDocument,
+                                                   BiConsumer<JobStatus, JobStatus> callback) {
+        Callable<Void> jobProcessRunnable = () -> {
+            processPersistenceJob(jobDocument, jobResultDocument, callback);
+            return null;
+        };
+        String jobName = jobDocument.getJobName();
+        TimeUnit timeUnit = TimeUnit.valueOf(jobDocument.getScheduleUnit());
+        long scheduleIntervalInMs = timeUnit.toMillis(jobDocument.getScheduleInterval());
+        TaskEntry taskEntry = new TaskEntry(jobName, ACTION_MANAGER, jobProcessRunnable, 0, scheduleIntervalInMs);
+        ScheduledFuture<?> scheduledFuture = scheduleTaskMgmtService.scheduleFixedRateTask(taskEntry, 1000, TimeUnit.MILLISECONDS);
+        if (Objects.isNull(scheduledFuture)) {
+            LOGGER.error("Reached to maximum number of schedule thread, no more thread to process {}", jobName);
+            return null;
+        }
+        return scheduledFuture;
+    }
+
+    private void processAsync (JobDocument jobDocument, JobResultDocument jobResultDocument,
+                               BiConsumer<JobStatus, JobStatus> callback) {
+        Runnable jobProcessRunnable = () -> processPersistenceJob(jobDocument, jobResultDocument, callback);
+        if (jobDocument.getJobCategory() == JobCategory.CPU) {
+            LOGGER.info("Using CPU threads to execute job: {}", jobDocument.getJobName());
+            cpuTaskMgmtService.execute(jobProcessRunnable);
+            return;
+        }
+        LOGGER.info("Using IO threads to execute job: {}", jobDocument.getJobName());
+        ioTaskMgmtService.execute(jobProcessRunnable);
     }
 
     private void processJobResultCallback (BiConsumer<JobStatus, JobStatus> onJobStatusChange,
@@ -450,31 +501,5 @@ public class JobManagerServiceImpl implements JobManagerService {
                 metricService.setMetric(metricName, metricTags);
             });
         }
-    }
-
-    private void processAsync (JobDocument jobDocument, JobResultDocument jobResultDocument,
-                               BiConsumer<JobStatus, JobStatus> callback) {
-        Runnable jobProcessRunnable = () -> processSync(jobDocument, jobResultDocument, callback);
-        if (jobDocument.getJobCategory() == JobCategory.CPU) {
-            LOGGER.info("Using CPU threads to execute job: {}", jobDocument.getJobName());
-            cpuTaskMgmtService.execute(jobProcessRunnable);
-            return;
-        }
-        LOGGER.info("Using IO threads to execute job: {}", jobDocument.getJobName());
-        ioTaskMgmtService.execute(jobProcessRunnable);
-    }
-
-    @Override
-    @LoggingMonitor
-    public Pair<JobDocument, JobResultDocument> initialJobs (JobDefinitionDTO jobDefinitionDTO, String actionId) {
-        JobDocument jobDocument = jobDocumentRepository.save(JobDocument.fromJobDefinition(jobDefinitionDTO, actionId));
-        JobResultDocument.JobResultDocumentBuilder jobResultDocumentBuilder = JobResultDocument.builder()
-                .jobState(JobState.INITIAL)
-                .jobStatus(JobStatus.PENDING)
-                .actionId(actionId)
-                .createdAt(DateTimeUtils.getCurrentEpochTimeInSecond())
-                .jobId(jobDocument.getHash());
-        JobResultDocument jobResultDocument = jobResultDocumentRepository.save(jobResultDocumentBuilder.build());
-        return Pair.of(jobDocument, jobResultDocument);
     }
 }
