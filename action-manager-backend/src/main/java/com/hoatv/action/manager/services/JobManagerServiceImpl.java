@@ -3,14 +3,17 @@ package com.hoatv.action.manager.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.api.JobResultImmutable;
+import com.hoatv.action.manager.collections.ActionDocument;
 import com.hoatv.action.manager.collections.JobDocument;
 import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.dtos.JobCategory;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
+import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOutputTarget;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.dtos.JobState;
 import com.hoatv.action.manager.dtos.JobStatus;
+import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
@@ -309,6 +312,14 @@ public class JobManagerServiceImpl implements JobManagerService {
             return;
         }
         processSync(jobDocument, jobResultDocument, callback);
+    }
+
+    @Override
+    public JobDetailDTO getJob (String hash) {
+        Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(hash);
+        JobDocument jobDocument = jobDocumentOptional
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find job ID: " + hash));
+        return JobDocument.jobDetailDTO(jobDocument);
     }
 
     private ScheduledFuture<?> processScheduleJob (JobDocument jobDocument, JobResultDocument jobResultDocument,

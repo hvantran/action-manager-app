@@ -2,6 +2,7 @@ package com.hoatv.action.manager.collections;
 
 import com.hoatv.action.manager.dtos.JobCategory;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
+import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -72,6 +73,21 @@ public class JobDocument {
                 .scheduleInterval(jobDocument.getScheduleInterval())
                 .scheduleTimeUnit(jobDocument.getScheduleUnit())
                 .createdAt(jobDocument.getCreatedAt())
+                .isAsync(jobDocument.isAsync())
+                .build();
+    }
+
+    public static JobDetailDTO jobDetailDTO(JobDocument jobDocument) {
+        return JobDetailDTO.builder()
+                .jobName(jobDocument.getJobName())
+                .jobDescription(jobDocument.getJobDescription())
+                .configurations(jobDocument.getConfigurations())
+                .jobContent(jobDocument.getJobContent())
+                .jobCategory(jobDocument.getJobCategory().name())
+                .outputTargets(jobDocument.getOutputTargets())
+                .isScheduled(jobDocument.isScheduled())
+                .scheduleInterval(jobDocument.getScheduleInterval())
+                .scheduleTimeUnit(jobDocument.getScheduleUnit())
                 .isAsync(jobDocument.isAsync())
                 .build();
     }
