@@ -45,6 +45,19 @@ public class JobDocument implements JobImmutable {
         return fromJobDefinition(jobDefinitionDTO, "");
     }
 
+    public void updateFromJobDefinitionDTO(JobDefinitionDTO jobDefinitionDTO) {
+        setJobName(jobDefinitionDTO.getJobName());
+        setJobDescription(jobDefinitionDTO.getJobDescription());
+        setConfigurations(jobDefinitionDTO.getConfigurations());
+        setJobContent(jobDefinitionDTO.getJobContent());
+        setJobCategory(jobDefinitionDTO.getJobCategory());
+        setAsync(jobDefinitionDTO.isAsync());
+        setScheduleUnit(jobDefinitionDTO.getScheduleUnit());
+        setScheduled(jobDefinitionDTO.isScheduled());
+        setScheduleInterval(jobDefinitionDTO.getScheduleInterval());
+        setOutputTargets(jobDefinitionDTO.getOutputTargets());
+    }
+
     public static JobDocument fromJobDefinition(JobDefinitionDTO jobDefinitionDTO, String actionId) {
         return JobDocument.builder()
                 .jobName(jobDefinitionDTO.getJobName())

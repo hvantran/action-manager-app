@@ -6,14 +6,13 @@ import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.HttpClientService;
 import com.hoatv.system.health.metrics.MethodStatisticCollector;
 import com.hoatv.task.mgmt.services.TaskFactory;
+import java.util.Map;
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import java.util.Map;
 
 @Service
 public class ScriptEngineService {
@@ -33,7 +32,7 @@ public class ScriptEngineService {
 
     @SuppressWarnings("unchecked")
     public <T> T execute(Class<? extends Launcher> klass, String scriptContent,
-                               Map<String, Object> executionContext) {
+                         Map<String, Object> executionContext) {
         ScriptEngine scriptEngine = ScriptEngineFactory.GRAAL_JS.getScriptEngine();
 
         scriptEngine.put("httpClientService", HttpClientService.INSTANCE);
@@ -53,7 +52,12 @@ public class ScriptEngineService {
 
         Map<String, String> preExecuteParams = launcher.preExecute();
         LOGGER.info("Executing the job {}", launcher);
-        Object executed = launcher.execute(preExecuteParams);
-        return (T) launcher.postExecute(executed, preExecuteParams);
+        Object executed = null;
+        try {
+            executed = launcher.execute(preExecuteParams);
+        } finally {
+            executed = launcher.postExecute(executed, preExecuteParams);
+        }
+        return (T) executed;
     }
 }

@@ -6,6 +6,7 @@ import com.hoatv.action.manager.collections.JobDocument;
 import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.dtos.JobStatus;
 import com.hoatv.fwk.common.ultilities.Pair;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import lombok.*;
 
@@ -23,7 +24,9 @@ public class ActionExecutionContext {
 
     private ActionStatisticsDocument actionStatisticsDocument;
 
-    private List<Pair<JobDocument, JobResultDocument>> jobDocumentPairs;
+    private Map<String, String> jobDocumentPairs;
 
     private BiConsumer<JobStatus, JobStatus> onCompletedJobCallback;
+
+    private boolean isRelayAction;
 }

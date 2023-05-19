@@ -1,4 +1,6 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { Stack } from '@mui/material';
@@ -6,6 +8,7 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import {
+  GenericActionMetadata,
   PageEntityMetadata,
   PropType,
   PropertyMetadata,
@@ -24,9 +27,11 @@ import {
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
   JobDetailMetadata,
-  ROOT_BREADCRUMB
+  ROOT_BREADCRUMB,
+  getJobDefinition
 } from '../AppConstants';
 import PageEntityRender from '../renders/PageEntityRender';
+import { yellow } from '@mui/material/colors';
 
 
 
@@ -38,6 +43,44 @@ export default function JobDetail() {
   if (!jobId) {
     throw new Error("TaskId is required");
   }
+
+  const enableEditFunction = function (isEnabled: boolean) {
+
+    setEditActionMeta(previous => {
+      previous.disable = isEnabled;
+      return previous;
+    })
+    setSaveActionMeta(previous => {
+      previous.disable = !isEnabled;
+      return previous;
+    });
+    setPropertyMetadata(previous => {
+      return [...previous].map(p => {
+        if (p.propName !== "name") {
+          p.disabled = !isEnabled;
+        }
+        return p;
+      })
+    })
+  }
+
+  const [saveActionMeta, setSaveActionMeta] = React.useState<GenericActionMetadata>(
+    {
+      actionIcon: <SaveIcon />,
+      actionLabel: "Save",
+      actionName: "saveAction",
+      disable: true,
+      onClick: () => updateJob
+    });
+
+  const [editActionMeta, setEditActionMeta] = React.useState<GenericActionMetadata>(
+    {
+      actionIcon: <EditIcon />,
+      properties: {sx:{color: yellow[800]}},
+      actionLabel: "Edit",
+      actionName: "editAction",
+      onClick: () => () => enableEditFunction(true)
+    });
 
   const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>(
     [
@@ -252,6 +295,28 @@ export default function JobDetail() {
     });
   }
 
+  const updateJob = async () => {
+    let jobDefinition = getJobDefinition(propertyMetadata);
+    const requestOptions = {
+      method: "PUT",
+      headers: {
+        "Accept": "application/json",
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(jobDefinition)
+    }
+
+    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
+    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
+      let responseJSON = await response.json();
+      enableEditFunction(false);
+      return { 'message': `${responseJSON['uuid']} is updated`, key: new Date().getTime() } as SnackbarMessage;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
   React.useEffect(() => {
     loadJobAsync(jobId);
   }, [])
@@ -260,6 +325,8 @@ export default function JobDetail() {
     pageName: 'template-details',
     breadcumbsMeta: breadcrumbs,
     pageEntityActions: [
+      editActionMeta,
+      saveActionMeta,
       {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh",

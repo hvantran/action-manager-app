@@ -28,4 +28,6 @@ public interface ActionManagerService {
     String addJobsToAction (String hash, List<JobDefinitionDTO> jobDefinitionDTOs);
 
     void dryRunAction (ActionDefinitionDTO actionDefinition);
+
+    void resumeJob(String jobHash);
 }

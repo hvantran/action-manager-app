@@ -115,6 +115,7 @@ export default function ActionSummary() {
         },
         {
           actionIcon: <StarBorderIcon />,
+          properties: {sx:{color: yellow[800]}},
           actionLabel: "Favorite action",
           visible: (row: ActionOverview) => !row.isFavorite,
           actionName: "favoriteAction",

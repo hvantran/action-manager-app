@@ -26,11 +26,11 @@ export default function PageRender(props: PageEntityMetadata) {
                     <IconButton
                         key={action.actionName}
                         onClick={action.onClick()}
+                        aria-label={action.actionLabel}
                         color="primary"
-                        aria-label="Next"
                         component="label"
-
-                        {...action.properties}>
+                        {...action.properties}
+                        disabled={action.disable}>
                         <Tooltip
                             title={
                                 <>
@@ -54,11 +54,11 @@ export default function PageRender(props: PageEntityMetadata) {
                     <IconButton
                         key={action.actionName}
                         onClick={action.onClick()}
+                        aria-label={action.actionLabel}
                         color="primary"
-                        aria-label="Next"
                         component="label"
-
-                        {...action.properties}>
+                        {...action.properties}
+                        disabled={action.disable}>
                         <Tooltip title={action.actionLabel}>
                             {action.actionIcon}
                         </Tooltip>

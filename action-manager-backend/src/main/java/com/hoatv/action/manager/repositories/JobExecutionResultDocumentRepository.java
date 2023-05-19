@@ -11,5 +11,7 @@ public interface JobExecutionResultDocumentRepository extends MongoRepository<Jo
 
     List<JobResultDocument> findByJobIdIn(List<String> jobIds);
 
+    JobResultDocument findByJobId(String jobId);
+
     void deleteByActionId(String actionId);
 }

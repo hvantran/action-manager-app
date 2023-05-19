@@ -8,20 +8,25 @@ import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
-import com.hoatv.fwk.common.ultilities.ObjectUtils;
-import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-import java.util.Optional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/v1/actions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -35,14 +40,12 @@ public class ActionControllerV1 {
         this.jobManagerService = jobManagerService;
     }
 
-    @LoggingMonitor
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> executeAction(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
         String actionId = actionManagerService.processAction(actionDefinition);
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
-    @LoggingMonitor
     @PostMapping(value = "/{hash}/jobs/new", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addNewJobs(@PathVariable("hash") String hash,
                                         @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
@@ -50,7 +53,6 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
-    @LoggingMonitor
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAllActionsWithPaging(
             @RequestParam("pageIndex") @Min(0) int pageIndex,
@@ -62,7 +64,6 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(actionResults);
     }
 
-    @LoggingMonitor
     @GetMapping(value = "/{hash}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getActionDetail(@PathVariable("hash") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
@@ -71,24 +72,21 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(actionDefinitionDTO);
     }
 
-    @LoggingMonitor
     @PatchMapping(value = "/{hash}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> setFavoriteActionValue(@PathVariable("hash") String hash,
-                                               @RequestParam("isFavorite") boolean isFavorite) {
+                                                    @RequestParam("isFavorite") boolean isFavorite) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.setFavoriteActionValue(hash, isFavorite);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
         return ResponseEntity.ok(actionDefinitionDTO);
     }
 
-    @LoggingMonitor
     @GetMapping(value = "/{hash}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> replayAction(@PathVariable("hash") String hash) {
         boolean isReplaySuccess = actionManagerService.replayAction(hash);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
 
-    @LoggingMonitor
     @DeleteMapping(value = "/{hash}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> deleteAction(@PathVariable("hash") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
@@ -98,7 +96,6 @@ public class ActionControllerV1 {
         return ResponseEntity.noContent().build();
     }
 
-    @LoggingMonitor
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getActions(@RequestParam("search") String search,
                                         @RequestParam("pageIndex") @Min(0) int pageIndex,
@@ -109,7 +106,7 @@ public class ActionControllerV1 {
                 actionManagerService.getAllActionsWithPaging(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
     }
-    @LoggingMonitor
+
     @GetMapping(value = "/{hash}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getJobsFromAction(@PathVariable("hash") String actionId,
                                                @RequestParam("pageIndex") @Min(0) int pageIndex,
@@ -121,10 +118,21 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(actionResults);
     }
 
-    @LoggingMonitor
     @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> dryRun(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
         actionManagerService.dryRunAction(actionDefinition);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(path = "/{hash}/jobs/{jobHash}/pause", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> pauseJob(@PathVariable("hash") String actionId, @PathVariable("jobHash") String jobId) {
+        jobManagerService.pause(jobId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(path = "/{hash}/jobs/{jobHash}/resume", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> resumeJob(@PathVariable("hash") String actionId, @PathVariable("jobHash") String jobId) {
+        actionManagerService.resumeJob(jobId);
         return ResponseEntity.noContent().build();
     }
 }
