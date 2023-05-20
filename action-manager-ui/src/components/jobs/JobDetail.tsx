@@ -1,8 +1,8 @@
-import RefreshIcon from '@mui/icons-material/Refresh';
-import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
+import EditIcon from '@mui/icons-material/Edit';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import SaveIcon from '@mui/icons-material/Save';
 import { Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
@@ -19,8 +19,8 @@ import {
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';
 
+import { yellow } from '@mui/material/colors';
 import { useParams } from 'react-router-dom';
-import SnackbarAlert from '../common/SnackbarAlert';
 import {
   JOB_CATEGORY_VALUES,
   JOB_MANAGER_API_URL,
@@ -30,8 +30,8 @@ import {
   ROOT_BREADCRUMB,
   getJobDefinition
 } from '../AppConstants';
+import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
-import { yellow } from '@mui/material/colors';
 
 
 
@@ -177,16 +177,16 @@ export default function JobDetail() {
         propName: 'scheduleInterval',
         propLabel: 'Interval minutes',
         disabled: true,
-        propValue: "",
-        propDefaultValue: "",
+        propValue: 0,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4, sx: { pl: 5 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
           selections: JOB_SCHEDULE_TIME_SELECTION,
-          onChangeEvent: function (event, propValue) {
+          onChangeEvent: function (event) {
             let propName = event.target.name;
+            let propValue = event.target.value;
             setPropertyMetadata(onChangeProperty(propName, propValue));
           }
         }

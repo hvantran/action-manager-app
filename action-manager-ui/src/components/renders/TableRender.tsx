@@ -91,7 +91,7 @@ export default function TableRender(props: TableMetadata) {
                                                     key={column.id}
                                                     align={column.align}>
                                                     {column.format
-                                                        ? column.format(value)
+                                                        ? column.format(value, row)
                                                         : value}
                                                 </TableCell>
                                             );

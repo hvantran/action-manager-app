@@ -131,6 +131,7 @@ export interface ActionDetails {
 
 export interface JobOverview {
     hash: string
+    actionHash: string
     name: string
     state: string
     status: string

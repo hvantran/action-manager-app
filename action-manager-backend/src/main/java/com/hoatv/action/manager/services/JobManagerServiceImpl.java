@@ -387,6 +387,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .updatedAt(jobStat.getUpdatedAt())
                     .elapsedTime(DurationFormatUtils.formatDuration(jobStat.getElapsedTime(), "HH:mm:ss.S"))
                     .failureNotes(jobStat.getFailureNotes())
+                    .actionHash(jobDocument.getActionId())
                     .build();
         });
     }

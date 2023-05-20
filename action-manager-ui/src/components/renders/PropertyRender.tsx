@@ -5,7 +5,7 @@ import { PropertyMetadata, PropType } from '../GenericConstants';
 
 export default function PropertyRender(props: any) {
     let property: PropertyMetadata = props.property
-    let value = !property.propValue || property.propValue === '' ? (property.propDefaultValue ? property.propDefaultValue : '') : property.propValue
+    let value = property.propValue === undefined || property.propValue === '' ? (property.propDefaultValue ? property.propDefaultValue : '') : property.propValue
     let renderNode: React.ReactNode = undefined;
     switch (property.propType) {
 

@@ -38,4 +38,7 @@ public class JobOverviewDTO {
 
     @JsonProperty("elapsedTime")
     private String elapsedTime;
+
+    @JsonProperty("actionHash")
+    private String actionHash;
 }

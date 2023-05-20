@@ -19,15 +19,17 @@ import PageEntityRender from '../renders/PageEntityRender';
 
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
-import { JOB_MANAGER_API_URL } from '../AppConstants';
+import { JOB_MANAGER_API_URL, JobOverview } from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import SnackbarAlert from '../common/SnackbarAlert';
 import TextTruncate from '../common/TextTruncate';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function JobSummary() {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [openError, setOpenError] = React.useState(false);
   const [openSuccess, setOpenSuccess] = React.useState(false);
@@ -113,19 +115,19 @@ export default function JobSummary() {
       align: 'left',
       format: (value: string) => (<TextTruncate text={value} maxTextLength={100} />)
     },
-    // {
-    //   id: 'actions',
-    //   label: '',
-    //   align: 'left',
-    //   actions: [{
-    //     actionIcon: <ReadMoreIcon />,
-    //     actionLabel: "Job details",
-    //     actionName: "gotoJobDetail",
-    //     onClick: (row: JobOverview) => {
-    //       return () => navigate(`/jobs/${row.hash}`)
-    //     }
-    //   }]
-    // }
+    {
+      id: 'actions',
+      label: '',
+      align: 'left',
+      actions: [{
+        actionIcon: <ReadMoreIcon />,
+        actionLabel: "Job details",
+        actionName: "gotoJobDetail",
+        onClick: (row: JobOverview) => {
+          return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`)
+        }
+      }]
+    }
   ];
 
   const loadRelatedJobsAsync = async (pageIndex: number, pageSize: number) => {

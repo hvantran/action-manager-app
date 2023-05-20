@@ -19,6 +19,7 @@ import {
   JOB_SCHEDULE_TIME_SELECTION,
   JobDefinition,
   ROOT_BREADCRUMB,
+  getJobDetails,
 } from '../AppConstants';
 import {
   PageEntityMetadata,
@@ -433,40 +434,6 @@ export default function JobCreation() {
     setStepMetadatas(initialStepMetadatas);
   }, [])
 
-  const getJobDetails = (currentStepMetadata: Array<StepMetadata>) => {
-    const findStepPropertyByCondition = (stepMetadata: StepMetadata | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
-      return stepMetadata ? stepMetadata.properties.find(filter) : undefined;
-    }
-
-    const findRelatedJobs = (currentStepMetadata: Array<StepMetadata>): Array<JobDefinition> => {
-      return currentStepMetadata
-        .map(stepMetadata => {
-          let name = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobName"))?.propValue;
-          let description = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobDescription"))?.propValue;
-          let configurations = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobConfigurations"))?.propValue;
-          let content = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobContent"))?.propValue;
-          let isAsync = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isAsync"))?.propValue;
-          let category = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobCategory"))?.propValue;
-          let outputTargets = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobOutputTargets"))?.propValue;
-          let isScheduled = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isScheduledJob"))?.propValue;
-          let scheduleInterval = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("scheduleInterval"))?.propValue;
-
-          return {
-            name,
-            category,
-            description,
-            configurations,
-            content,
-            outputTargets,
-            isAsync,
-            isScheduled,
-            scheduleInterval: isScheduled ? scheduleInterval : 0
-          } as JobDefinition
-        })
-    }
-
-    return findRelatedJobs(currentStepMetadata);
-  }
 
 
   let initialFloatingActions: Array<SpeedDialActionMetadata> = [
