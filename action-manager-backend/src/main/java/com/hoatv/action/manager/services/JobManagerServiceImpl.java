@@ -24,6 +24,7 @@ import com.hoatv.fwk.common.exceptions.InvalidArgumentException;
 import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.TemplateEngineEnum;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
+import com.hoatv.fwk.common.ultilities.ObjectUtils;
 import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.fwk.common.ultilities.Triplet;
 import com.hoatv.metric.mgmt.annotations.Metric;
@@ -471,12 +472,15 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private ScheduledFuture<?> processScheduleJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                                                   BiConsumer<JobStatus, JobStatus> callback) {
-        Callable<Void> jobProcessRunnable = () -> {
-            processPersistenceJob(jobDocument, jobResultDocument, callback);
-            return null;
-        };
         String jobName = jobDocument.getJobName();
         TimeUnit timeUnit = TimeUnit.valueOf(jobDocument.getScheduleUnit());
+        Callable<Void> jobProcessRunnable = () -> {
+            Optional<JobDocument> jobDocument1 = jobDocumentRepository.findById(jobDocument.getHash());
+            ObjectUtils.checkThenThrow(jobDocument1.isEmpty(), "Cannot find job: " + jobName);
+            processPersistenceJob(jobDocument1.get(), jobResultDocument, callback);
+            return null;
+        };
+
         long scheduleIntervalInMs = timeUnit.toMillis(jobDocument.getScheduleInterval());
         TaskEntry taskEntry = new TaskEntry(jobName, ACTION_MANAGER, jobProcessRunnable, 0, scheduleIntervalInMs);
         ScheduledFuture<?> scheduledFuture = scheduleTaskMgmtService.scheduleFixedRateTask(taskEntry, 1000, TimeUnit.MILLISECONDS);
@@ -535,9 +539,9 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     private void processOutputData(JobResultImmutable jobResult, String jobName) {
-        ArrayList<MetricTag> metricTags = new ArrayList<>();
         String metricNamePrefix = JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName;
         if (jobResult instanceof JobResult singleJobResult) {
+            ArrayList<MetricTag> metricTags = new ArrayList<>();
             MetricTag metricTag = new MetricTag(singleJobResult.getData());
             metricTag.setAttributes(Map.of("name", metricNamePrefix));
             metricTags.add(metricTag);
@@ -554,6 +558,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .forEach(p -> p.setValue("0"));
 
             multipleJobResultMap.forEach((name, value) -> {
+                ArrayList<MetricTag> metricTags = new ArrayList<>();
                 MetricTag metricTag = new MetricTag(value);
                 String metricName = metricNamePrefix + "-" + name;
                 metricTag.setAttributes(Map.of("name", metricName));
