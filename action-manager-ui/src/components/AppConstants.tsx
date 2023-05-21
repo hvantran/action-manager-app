@@ -61,9 +61,10 @@ function sendNewRelicQuery(targetURL, newRelicQuery) {
 }
 
 function sendHttpGETRequest(targetURL, headers) {
-    let httpClient = HttpClient.newBuilder().connectTimeout(Duration.of(1000, ChronoUnit.SECONDS)).build();
+    let httpClient = HttpClient.newBuilder().build();
     let requestParams = RequestParams.builder(targetURL, httpClient)
         .method(HttpMethod.GET)
+        .requestTimeoutInMs(60000)
         .headers(headers)
         .build();
 
@@ -73,9 +74,10 @@ function sendHttpGETRequest(targetURL, headers) {
 }
 
 function sendHttpPOSTRequest(targetURL, headers, queryData) {
-    let httpClient = HttpClient.newBuilder().connectTimeout(Duration.of(1000, ChronoUnit.SECONDS)).build();
+    let httpClient = HttpClient.newBuilder().build();
     let requestParams = RequestParams.builder(targetURL, httpClient)
         .method(HttpMethod.POST)
+        .requestTimeoutInMs(60000)
         .headers(headers)
         .data(queryData)
         .build();
