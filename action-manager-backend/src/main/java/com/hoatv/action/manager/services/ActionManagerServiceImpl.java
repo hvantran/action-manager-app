@@ -96,7 +96,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         long numberOfActions = actionDocumentRepository.count();
         actionStatistics.numberOfActions.set(numberOfActions);
 
-        Map<String, Map<String, String>> actionJobMapping = jobManagerService.getScheduleJobsGroupByActionId();
+        Map<String, Map<String, String>> actionJobMapping = jobManagerService.getEnabledScheduleJobsGroupByActionId();
         Set<String> startupActionIds = actionJobMapping.keySet();
 
         List<ActionDocument> actionDocuments = actionDocumentRepository.findByHashIn(startupActionIds);
@@ -223,6 +223,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             long numberOfFailureJobs = actionStat.getNumberOfFailureJobs();
             long numberOfSuccessJobs = actionStat.getNumberOfSuccessJobs();
             long numberOfScheduleJobs = actionStat.getNumberOfScheduleJobs();
+
             return ActionOverviewDTO.builder()
                     .name(actionDocument.getActionName())
                     .hash(actionId)
@@ -276,8 +277,9 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
 
         ActionStatisticsDocument actionStatisticsDocument = actionStatisticsDocumentRepository.findByActionId(actionId);
-        Map<String, String> jobDocumentPairs = jobManagerService.getOneTimeJobsFromAction(actionId);
-        Map<String, String> scheduledJobDocumentPairs = jobManagerService.getScheduledJobsFromAction(actionId);
+        Map<String, String> jobDocumentPairs = jobManagerService.getEnabledOnetimeJobs(actionId);
+        Map<String, String> scheduledJobDocumentPairs = jobManagerService.getEnabledScheduledJobs(actionId);
+
         BiCheckedConsumer<JobStatus, JobStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
         Map<String, String> jobDocumentProcessPairs = new HashMap<>(jobDocumentPairs);
         jobDocumentProcessPairs.putAll(scheduledJobDocumentPairs);
@@ -320,10 +322,12 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @Override
     public void resumeJob(String jobHash) {
         JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
+        jobDocument.setPaused(false);
         JobResultDocument jobResultDocument = jobManagerService.getJobResultDocumentByJobId(jobHash);
         ActionStatisticsDocument statisticsDocument = actionStatisticsDocumentRepository.findByActionId(jobDocument.getActionId());
         Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
         checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Resume only support for schedule jobs"));
+        jobManagerService.update(jobDocument);
         jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(statisticsDocument), false);
     }
 

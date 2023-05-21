@@ -178,8 +178,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor
-    public Map<String, Map<String, String>> getScheduleJobsGroupByActionId() {
-        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrue();
+    public Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId() {
+        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndIsPausedFalse();
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(scheduledJobDocuments);
 
         List<Triplet<String, String, String>> jobDocumentMapping = getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments);
@@ -219,8 +219,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor
-    public Map<String, String> getOneTimeJobsFromAction(String actionId) {
-        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndActionId(actionId);
+    public Map<String, String> getEnabledOnetimeJobs(String actionId) {
+        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndIsPausedFalseAndActionId(actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments)
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
@@ -228,8 +228,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor
-    public Map<String, String> getScheduledJobsFromAction(String actionId) {
-        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndActionId(actionId);
+    public Map<String, String> getEnabledScheduledJobs(String actionId) {
+        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndIsPausedFalseAndActionId(actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments)
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
@@ -245,6 +245,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public void pause(String jobHash) {
         JobDocument jobDocument = getJobDocument(jobHash);
+        jobDocument.setPaused(true);
         Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
         checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Pause only support for schedule jobs"));
 
@@ -255,12 +256,13 @@ public class JobManagerServiceImpl implements JobManagerService {
                 .map(Map.Entry::getValue)
                 .forEach(scheduleTaskMgmtService::cancel);
         metricService.removeMetric(jobHash);
+        update(jobDocument);
     }
     @Override
     @LoggingMonitor
     public void deleteJobsByActionId(String actionId) {
         LOGGER.info("Deleted the job result documents belong to action {}", actionId);
-        List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndActionId(actionId);
+        List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndIsPausedFalseAndActionId(actionId);
         List<String> jobIdStrings = jobIds.stream().map(JobDocument::getHash).toList();
 
         scheduledJobRegistry.entrySet().stream()
@@ -326,6 +328,13 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor
+    public void update(JobDocument jobDocument) {
+        jobDocumentRepository.save(jobDocument);
+    }
+
+
+    @Override
+    @LoggingMonitor
     public Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId) {
         JobDocument jobDocument = jobDocumentRepository.save(JobDocument.fromJobDefinition(jobDefinitionDTO, actionId));
         JobResultDocument.JobResultDocumentBuilder jobResultDocumentBuilder = JobResultDocument.builder()
@@ -383,6 +392,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .hash(jobId)
                     .jobState(jobState)
                     .jobStatus(jobStatus)
+                    .isPaused(jobDocument.isPaused())
                     .isSchedule(jobDocument.isScheduled())
                     .startedAt(jobStat.getStartedAt())
                     .updatedAt(jobStat.getUpdatedAt())

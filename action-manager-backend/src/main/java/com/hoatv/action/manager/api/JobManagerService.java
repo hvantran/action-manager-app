@@ -8,6 +8,7 @@ import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.dtos.JobStatus;
 import com.hoatv.action.manager.services.ActionExecutionContext;
 import com.hoatv.fwk.common.ultilities.Pair;
+import com.hoatv.monitor.mgmt.LoggingMonitor;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -28,19 +29,22 @@ public interface JobManagerService {
 
     Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest);
 
-    Map<String, Map<String, String>> getScheduleJobsGroupByActionId();
+    Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId();
 
     void processNonePersistenceJob(JobDefinitionDTO jobDocument);
 
     JobDocument getJobDocument(String hash);
 
+    @LoggingMonitor
+    void update(JobDocument jobDocument);
+
     Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId);
 
     Map<String, String> getJobsFromAction(String actionId);
 
-    Map<String, String> getScheduledJobsFromAction(String actionId);
+    Map<String, String> getEnabledScheduledJobs(String actionId);
 
-    Map<String, String> getOneTimeJobsFromAction(String actionId);
+    Map<String, String> getEnabledOnetimeJobs(String actionId);
 
     Page<JobOverviewDTO> getJobs(PageRequest pageRequest);
 

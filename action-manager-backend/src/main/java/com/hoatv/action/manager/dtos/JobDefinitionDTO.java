@@ -72,4 +72,7 @@ public class JobDefinitionDTO implements JobImmutable {
 
     @JsonProperty("created_at")
     private long createdAt;
+
+    @JsonProperty("isPaused")
+    private boolean isPaused;
 }

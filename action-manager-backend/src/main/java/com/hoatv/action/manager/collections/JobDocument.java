@@ -36,6 +36,7 @@ public class JobDocument implements JobImmutable {
     private boolean isScheduled;
     private int scheduleInterval;
     private String scheduleUnit;
+    private boolean isPaused;
     private long createdAt;
     private long updatedAt;
 
@@ -86,6 +87,7 @@ public class JobDocument implements JobImmutable {
                 .scheduleUnit(jobDocument.getScheduleUnit())
                 .createdAt(jobDocument.getCreatedAt())
                 .isAsync(jobDocument.isAsync())
+                .isPaused(jobDocument.isPaused())
                 .build();
     }
 
@@ -101,6 +103,7 @@ public class JobDocument implements JobImmutable {
                 .scheduleInterval(jobDocument.getScheduleInterval())
                 .scheduleTimeUnit(jobDocument.getScheduleUnit())
                 .isAsync(jobDocument.isAsync())
+                .isPaused(jobDocument.isPaused())
                 .build();
     }
 }
