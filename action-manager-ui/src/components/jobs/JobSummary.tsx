@@ -124,7 +124,7 @@ export default function JobSummary() {
         actionLabel: "Job details",
         actionName: "gotoJobDetail",
         onClick: (row: JobOverview) => {
-          return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`)
+          return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, {state: {isPaused: row.isPaused, name: row.name}})
         }
       }]
     }
@@ -179,7 +179,7 @@ export default function JobSummary() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => () => loadRelatedJobsAsync(pageIndex, pageSize)
+        onClick: () => loadRelatedJobsAsync(pageIndex, pageSize)
       }
     ]
   }

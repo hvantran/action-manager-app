@@ -5,7 +5,7 @@ import { PropertyMetadata, PropType } from '../GenericConstants';
 
 export default function PropertyRender(props: any) {
     let property: PropertyMetadata = props.property
-    let value = property.propValue === undefined || property.propValue === '' ? (property.propDefaultValue ? property.propDefaultValue : '') : property.propValue
+    let value = !property.propValue || property.propValue === '' ? (property.propDefaultValue ? property.propDefaultValue : '') : property.propValue
     let renderNode: React.ReactNode = undefined;
     switch (property.propType) {
 
@@ -69,7 +69,7 @@ export default function PropertyRender(props: any) {
             }
             let selectionMeta = property.selectionMeta;
             renderNode = (
-                <FormControl sx={{ m: 1, width: '100%' }} size="small">
+                <FormControl sx={{ m: 1, width: '100%', margin: 0}} size="small">
                     <Select
                         labelId={"demo-select-small".concat(property.propName)}
                         id={"demo-select-small".concat(property.propName)}

@@ -95,6 +95,7 @@ export interface JobDefinition {
     configurations: string | undefined
     content: string | undefined
     isAsync: boolean | undefined
+    isPaused: boolean | undefined
     isScheduled: boolean | undefined
     outputTargets: Array<String> | undefined
     scheduleInterval: number | undefined
@@ -142,19 +143,21 @@ export interface JobOverview {
     elapsedTime: number
     updatedAt: number
     schedule: boolean
+    isPaused: boolean
 }
 
 export interface JobDetailMetadata {
-    name: string | undefined
+    name?: string
     category: 'NORMAL' | 'SYSTEM' | undefined
-    description: string | undefined
-    configurations: string | undefined
-    content: string | undefined
-    isAsync: boolean | undefined
-    isScheduled: boolean | undefined
-    outputTargets: Array<String> | undefined
-    scheduleInterval: number | undefined
-    createdAt?: number | undefined
+    description?: string
+    configurations?: string
+    content?: string
+    isAsync?: boolean
+    isScheduled?: boolean
+    outputTargets?: Array<String>
+    scheduleInterval?: number
+    createdAt?: number
+    isPaused: boolean
 }
 
 const findStepPropertyByCondition = (stepMetadata: StepMetadata | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {

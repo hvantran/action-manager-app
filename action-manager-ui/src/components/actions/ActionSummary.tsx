@@ -246,7 +246,7 @@ export default function ActionSummary() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => () => loadActionsAsync(pageIndex, pageSize)
+        onClick: () => loadActionsAsync(pageIndex, pageSize)
       }
     ]
   }

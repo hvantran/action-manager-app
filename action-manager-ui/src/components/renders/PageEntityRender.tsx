@@ -25,7 +25,7 @@ export default function PageRender(props: PageEntityMetadata) {
                 return (
                     <IconButton
                         key={action.actionName}
-                        onClick={action.onClick()}
+                        onClick={action.onClick}
                         aria-label={action.actionLabel}
                         color="primary"
                         component="label"
@@ -53,7 +53,7 @@ export default function PageRender(props: PageEntityMetadata) {
                 return (
                     <IconButton
                         key={action.actionName}
-                        onClick={action.onClick()}
+                        onClick={action.onClick}
                         aria-label={action.actionLabel}
                         color="primary"
                         component="label"

@@ -3,7 +3,7 @@ import { json } from '@codemirror/lang-json';
 import EditIcon from '@mui/icons-material/Edit';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveIcon from '@mui/icons-material/Save';
-import { Stack } from '@mui/material';
+import { Stack, Switch } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
@@ -20,8 +20,9 @@ import {
 import ProcessTracking from '../common/ProcessTracking';
 
 import { yellow } from '@mui/material/colors';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import {
+  ACTION_MANAGER_API_URL,
   JOB_CATEGORY_VALUES,
   JOB_MANAGER_API_URL,
   JOB_OUTPUT_TARGET_VALUES,
@@ -34,12 +35,75 @@ import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
+class JobAPI {
+  static update = async (jobId: string, restClient: RestClient, propertyMetadata: Array<PropertyMetadata>, successCallback: () => void) => {
+    let jobDefinition = getJobDefinition(propertyMetadata);
+    const requestOptions = {
+      method: "PUT",
+      headers: {
+        "Accept": "application/json",
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(jobDefinition)
+    }
+
+    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
+    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
+      let responseJSON = await response.json();
+      successCallback();
+      return { 'message': `${responseJSON['uuid']} is updated`, key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async pause(actionId: string, jobId: string, jobName: string, restClient: RestClient) {
+    const requestOptions = {
+      method: "PUT",
+      headers: {}
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/pause`;
+    await restClient.sendRequest(requestOptions, targetURL, async() => {
+      return { 'message': `Job ${jobName} has been paused`, key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async resume(actionId: string, jobId: string, jobName: string, restClient: RestClient) {
+    const requestOptions = {
+      method: "PUT",
+      headers: {}
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/resume`;
+    await restClient.sendRequest(requestOptions, targetURL, async() => {
+      return { 'message': `Job ${jobName} has been resumed`, key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async load(jobId: string, restClient: RestClient, successCallback: (data: any) => void) {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let jobDetail: JobDetailMetadata = await response.json() as JobDetailMetadata;
+      successCallback(jobDetail);
+      return { 'message': 'Load job detail successfully!!', key: new Date().getTime() } as SnackbarMessage;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+}
 
 export default function JobDetail() {
   const targetJob = useParams();
-
+  const location = useLocation();
+  const jobName = location.state?.name || "";
+  const [isPausedJob, setIsPausedJob] = React.useState(false);
   const jobId: string | undefined = targetJob.jobId;
-  const actionId: string | undefined = targetJob.actionId;
+  const actionId: string = targetJob.actionId || "";
   if (!jobId) {
     throw new Error("TaskId is required");
   }
@@ -70,7 +134,7 @@ export default function JobDetail() {
       actionLabel: "Save",
       actionName: "saveAction",
       disable: true,
-      onClick: () => updateJob
+      onClick: () => JobAPI.update(jobId, restClient, propertyMetadata, () => enableEditFunction(false))
     });
 
   const [editActionMeta, setEditActionMeta] = React.useState<GenericActionMetadata>(
@@ -79,7 +143,7 @@ export default function JobDetail() {
       properties: {sx:{color: yellow[800]}},
       actionLabel: "Edit",
       actionName: "editAction",
-      onClick: () => () => enableEditFunction(true)
+      onClick: () => enableEditFunction(true)
     });
 
   const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>(
@@ -262,7 +326,7 @@ export default function JobDetail() {
   const [openError, setOpenError] = React.useState(false);
   const [openSuccess, setOpenSuccess] = React.useState(false);
   const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
-  const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
+  const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess), []);
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href="/actions">
@@ -273,53 +337,25 @@ export default function JobDetail() {
     <Typography key="3" color="text.primary">{jobId}</Typography>
   ];
 
-  const loadJobAsync = async (templateId: string) => {
-    const requestOptions = {
-      method: "GET",
-      headers: {
-        "Accept": "application/json"
-      }
-    }
 
-    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
-    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-      let jobDetail: JobDetailMetadata = await response.json() as JobDetailMetadata;
+
+  React.useEffect(() => {
+    JobAPI.load(jobId, restClient, (jobDetail: any) => {
+      setIsPausedJob(jobDetail.isPaused)
       Object.keys(jobDetail).forEach((propertyName: string) => {
         setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
       })
-
-      return { 'message': 'Load job detail successfully!!', key: new Date().getTime() } as SnackbarMessage;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
-  const updateJob = async () => {
-    let jobDefinition = getJobDefinition(propertyMetadata);
-    const requestOptions = {
-      method: "PUT",
-      headers: {
-        "Accept": "application/json",
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify(jobDefinition)
+    })
+  }, [jobId, restClient])
+  
+  const onPauseResumeSwicherOnChange = (event: any) => {
+    setIsPausedJob(event.target.checked);
+    if (event.target.checked) {
+      JobAPI.pause(actionId, jobId, jobName, restClient);
+      return;
     }
-
-    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
-    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
-      let responseJSON = await response.json();
-      enableEditFunction(false);
-      return { 'message': `${responseJSON['uuid']} is updated`, key: new Date().getTime() } as SnackbarMessage;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
-    });
+    JobAPI.resume(actionId, jobId, jobName, restClient);
   }
-
-  React.useEffect(() => {
-    loadJobAsync(jobId);
-  }, [])
 
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'template-details',
@@ -331,7 +367,17 @@ export default function JobDetail() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh",
         actionName: "refreshAction",
-        onClick: () => () => loadJobAsync(jobId)
+        onClick: () => 
+          JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
+            setIsPausedJob(jobDetail.isPaused)
+            Object.keys(jobDetail).forEach((propertyName: string) => {
+              setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
+            })
+          })
+      },{
+        actionIcon: <Switch checked={isPausedJob} onChange={onPauseResumeSwicherOnChange}/>,
+        actionLabel: "Pause/Resume",
+        actionName: "pauseResumeAction"
       }
     ],
     properties: propertyMetadata

@@ -120,7 +120,7 @@ export default function ActionDetail() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => () => {
+        onClick: () => {
           loadActionDetailAsync();
           setReplayActionFlag(previous => !previous);
         }
@@ -134,21 +134,21 @@ export default function ActionDetail() {
             <p>Replay function only support for one time jobs, <b>doesn't support for schedule jobs</b></p>
           </Box>,
         actionName: "replayAction",
-        onClick: () => () => replayAction(actionId)
+        onClick: () => replayAction(actionId)
       },
       {
         actionIcon: <DeleteIcon />,
         properties: { sx: { color: red[800] } },
         actionLabel: "Delete action",
         actionName: "deleteAction",
-        onClick: () => () => setDeleteConfirmationDialogOpen(true)
+        onClick: () => setDeleteConfirmationDialogOpen(true)
       },
       {
         actionIcon: <AddIcon />,
         properties: { sx: { color: green[800] } },
         actionLabel: "Add Jobs",
         actionName: "addAction",
-        onClick: () => () => navigate("/actions/" + actionId + "/jobs/new")
+        onClick: () => navigate("/actions/" + actionId + "/jobs/new")
       }
     ],
     properties: [

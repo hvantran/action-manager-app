@@ -60,6 +60,20 @@ export function onChangeProperty(propName: string, propValue: any): React.SetSta
   };
 }
 
+export class DataTypeDisplayer {
+
+    static formatDate(value: number) {
+
+        if (!value) {
+          return "";
+        }
+
+        let createdAtDate = new Date(value);
+        return createdAtDate.toString();
+
+    }
+}
+
 export class RestClient {
     setCircleProcessOpen: (value: boolean) => void
     setMessageInfo: (message: SnackbarMessage) => void
@@ -77,14 +91,25 @@ export class RestClient {
         this.setOpenSuccess = setOpenSuccess;
     }
 
+    async defaultErrorCallback(response: Response) : Promise<SnackbarMessage> {
+        let responseJSON = await response.json();
+        return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+
+    }
+
     async sendRequest(requestOptions: any, targetURL: string,
         successCallback: (response: Response) => Promise<SnackbarMessage | undefined> | undefined,
-        errorCallback: (response: Response) => Promise<SnackbarMessage> | undefined) {
+        errorCallback?: (response: Response) => Promise<SnackbarMessage> | undefined) {
 
         try {
             this.setCircleProcessOpen(true);
             let response = await fetch(targetURL, requestOptions);
             if (response.status >= 400) {
+
+                if (!errorCallback) {
+                    errorCallback = this.defaultErrorCallback
+                }
+
                 let errorSnackbarMessage = errorCallback(response);
                 if (errorSnackbarMessage) {
                     this.setMessageInfo(await errorSnackbarMessage);
@@ -191,7 +216,7 @@ export interface ActionMetadata {
 }
 
 export interface GenericActionMetadata extends ActionMetadata {
-    onClick: (data?: any) => void
+    onClick?: (data?: any) => void
 }
 
 export interface ColumnActionMetadata extends ActionMetadata {

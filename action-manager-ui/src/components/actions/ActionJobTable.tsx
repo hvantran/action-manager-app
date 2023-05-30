@@ -107,9 +107,7 @@ export default function ActionJobTable(props: any) {
                     actionIcon: <ReadMoreIcon />,
                     actionLabel: "Action details",
                     actionName: "gotoActionDetail",
-                    onClick: (row: JobOverview) => {
-                        return () => navigate(`/actions/${targetAction}/jobs/${row.hash}`)
-                    }
+                    onClick: (row: JobOverview) => () => navigate(`/actions/${targetAction}/jobs/${row.hash}`, {state: {isPaused: row.isPaused, name: row.name}})
                 }
             ]
         }
