@@ -49,11 +49,14 @@ export function onchangeStepDefault(propName: string, propValue: any, stepMetada
     };
 }
 
-export function onChangeProperty(propName: string, propValue: any): React.SetStateAction<PropertyMetadata[]> {
+export function onChangeProperty(propName: string, propValue: any, propertyCallback?: (property: PropertyMetadata) => void): React.SetStateAction<PropertyMetadata[]> {
   return previous => {
     return [...previous].map((prop) => {
       if (prop.propName === propName) {
         prop.propValue = propValue;
+      }
+      if (propertyCallback) {
+          propertyCallback(prop);
       }
       return prop;
     });
@@ -172,9 +175,13 @@ export interface SwitcherFieldMeta {
     onChangeEvent: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void
 }
 
+export interface SelectionData {
+    label: string
+    value: any
+}
 
 export interface SelectionMetadata {
-    selections: Array<string> | Array<number>
+    selections: Array<SelectionData>
     isMultiple?: boolean
     onChangeEvent: (event: SelectChangeEvent, child: React.ReactNode) => void
 }

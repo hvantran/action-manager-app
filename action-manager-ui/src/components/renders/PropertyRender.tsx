@@ -82,7 +82,7 @@ export default function PropertyRender(props: any) {
                         onChange={selectionMeta.onChangeEvent}
                     >  {
                             selectionMeta.selections.map(selection => {
-                                return (<MenuItem key={property.propName + selection} value={selection}>{selection}</MenuItem>)
+                                return (<MenuItem key={property.propName + selection.value} value={selection.value}>{selection.label}</MenuItem>)
                             })
                         }
                     </Select>

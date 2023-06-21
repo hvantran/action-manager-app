@@ -1,9 +1,18 @@
-import { PropertyMetadata, StepMetadata } from "./GenericConstants"
+import { PropertyMetadata, SelectionData, StepMetadata } from "./GenericConstants"
 
 export const ROOT_BREADCRUMB = 'Actions'
-export const JOB_CATEGORY_VALUES = ["IO", "CPU"]
-export const JOB_OUTPUT_TARGET_VALUES = ["CONSOLE", "METRIC"]
-export const JOB_SCHEDULE_TIME_SELECTION = [0, 5, 10, 20, 30, 60]
+export const JOB_CATEGORY_VALUES: Array<SelectionData> = [{label: "IO", value: "IO"}, {label: "CPU", value: "CPU"}]
+export const JOB_OUTPUT_TARGET_VALUES: Array<SelectionData>  = [{label: "CONSOLE", value: "CONSOLE"}, {label: "METRIC", value: "METRIC"}]
+export const JOB_SCHEDULE_TIME_SELECTION: Array<SelectionData>  = [
+    {label: "0", value: 0},
+    {label: "5 minutes", value: 5},
+    {label: "10 minutes", value: 10},
+    {label: "30 minutes", value: 30},
+    {label: "1 hour", value: 1 * 60},
+    {label: "6 hours", value: 6 * 60},
+    {label: "12 hours", value: 12 * 60},
+    {label: "24 hours", value: 24 * 60},
+]
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
@@ -37,7 +46,13 @@ let RequestParams = Java.type('com.hoatv.fwk.common.services.HttpClientService.R
 let HttpMethod = Java.type('com.hoatv.fwk.common.services.HttpClientService.HttpMethod');
 let HttpClientService = Java.type('com.hoatv.fwk.common.services.HttpClientService');
 
-const NEWRELIC_API_KEY = ''
+const NEWRELIC_ENDPOINT = "https://api.newrelic.com/graphql";
+const NEWRELIC_REQUEST_HEADERS = Map.of('Content-Type', 'application/json', 'API-Key', '<api key>');
+
+
+const JIRA_ENDPOINT = 'https://unified.jira.com/wiki/rest/api/content';
+const JIRA_REQUEST_HEADERS = Map.of('Content-Type', 'application/json', "Authorization", "Basic <token>")
+
 
 function preExecute() {
     return null;
@@ -51,13 +66,18 @@ function postExecute(result, preExecuteReturnValues) {
     reutrn result;
 }
 
+function createJiraConfluenceWikiPage(pageTitle, pageContent) {
+  let pageContentData = {
+  }
+
+  return sendHttpPOSTRequest(JIRA_ENDPOINT, JIRA_REQUEST_HEADERS, JSON.stringify(pageContentData))
+}
 
 function sendNewRelicQuery(targetURL, newRelicQuery) {
   
-    let postData = JSON.parse('{"query":"{ actor {account(id: 153518) {  nrql(timeout: 120, query: \\"' + newRelicQuery + '\\") { results  }} }}", "variables":""}')
-    return sendHttpPOSTRequest(targetURL,
-      Map.of('Content-Type', 'application/json', 'API-Key', NEWRELIC_API_KEY), JSON.stringify(postData)
-   );
+    let postDataAsJSONString = '{"query":"{ actor {account(id: 153518) {  nrql(timeout: 120, query: \\"' + newRelicQuery + '\\") { results  }} }}", "variables":""}'; 
+    let postData = JSON.parse(postDataAsJSONString)
+    return sendHttpPOSTRequest(NEWRELIC_ENDPOINT, NEWRELIC_REQUEST_HEADERS, JSON.stringify(postData));
 }
 
 function sendHttpGETRequest(targetURL, headers) {

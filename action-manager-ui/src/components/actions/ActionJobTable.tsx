@@ -37,14 +37,14 @@ export default function ActionJobTable(props: any) {
         { id: 'name', label: 'Name', minWidth: 100 },
         {
             id: 'state',
-            label: 'State',
+            label: 'Execution State',
             minWidth: 100,
             align: 'left',
             format: (value: number) => value.toLocaleString('en-US'),
         },
         {
             id: 'status',
-            label: 'Status',
+            label: 'Execution Status',
             minWidth: 100,
             align: 'left',
             format: (value: string) => (<JobStatus status={value} />)

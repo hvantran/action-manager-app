@@ -102,6 +102,7 @@ export default function JobDetail() {
   const location = useLocation();
   const jobName = location.state?.name || "";
   const [isPausedJob, setIsPausedJob] = React.useState(false);
+  const [isScheduledJob, setIsScheduledJob] = React.useState(false);
   const jobId: string | undefined = targetJob.jobId;
   const actionId: string = targetJob.actionId || "";
   if (!jobId) {
@@ -179,7 +180,11 @@ export default function JobDetail() {
         switcherFieldMeta: {
           onChangeEvent: function (event, propValue) {
             let propName = event.target.name;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
+            setPropertyMetadata(onChangeProperty(propName, propValue, (propertyMetadata) => {
+              if (propertyMetadata.propName === 'category') {
+                propertyMetadata.disabled = !propValue;
+              }
+            }));
           }
         }
       },
@@ -233,7 +238,12 @@ export default function JobDetail() {
         switcherFieldMeta: {
           onChangeEvent: function (event, propValue) {
             let propName = event.target.name;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
+
+            setPropertyMetadata(onChangeProperty(propName, propValue, propertyMetadata => {
+              if (propertyMetadata.propName === 'scheduleInterval') {
+                propertyMetadata.disabled = !propValue;
+              }
+            }));
           }
         }
       },
@@ -342,6 +352,7 @@ export default function JobDetail() {
   React.useEffect(() => {
     JobAPI.load(jobId, restClient, (jobDetail: any) => {
       setIsPausedJob(jobDetail.isPaused)
+      setIsScheduledJob(jobDetail.isScheduled)
       Object.keys(jobDetail).forEach((propertyName: string) => {
         setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
       })
@@ -375,7 +386,7 @@ export default function JobDetail() {
             })
           })
       },{
-        actionIcon: <Switch checked={isPausedJob} onChange={onPauseResumeSwicherOnChange}/>,
+        actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange}/>,
         actionLabel: "Pause/Resume",
         actionName: "pauseResumeAction"
       }
