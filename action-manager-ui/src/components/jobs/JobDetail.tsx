@@ -201,9 +201,9 @@ export default function JobDetail() {
         selectionMeta: {
           selections: JOB_OUTPUT_TARGET_VALUES,
           isMultiple: true,
-          onChangeEvent: function (event, propValue) {
+          onChangeEvent: function (event) {
             let propName = event.target.name;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
+            setPropertyMetadata(onChangeProperty(propName, event.target.value));
           }
         }
       },
@@ -219,9 +219,9 @@ export default function JobDetail() {
         propType: PropType.Selection,
         selectionMeta: {
           selections: JOB_CATEGORY_VALUES,
-          onChangeEvent: function (event, propValue) {
+          onChangeEvent: function (event) {
             let propName = event.target.name;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
+            setPropertyMetadata(onChangeProperty(propName, event.target.value));
           }
         }
       },
