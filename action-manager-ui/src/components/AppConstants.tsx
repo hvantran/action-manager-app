@@ -30,6 +30,8 @@ let String = Java.type('java.lang.String');
 let Duration = Java.type('java.time.Duration');
 let ChronoUnit = Java.type('java.time.temporal.ChronoUnit');
 let JSONObject = Java.type('net.minidev.json.JSONObject');
+let IntStream = Java.type('java.util.stream.IntStream');
+let AtomicInteger = Java.type('java.util.concurrent.atomic.AtomicInteger');
 
 let HttpClient = Java.type('java.net.http.HttpClient');
 let Pair = Java.type('com.hoatv.fwk.common.ultilities.Pair');
@@ -50,7 +52,7 @@ const NEWRELIC_ENDPOINT = "https://api.newrelic.com/graphql";
 const NEWRELIC_REQUEST_HEADERS = Map.of('Content-Type', 'application/json', 'API-Key', '<api key>');
 
 
-const JIRA_ENDPOINT = 'https://unified.jira.com/wiki/rest/api/content';
+const JIRA_ENDPOINT = 'https://<jira URL>/wiki/rest/api/content';
 const JIRA_REQUEST_HEADERS = Map.of('Content-Type', 'application/json', "Authorization", "Basic <token>")
 
 
@@ -64,6 +66,60 @@ function execute(preExecuteReturnValues) {
 
 function postExecute(result, preExecuteReturnValues) {
     reutrn result;
+}
+
+
+function getNewRelicReport(newRelicQuery, columnMapping, heading) {
+  let responseDocument = sendNewRelicQuery(newRelicQuery);
+  let dailyStatsContext = JsonPath.parse(responseDocument);
+  let dailyStats = dailyStatsContext.read('$.data.actor.account.nrql.results', List.class);
+
+  let dailyStatRecords = formatJsonResponseToJavaMap(dailyStats, columnMapping);
+  let daylyStatColumnLabels = columnMapping.keySet();
+  let dailyStatsHTMLCode = new TableInfor(daylyStatColumnLabels, dailyStatRecords, heading);
+  return dailyStatsHTMLCode.getHTMLCode;
+}
+
+function formatJsonResponseToJavaMap(jsonResponse, columnMapping) {
+  let counter = new AtomicInteger(0);
+  return StreamSupport.stream(jsonResponse.spliterator(), false).
+    map(p => {
+      let columnAsList = new ArrayList(columnMapping.entrySet());
+      return columnMapping.entrySet().stream().map(column => {
+        let columnName = column.getKey();
+        let rowColumnDataType = column.getValue();
+        let columnDataType = rowColumnDataType.getValue();
+
+        if (columnName === 'No') {
+          return Pair.of(columnName, counter.incrementAndGet());
+        }
+
+        if (columnDataType === 'date') {
+          return Pair.of(columnName, new Date(parseInt(p.get(rowColumnDataType.getKey()))).toISOString());
+        }
+
+        let columnValue = replaceSpecialCharacters(p.get(rowColumnDataType.getKey()).toString());
+        return Pair.of(columnName, columnValue);
+      }).collect(Collectors.toMap(column => column.getKey(), column => column.getValue(), (u, v) => u, ()=> new LinkedHashMap()));
+    }).collect(Collectors.toList());
+}
+
+function replaceSpecialCharacters(text) {
+  const specialCharacters = /[&<>'"]/g;
+  return text.replace(specialCharacters, function(match) {
+    switch (match) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case "\"":
+        return "&quot;";
+      case "'":
+        return "&apos;";
+    }
+  });
 }
 
 function createJiraConfluenceWikiPage(pageTitle, pageContent) {

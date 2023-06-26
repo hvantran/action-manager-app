@@ -12,10 +12,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories
 public class ActionManagerApplication {
     public static void main (String[] args) {
-        try{
         SpringApplication.run(ActionManagerApplication.class, args);
-    } catch (Throwable e) {
-        e.printStackTrace();
-    }
     }
 }
