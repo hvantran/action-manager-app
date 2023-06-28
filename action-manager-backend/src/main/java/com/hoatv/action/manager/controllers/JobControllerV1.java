@@ -53,10 +53,8 @@ public class JobControllerV1 {
         return ResponseEntity.ok(jobDetailDTO);
     }
 
-    @PostMapping(path = "/{hash}/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> dryRun(@PathVariable("hash") String jobId,
-                                    @RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
-        LOGGER.info("Execute dry run on persisted job: {}", jobId);
+    @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> dryRun(@RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
         jobManagerService.processNonePersistenceJob(jobDefinitionDTO);
         return ResponseEntity.noContent().build();
     }
