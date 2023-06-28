@@ -98,8 +98,8 @@ export default function ActionCreation() {
       {
         propName: 'jobOutputTargets',
         propLabel: 'Output',
-        propValue: [JOB_OUTPUT_TARGET_VALUES[0]],
-        propDefaultValue: JOB_OUTPUT_TARGET_VALUES[0],
+        propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
+        propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4 },
         valueElementProperties: { xs: 8 },
@@ -118,8 +118,8 @@ export default function ActionCreation() {
         propName: 'jobCategory',
         propLabel: 'Category',
         disabled: true,
-        propValue: JOB_CATEGORY_VALUES[0],
-        propDefaultValue: JOB_CATEGORY_VALUES[0],
+        propValue: JOB_CATEGORY_VALUES[0].value,
+        propDefaultValue: JOB_CATEGORY_VALUES[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4, sx: { pl: 5 } },
         valueElementProperties: { xs: 8 },
@@ -157,8 +157,8 @@ export default function ActionCreation() {
       {
         propName: 'scheduleInterval',
         propLabel: 'Interval minutes',
-        propValue: [JOB_SCHEDULE_TIME_SELECTION[0]],
-        propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0],
+        propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
+        propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4, sx: { pl: 5 } },
         valueElementProperties: { xs: 8 },
@@ -351,8 +351,8 @@ export default function ActionCreation() {
         {
           propName: 'jobOutputTargets',
           propLabel: 'Output',
-          propValue: [JOB_OUTPUT_TARGET_VALUES[0]],
-          propDefaultValue: JOB_OUTPUT_TARGET_VALUES[0],
+          propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
+          propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
           labelElementProperties: { xs: 4, alignItems: "center", justifyContent: "center" },
           valueElementProperties: { xs: 8 },
@@ -371,8 +371,8 @@ export default function ActionCreation() {
           propName: 'jobCategory',
           propLabel: 'Category',
           disabled: true,
-          propValue: JOB_CATEGORY_VALUES[0],
-          propDefaultValue: JOB_CATEGORY_VALUES[0],
+          propValue: JOB_CATEGORY_VALUES[0].value,
+          propDefaultValue: JOB_CATEGORY_VALUES[0].value,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
           labelElementProperties: { xs: 4, sx: { pl: 5 } },
           valueElementProperties: { xs: 8 },
@@ -410,8 +410,8 @@ export default function ActionCreation() {
           propName: 'scheduleInterval',
           propLabel: 'Interval minutes',
           disabled: true,
-          propValue: [JOB_SCHEDULE_TIME_SELECTION[0]],
-          propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0],
+          propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
+          propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
           labelElementProperties: { xs: 4, sx: { pl: 5 } },
           valueElementProperties: { xs: 8 },
@@ -638,7 +638,7 @@ export default function ActionCreation() {
         actionIcon: <EngineeringIcon />,
         actionLabel: "Dry run",
         actionName: "dryRunAction",
-        onClick: () => dryRunAction
+        onClick: dryRunAction
       }
     ]
   }
