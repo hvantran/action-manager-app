@@ -5,28 +5,25 @@ import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
-import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/v1/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
 public class JobControllerV1 {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(JobControllerV1.class);
     private JobManagerService jobManagerService;
 
     @Autowired
@@ -54,5 +51,13 @@ public class JobControllerV1 {
     public ResponseEntity<?> getJobById(@PathVariable("hash") String jobId) {
         JobDetailDTO jobDetailDTO = jobManagerService.getJob(jobId);
         return ResponseEntity.ok(jobDetailDTO);
+    }
+
+    @PostMapping(path = "/{hash}/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> dryRun(@PathVariable("hash") String jobId,
+                                    @RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
+        LOGGER.info("Execute dry run on persisted job: {}", jobId);
+        jobManagerService.processNonePersistenceJob(jobDefinitionDTO);
+        return ResponseEntity.noContent().build();
     }
 }
