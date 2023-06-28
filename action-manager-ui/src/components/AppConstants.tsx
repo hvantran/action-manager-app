@@ -1,4 +1,4 @@
-import { PropertyMetadata, SelectionData, StepMetadata } from "./GenericConstants"
+import { PropertyMetadata, RestClient, SelectionData, SnackbarMessage, StepMetadata } from "./GenericConstants"
 
 export const ROOT_BREADCRUMB = 'Actions'
 export const JOB_CATEGORY_VALUES: Array<SelectionData> = [{label: "IO", value: "IO"}, {label: "CPU", value: "CPU"}]
@@ -236,12 +236,38 @@ export interface JobDetailMetadata {
     isPaused: boolean
 }
 
+
 const findStepPropertyByCondition = (stepMetadata: StepMetadata | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
-    return stepMetadata ? stepMetadata.properties.find(filter) : undefined;
+    return stepMetadata ? findPropertyByCondition(stepMetadata.properties, filter) : undefined;
 }
 
 const findPropertyByCondition = (properties: Array<PropertyMetadata> | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
     return properties ? properties.find(filter) : undefined;
+}
+
+export const getJobDefinitionFromStepMetadata = (stepMetadata: StepMetadata) => {
+
+  let name = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobName"))?.propValue;
+  let description = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobDescription"))?.propValue;
+  let configurations = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobConfigurations"))?.propValue;
+  let content = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobContent"))?.propValue;
+  let isAsync = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isAsync"))?.propValue;
+  let category = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobCategory"))?.propValue;
+  let outputTargets = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobOutputTargets"))?.propValue;
+  let isScheduled = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isScheduledJob"))?.propValue;
+  let scheduleInterval = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("scheduleInterval"))?.propValue;
+
+  return {
+    name,
+    category,
+    description,
+    configurations,
+    content,
+    outputTargets,
+    isAsync,
+    isScheduled,
+    scheduleInterval: isScheduled ? scheduleInterval : 0
+  } as JobDefinition
 }
 
 export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
@@ -300,4 +326,83 @@ export const getJobDetails = (currentStepMetadata: Array<StepMetadata>) => {
     }
 
     return findRelatedJobs(currentStepMetadata);
+}
+
+
+export class JobAPI {
+  static update = async (jobId: string, restClient: RestClient, propertyMetadata: Array<PropertyMetadata>, successCallback: () => void) => {
+    let jobDefinition = getJobDefinition(propertyMetadata);
+    const requestOptions = {
+      method: "PUT",
+      headers: {
+        "Accept": "application/json",
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(jobDefinition)
+    }
+
+    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
+    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
+      let responseJSON = await response.json();
+      successCallback();
+      return { 'message': `${responseJSON['uuid']} is updated`, key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async pause(actionId: string, jobId: string, jobName: string, restClient: RestClient) {
+    const requestOptions = {
+      method: "PUT",
+      headers: {}
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/pause`;
+    await restClient.sendRequest(requestOptions, targetURL, async() => {
+      return { 'message': `Job ${jobName} has been paused`, key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async resume(actionId: string, jobId: string, jobName: string, restClient: RestClient) {
+    const requestOptions = {
+      method: "PUT",
+      headers: {}
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/resume`;
+    await restClient.sendRequest(requestOptions, targetURL, async() => {
+      return { 'message': `Job ${jobName} has been resumed`, key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async load(jobId: string, restClient: RestClient, successCallback: (data: any) => void) {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let jobDetail: JobDetailMetadata = await response.json() as JobDetailMetadata;
+      successCallback(jobDetail);
+      return { 'message': 'Load job detail successfully!!', key: new Date().getTime() } as SnackbarMessage;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async dryRun(restClient: RestClient, propertyMetadata: Array<PropertyMetadata>) {
+    let jobDefinition = getJobDefinition(propertyMetadata);
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(jobDefinition)
+    }
+
+    const targetURL = `${JOB_MANAGER_API_URL}/dryRun`;
+    await restClient.sendRequest(requestOptions, targetURL, async() => {
+      return { 'message': "Dry run action successfully", key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
 }

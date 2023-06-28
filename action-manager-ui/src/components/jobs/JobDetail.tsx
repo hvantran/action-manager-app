@@ -1,6 +1,7 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import EditIcon from '@mui/icons-material/Edit';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveIcon from '@mui/icons-material/Save';
 import { Stack, Switch } from '@mui/material';
@@ -22,80 +23,17 @@ import ProcessTracking from '../common/ProcessTracking';
 import { yellow } from '@mui/material/colors';
 import { useLocation, useParams } from 'react-router-dom';
 import {
-  ACTION_MANAGER_API_URL,
   JOB_CATEGORY_VALUES,
-  JOB_MANAGER_API_URL,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
+  JobAPI,
   JobDetailMetadata,
-  ROOT_BREADCRUMB,
-  getJobDefinition
+  ROOT_BREADCRUMB
 } from '../AppConstants';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
-class JobAPI {
-  static update = async (jobId: string, restClient: RestClient, propertyMetadata: Array<PropertyMetadata>, successCallback: () => void) => {
-    let jobDefinition = getJobDefinition(propertyMetadata);
-    const requestOptions = {
-      method: "PUT",
-      headers: {
-        "Accept": "application/json",
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify(jobDefinition)
-    }
-
-    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
-    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
-      let responseJSON = await response.json();
-      successCallback();
-      return { 'message': `${responseJSON['uuid']} is updated`, key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
-  static async pause(actionId: string, jobId: string, jobName: string, restClient: RestClient) {
-    const requestOptions = {
-      method: "PUT",
-      headers: {}
-    }
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/pause`;
-    await restClient.sendRequest(requestOptions, targetURL, async() => {
-      return { 'message': `Job ${jobName} has been paused`, key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
-  static async resume(actionId: string, jobId: string, jobName: string, restClient: RestClient) {
-    const requestOptions = {
-      method: "PUT",
-      headers: {}
-    }
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/resume`;
-    await restClient.sendRequest(requestOptions, targetURL, async() => {
-      return { 'message': `Job ${jobName} has been resumed`, key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
-  static async load(jobId: string, restClient: RestClient, successCallback: (data: any) => void) {
-    const requestOptions = {
-      method: "GET",
-      headers: {
-        "Accept": "application/json"
-      }
-    }
-
-    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
-    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-      let jobDetail: JobDetailMetadata = await response.json() as JobDetailMetadata;
-      successCallback(jobDetail);
-      return { 'message': 'Load job detail successfully!!', key: new Date().getTime() } as SnackbarMessage;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-}
 
 export default function JobDetail() {
   const targetJob = useParams();
@@ -374,6 +312,12 @@ export default function JobDetail() {
     pageEntityActions: [
       editActionMeta,
       saveActionMeta,
+      {
+        actionIcon: <EngineeringIcon />,
+        actionLabel: "Dry run",
+        actionName: "dryRunAction",
+        onClick: () => JobAPI.dryRun(restClient, propertyMetadata)
+      },
       {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh",

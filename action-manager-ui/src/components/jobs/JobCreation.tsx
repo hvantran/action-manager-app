@@ -2,6 +2,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import AddTaskTwoToneIcon from '@mui/icons-material/AddTaskTwoTone';
 import ArrowBackTwoToneIcon from '@mui/icons-material/ArrowBackTwoTone';
+import EngineeringIcon from '@mui/icons-material/Engineering';
 import SaveIcon from '@mui/icons-material/Save';
 
 import { Stack } from '@mui/material';
@@ -17,6 +18,7 @@ import {
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
+  JobAPI,
   JobDefinition,
   ROOT_BREADCRUMB,
   getJobDetails,
@@ -24,7 +26,6 @@ import {
 import {
   PageEntityMetadata,
   PropType,
-  PropertyMetadata,
   RestClient,
   SnackbarAlertMetadata,
   SnackbarMessage,
@@ -435,45 +436,8 @@ export default function JobCreation() {
   }, [])
 
 
-
-  let initialFloatingActions: Array<SpeedDialActionMetadata> = [
-    {
-      actionIcon: <AddTaskTwoToneIcon />, actionName: 'newJob', actionLabel: 'New Job',
-      onClick: () => {
-        setStepMetadatas(previous => {
-          let nextStepMetadata: Array<StepMetadata> = [...previous];
-          let addtionalStep = { ...initialTemplateStep }
-          let newStepName = `${initialTemplateStep.name}${nextStepMetadata.length}`
-          addtionalStep.name = newStepName
-          addtionalStep.properties.forEach(property => property.propName = `${property.propName}${nextStepMetadata.length}`)
-          nextStepMetadata.splice(previous.length - 1, 0, addtionalStep);
-          return nextStepMetadata;
-        })
-      },
-      properties: {
-        sx: {
-          bgcolor: green[500],
-          '&:hover': {
-            bgcolor: green[800],
-          }
-        }
-      },
-    },
-    {
-      actionIcon: WithLink('/actions', <ArrowBackTwoToneIcon />), actionName: 'navigateBackToActions', actionLabel: 'Navigate to actions', properties: {
-        sx: {
-          bgcolor: blue[500],
-          '&:hover': {
-            bgcolor: blue[800],
-          }
-        }
-      }
-    }
-  ];
-
   let initialPageEntityMetdata: PageEntityMetadata = {
     pageName: 'job-creation',
-    floatingActions: initialFloatingActions,
     breadcumbsMeta: [
       <LinkBreadcrumd underline="hover" key="1" color="inherit" href="/actions">
         {ROOT_BREADCRUMB}
@@ -487,6 +451,32 @@ export default function JobCreation() {
       <Typography key="3" color="text.primary">new</Typography>
     ],
     pageEntityActions: [
+      {
+        actionIcon: <EngineeringIcon />,
+        actionLabel: "Dry run",
+        actionName: "dryRunJobs",
+        onClick: () => {
+          stepMetadatas.forEach(stepMetadata => {
+            JobAPI.dryRun(restClient, stepMetadata.properties)
+          })
+        }
+      },
+      {
+        actionIcon: <AddTaskTwoToneIcon />, 
+        actionName: 'newJob', 
+        actionLabel: 'New Job',
+        onClick: () => {
+          setStepMetadatas(previous => {
+            let nextStepMetadata: Array<StepMetadata> = [...previous];
+            let addtionalStep = { ...initialTemplateStep }
+            let newStepName = `${initialTemplateStep.name}${nextStepMetadata.length}`
+            addtionalStep.name = newStepName
+            addtionalStep.properties.forEach(property => property.propName = `${property.propName}${nextStepMetadata.length}`)
+            nextStepMetadata.splice(previous.length - 1, 0, addtionalStep);
+            return nextStepMetadata;
+          })
+        }
+      },
       {
         actionIcon: <SaveIcon />,
         actionLabel: "Save",

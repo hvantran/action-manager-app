@@ -17,7 +17,8 @@ import {
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
-  ROOT_BREADCRUMB
+  ROOT_BREADCRUMB,
+  getJobDefinitionFromStepMetadata
 } from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import SnackbarAlert from '../common/SnackbarAlert';
@@ -557,31 +558,9 @@ export default function ActionCreation() {
 
     const findRelatedJobs = (currentStepMetadata: Array<StepMetadata>): Array<JobDefinition> => {
       const reviewStepIndex = currentStepMetadata.length - 1;
-      return currentStepMetadata.filter((_, index) => index !== 0 && index !== reviewStepIndex)
-        .map(stepMetadata => {
-
-          let name = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobName"))?.propValue;
-          let description = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobDescription"))?.propValue;
-          let configurations = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobConfigurations"))?.propValue;
-          let content = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobContent"))?.propValue;
-          let isAsync = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isAsync"))?.propValue;
-          let category = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobCategory"))?.propValue;
-          let outputTargets = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobOutputTargets"))?.propValue;
-          let isScheduled = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isScheduledJob"))?.propValue;
-          let scheduleInterval = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("scheduleInterval"))?.propValue;
-
-          return {
-            name,
-            category,
-            description,
-            configurations,
-            content,
-            outputTargets,
-            isAsync,
-            isScheduled,
-            scheduleInterval: isScheduled ? scheduleInterval : 0
-          } as JobDefinition
-        })
+      return currentStepMetadata
+        .filter((_, index) => index !== 0 && index !== reviewStepIndex)
+        .map(getJobDefinitionFromStepMetadata)
     }
 
     return getAction();
@@ -633,7 +612,7 @@ export default function ActionCreation() {
       <Typography key="3" color="text.primary">new</Typography>
     ],
     stepMetadatas: stepMetadatas,
-    pageEntityActions: [      
+    pageEntityActions: [
       {
         actionIcon: <EngineeringIcon />,
         actionLabel: "Dry run",
