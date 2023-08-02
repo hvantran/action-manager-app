@@ -5,7 +5,7 @@ import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
-import com.hoatv.action.manager.dtos.JobStatus;
+import com.hoatv.action.manager.collections.JobExecutionStatus;
 import com.hoatv.action.manager.services.ActionExecutionContext;
 import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
@@ -49,7 +49,7 @@ public interface JobManagerService {
     Page<JobOverviewDTO> getJobs(PageRequest pageRequest);
 
     void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                    BiConsumer<JobStatus, JobStatus> callback, boolean isRelayAction);
+                    BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction);
 
     JobDetailDTO getJob(String hash);
 
