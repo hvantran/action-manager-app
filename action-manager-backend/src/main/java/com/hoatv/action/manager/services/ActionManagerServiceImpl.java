@@ -1,7 +1,5 @@
 package com.hoatv.action.manager.services;
 
-import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
-
 import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.collections.ActionDocument;
@@ -9,6 +7,7 @@ import com.hoatv.action.manager.collections.ActionStatisticsDocument;
 import com.hoatv.action.manager.collections.ActionStatisticsDocument.ActionStatisticsDocumentBuilder;
 import com.hoatv.action.manager.collections.JobDocument;
 import com.hoatv.action.manager.collections.JobResultDocument;
+import com.hoatv.action.manager.document.transformers.ActionTransformer;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
@@ -27,12 +26,14 @@ import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,12 +41,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
+
+import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
 
 @Service
 @MetricProvider(application = MetricProviders.OTHER_APPLICATION, category = "action-manager-stats-data")
@@ -151,7 +148,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @LoggingMonitor
     public Optional<ActionDefinitionDTO> getActionById(String hash) {
         return actionDocumentRepository.findById(hash)
-                .map(ActionDocument::toActionDefinition);
+                .map(ActionTransformer::toActionDefinition);
     }
 
     @Override
@@ -163,7 +160,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         ActionDocument actionDocument = actionDocumentOptional.get();
         actionDocument.setFavorite(isFavorite);
         ActionDocument document = actionDocumentRepository.save(actionDocument);
-        return Optional.of(ActionDocument.toActionDefinition(document));
+        return Optional.of(ActionTransformer.toActionDefinition(document));
     }
 
     @Override
@@ -293,7 +290,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     private ActionExecutionContext getActionExecutionContext(ActionDefinitionDTO actionDefinition) {
-        ActionDocument actionDocument = actionDocumentRepository.save(ActionDocument.fromActionDefinition(actionDefinition));
+        ActionDocument actionDocument = actionDocumentRepository.save(ActionTransformer.fromActionDefinition(actionDefinition));
         LOGGER.info("ActionExecutionContext: actionDocument - {}", actionDocument);
         long numberOfScheduleJobs = actionDefinition.getJobs().stream().filter(JobDefinitionDTO::isScheduled).count();
         ActionStatisticsDocumentBuilder statisticsDocumentBuilder = ActionStatisticsDocument.builder();

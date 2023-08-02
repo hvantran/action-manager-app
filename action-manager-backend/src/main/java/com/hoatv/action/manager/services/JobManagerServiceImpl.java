@@ -1,20 +1,15 @@
 package com.hoatv.action.manager.services;
 
-import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoatv.action.manager.api.JobImmutable;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.api.JobResultImmutable;
 import com.hoatv.action.manager.collections.JobDocument;
-import com.hoatv.action.manager.collections.JobResultDocument;
-import com.hoatv.action.manager.dtos.JobCategory;
-import com.hoatv.action.manager.dtos.JobDefinitionDTO;
-import com.hoatv.action.manager.dtos.JobDetailDTO;
-import com.hoatv.action.manager.dtos.JobOutputTarget;
-import com.hoatv.action.manager.dtos.JobOverviewDTO;
-import com.hoatv.action.manager.collections.JobState;
 import com.hoatv.action.manager.collections.JobExecutionStatus;
+import com.hoatv.action.manager.collections.JobResultDocument;
+import com.hoatv.action.manager.collections.JobState;
+import com.hoatv.action.manager.document.transformers.JobTransformer;
+import com.hoatv.action.manager.dtos.*;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
@@ -38,24 +33,6 @@ import com.hoatv.task.mgmt.services.ScheduleTaskMgmtService;
 import com.hoatv.task.mgmt.services.TaskFactory;
 import com.hoatv.task.mgmt.services.TaskMgmtServiceV1;
 import jakarta.annotation.PostConstruct;
-import java.util.AbstractMap;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
@@ -65,6 +42,20 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
 
 @Service
 @MetricProvider(application = JobManagerServiceImpl.ACTION_MANAGER, category = MetricProviders.MetricCategories.STATS_DATA_CATEGORY)
@@ -316,7 +307,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public JobDetailDTO getJob(String hash) {
         JobDocument jobDocument = getJobDocument(hash);
-        return JobDocument.jobDetailDTO(jobDocument);
+        return JobTransformer.jobDetailDTO(jobDocument);
     }
 
     @Override
@@ -336,7 +327,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @LoggingMonitor
     public Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId) {
-        JobDocument jobDocument = jobDocumentRepository.save(JobDocument.fromJobDefinition(jobDefinitionDTO, actionId));
+        JobDocument jobDocument = jobDocumentRepository.save(JobTransformer.fromJobDefinition(jobDefinitionDTO, actionId));
         JobResultDocument.JobResultDocumentBuilder jobResultDocumentBuilder = JobResultDocument.builder()
                 .jobState(JobState.INITIAL)
                 .jobStatus(JobExecutionStatus.PENDING)
