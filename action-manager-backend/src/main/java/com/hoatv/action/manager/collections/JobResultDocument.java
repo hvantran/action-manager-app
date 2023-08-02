@@ -1,5 +1,7 @@
 package com.hoatv.action.manager.collections;
 
+import com.hoatv.action.manager.dtos.JobState;
+import com.hoatv.action.manager.dtos.JobStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -19,7 +21,7 @@ public class JobResultDocument {
     @Builder.Default
     private String hash = UUID.randomUUID().toString();
     private JobState jobState;
-    private JobExecutionStatus jobStatus;
+    private JobStatus jobStatus;
     private String failureNotes;
     private String jobId;
     private String actionId;

@@ -1,4 +1,4 @@
-package com.hoatv.action.manager.collections;
+package com.hoatv.action.manager.dtos;
 
 
 public enum JobState {

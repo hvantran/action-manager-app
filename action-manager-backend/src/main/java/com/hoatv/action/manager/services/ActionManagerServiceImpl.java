@@ -12,7 +12,7 @@ import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
-import com.hoatv.action.manager.collections.JobExecutionStatus;
+import com.hoatv.action.manager.dtos.JobStatus;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.ActionStatisticsDocumentRepository;
@@ -254,7 +254,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         actionStatisticsDocument.setNumberOfJobs(numberOfJobs + jobDefinitionDTOs.size());
         actionStatisticsDocumentRepository.save(actionStatisticsDocument);
 
-        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
+        BiCheckedConsumer<JobStatus, JobStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
         return ActionExecutionContext.builder()
                 .actionDocument(actionDocument)
                 .actionStatisticsDocument(actionStatisticsDocument)
@@ -280,7 +280,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         Map<String, String> jobDocumentPairs = jobManagerService.getEnabledOnetimeJobs(actionId);
         Map<String, String> scheduledJobDocumentPairs = jobManagerService.getEnabledScheduledJobs(actionId);
 
-        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
+        BiCheckedConsumer<JobStatus, JobStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
         Map<String, String> jobDocumentProcessPairs = new HashMap<>(jobDocumentPairs);
         jobDocumentProcessPairs.putAll(scheduledJobDocumentPairs);
         return ActionExecutionContext.builder()
@@ -309,7 +309,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         Map<String, String> jobDocumentPairs = getJobDocumentPairs(definitionJobs, actionDocument);
         LOGGER.info("ActionExecutionContext: jobDocumentPairs - {}", jobDocumentPairs);
 
-        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
+        BiCheckedConsumer<JobStatus, JobStatus> onCompletedJobCallback = onCompletedJobCallback(actionStatisticsDocument);
 
         return ActionExecutionContext.builder()
                 .actionDocument(actionDocument)
@@ -331,7 +331,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(statisticsDocument), false);
     }
 
-    private BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback(ActionStatisticsDocument actionStatisticsDocument) {
+    private BiCheckedConsumer<JobStatus, JobStatus> onCompletedJobCallback(ActionStatisticsDocument actionStatisticsDocument) {
         return (prevJobStatus, currentJobStatus) -> {
             LOGGER.info("Prev status: {} -> Next status: {}", prevJobStatus, currentJobStatus);
             if (prevJobStatus == currentJobStatus) {
@@ -366,21 +366,21 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         };
     }
 
-    private static JobStatusCounter getJobStatusCounter(JobExecutionStatus prevJobStatus, JobExecutionStatus currentJobStatus,
+    private static JobStatusCounter getJobStatusCounter(JobStatus prevJobStatus, JobStatus currentJobStatus,
                                                         long numberOfFailureJobs, long numberOfSuccessJobs) {
         AtomicInteger numberOfSuccessCounter = new AtomicInteger(0);
         AtomicInteger numberOfFailureCounter = new AtomicInteger(0);
 
         if (Objects.isNull(prevJobStatus)) {
-            if (Objects.requireNonNull(currentJobStatus) == JobExecutionStatus.SUCCESS) {
+            if (Objects.requireNonNull(currentJobStatus) == JobStatus.SUCCESS) {
                 numberOfSuccessCounter.incrementAndGet();
             } else {
                 numberOfFailureCounter.incrementAndGet();
             }
-        } else if (prevJobStatus == JobExecutionStatus.FAILURE && currentJobStatus == JobExecutionStatus.SUCCESS) {
+        } else if (prevJobStatus == JobStatus.FAILURE && currentJobStatus == JobStatus.SUCCESS) {
             numberOfSuccessCounter.incrementAndGet();
             numberOfFailureCounter.decrementAndGet();
-        } else if (prevJobStatus == JobExecutionStatus.PENDING && currentJobStatus == JobExecutionStatus.SUCCESS) {
+        } else if (prevJobStatus == JobStatus.PENDING && currentJobStatus == JobStatus.SUCCESS) {
             numberOfSuccessCounter.incrementAndGet();
         } else {
             numberOfSuccessCounter.decrementAndGet();
