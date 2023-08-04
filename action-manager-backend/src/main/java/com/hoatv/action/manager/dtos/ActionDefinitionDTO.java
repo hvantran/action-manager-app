@@ -41,6 +41,11 @@ public class ActionDefinitionDTO {
     @JsonProperty("createdAt")
     private long createdAt;
 
+    @JsonProperty("status")
+    @NotEmpty(message = "Action configurations cannot be NULL/empty")
+    private String actionStatus;
+
+
     @Valid
     @JsonProperty("relatedJobs")
     @NotEmpty(message = "Jobs cannot be NULL/empty")

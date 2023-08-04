@@ -9,10 +9,16 @@ export const JOB_SCHEDULE_TIME_SELECTION: Array<SelectionData>  = [
     {label: "10 minutes", value: 10},
     {label: "30 minutes", value: 30},
     {label: "1 hour", value: 1 * 60},
+    {label: "2 hours", value: 2 * 60},
+    {label: "3 hours", value: 3 * 60},
     {label: "6 hours", value: 6 * 60},
     {label: "12 hours", value: 12 * 60},
     {label: "24 hours", value: 24 * 60},
 ]
+export const ACTION_STATUS_SELECTION: Array<SelectionData> = [
+  {label: "INITIAL", value: "INITIAL"},
+  {label: "READY", value:"READY"}
+] 
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
@@ -175,6 +181,7 @@ export interface JobDefinition {
     isScheduled: boolean | undefined
     outputTargets: Array<String> | undefined
     scheduleInterval: number | undefined
+    status: string | undefined
     createdAt?: number | undefined
 }
 
@@ -183,6 +190,7 @@ export interface ActionDefinition {
     description: string | undefined
     configurations: string | undefined
     createdAt?: number | undefined
+    status: string | undefined
     relatedJobs: Array<JobDefinition> | undefined
 }
 

@@ -18,7 +18,8 @@ import {
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
   ROOT_BREADCRUMB,
-  getJobDefinitionFromStepMetadata
+  getJobDefinitionFromStepMetadata,
+  ACTION_STATUS_SELECTION
 } from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import SnackbarAlert from '../common/SnackbarAlert';
@@ -59,7 +60,7 @@ export default function ActionCreation() {
         propValue: '',
         propDescription: 'This is name of job',
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4 },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.InputText,
         textFieldMeta: {
@@ -81,7 +82,7 @@ export default function ActionCreation() {
         propLabel: 'Asynchronous',
         propValue: false,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, sx: { pl: 5 } },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Switcher,
         switcherFieldMeta: {
@@ -102,7 +103,7 @@ export default function ActionCreation() {
         propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
         propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4 },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -122,7 +123,7 @@ export default function ActionCreation() {
         propValue: JOB_CATEGORY_VALUES[0].value,
         propDefaultValue: JOB_CATEGORY_VALUES[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, sx: { pl: 5 } },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -139,7 +140,7 @@ export default function ActionCreation() {
         propLabel: 'Supported schedule',
         propValue: false,
         layoutProperties: { xs: 6 },
-        labelElementProperties: { xs: 4 },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propDefaultValue: false,
         propType: PropType.Switcher,
@@ -161,7 +162,7 @@ export default function ActionCreation() {
         propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
         propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, sx: { pl: 5 } },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -178,7 +179,7 @@ export default function ActionCreation() {
         propLabel: 'Description',
         propValue: '',
         layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 2 },
+        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propType: PropType.Textarea,
         textareaFieldMeta: {
@@ -196,7 +197,7 @@ export default function ActionCreation() {
         propValue: '{}',
         propDefaultValue: '{}',
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2 },
+        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propType: PropType.CodeEditor,
         codeEditorMeta:
@@ -218,7 +219,7 @@ export default function ActionCreation() {
         propValue: DEFAULT_JOB_CONTENT,
         propType: PropType.CodeEditor,
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2 },
+        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propDefaultValue: DEFAULT_JOB_CONTENT,
         codeEditorMeta:
@@ -246,9 +247,9 @@ export default function ActionCreation() {
           propLabel: 'Name',
           propValue: '',
           isRequired: true,
-          layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 2 },
-          valueElementProperties: { xs: 10 },
+          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+          labelElementProperties: { xs: 4, sx: { pl: 15 } },
+          valueElementProperties: { xs: 8 },
           propDescription: 'This is name of action',
           propType: PropType.InputText,
           textFieldMeta: {
@@ -265,11 +266,30 @@ export default function ActionCreation() {
           }
         },
         {
+          propName: 'actionStatus',
+          propLabel: 'Status',
+          propValue: ACTION_STATUS_SELECTION[0].value,
+          isRequired: true,
+          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+          labelElementProperties: { xs: 4, sx: { pl: 15 } },
+          valueElementProperties: { xs: 8 },
+          propDescription: 'This is status of action',
+          propType: PropType.Selection,
+          selectionMeta: {
+            selections: ACTION_STATUS_SELECTION,
+            onChangeEvent: function (event) {
+              let propValue = event.target.value;
+              let propName = event.target.name;
+              setStepMetadatas(onchangeStepDefault(propName, propValue))
+            }
+          }
+        },
+        {
           propName: 'actionDescription',
           propLabel: 'Description',
           propValue: '',
           layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 2 },
+          labelElementProperties: { xs: 2, sx: { pl: 15 } },
           valueElementProperties: { xs: 10 },
           propType: PropType.Textarea,
           textareaFieldMeta: {
@@ -286,7 +306,7 @@ export default function ActionCreation() {
           propValue: '{}',
           propDefaultValue: '{}',
           layoutProperties: { xs: 12 },
-          labelElementProperties: { xs: 2 },
+          labelElementProperties: { xs: 2, sx: { pl: 15 } },
           valueElementProperties: { xs: 10 },
           isRequired: true,
           propType: PropType.CodeEditor,
@@ -316,7 +336,7 @@ export default function ActionCreation() {
           propDescription: 'This is name of job',
           propType: PropType.InputText,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4 },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           textFieldMeta: {
             onChangeEvent: function (event: any) {
@@ -335,7 +355,7 @@ export default function ActionCreation() {
           propLabel: 'Asynchronous',
           propValue: false,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 5 } },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Switcher,
           switcherFieldMeta: {
@@ -355,7 +375,7 @@ export default function ActionCreation() {
           propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
           propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, alignItems: "center", justifyContent: "center" },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Selection,
           selectionMeta: {
@@ -375,7 +395,7 @@ export default function ActionCreation() {
           propValue: JOB_CATEGORY_VALUES[0].value,
           propDefaultValue: JOB_CATEGORY_VALUES[0].value,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 5 } },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Selection,
           selectionMeta: {
@@ -392,7 +412,7 @@ export default function ActionCreation() {
           propLabel: 'Supported schedule',
           propValue: false,
           layoutProperties: { xs: 6 },
-          labelElementProperties: { xs: 4 },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propDefaultValue: false,
           propType: PropType.Switcher,
@@ -414,7 +434,7 @@ export default function ActionCreation() {
           propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
           propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 5 } },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Selection,
           selectionMeta: {
@@ -431,7 +451,7 @@ export default function ActionCreation() {
           propLabel: 'Description',
           propValue: '',
           layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 2 },
+          labelElementProperties: { xs: 2,  sx: { pl: 10 } },
           valueElementProperties: { xs: 10 },
           propType: PropType.Textarea,
           textareaFieldMeta: {
@@ -449,7 +469,7 @@ export default function ActionCreation() {
           propValue: '{}',
           propDefaultValue: '{}',
           layoutProperties: { xs: 12 },
-          labelElementProperties: { xs: 2 },
+          labelElementProperties: { xs: 2,  sx: { pl: 10 } },
           valueElementProperties: { xs: 10 },
           propType: PropType.CodeEditor,
           codeEditorMeta:
@@ -468,7 +488,7 @@ export default function ActionCreation() {
           propName: 'jobContent',
           propLabel: 'Job Content',
           layoutProperties: { xs: 12 },
-          labelElementProperties: { xs: 2 },
+          labelElementProperties: { xs: 2,  sx: { pl: 10 } },
           valueElementProperties: { xs: 10 },
           isRequired: true,
           propValue: DEFAULT_JOB_CONTENT,
@@ -546,12 +566,14 @@ export default function ActionCreation() {
     const getAction = (): ActionDefinition => {
       let actionDescription = findStepPropertyByCondition(actionMetadata, property => property.propName === "actionDescription");
       let actionConfigurations = findStepPropertyByCondition(actionMetadata, property => property.propName === "actionConfigurations");
+      let actionStatus = findStepPropertyByCondition(actionMetadata, property => property.propName === "actionStatus");
       let relatedJobs = findRelatedJobs(currentStepMetadata);
       let actionDefinition: ActionDefinition = {
         name: actionMetadata?.label,
         description: actionDescription?.propValue,
         configurations: actionConfigurations?.propValue,
-        relatedJobs: relatedJobs
+        relatedJobs: relatedJobs,
+        status: actionStatus?.propValue
       }
       return actionDefinition;
     }

@@ -96,7 +96,7 @@ export default function JobDetail() {
         propDescription: 'This is name of job',
         propType: PropType.InputText,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4 },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         textFieldMeta: {
           onChangeEvent: function (event: any) {
@@ -112,7 +112,7 @@ export default function JobDetail() {
         propValue: false,
         disabled: true,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, sx: { pl: 5 } },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Switcher,
         switcherFieldMeta: {
@@ -152,7 +152,7 @@ export default function JobDetail() {
         propValue: "",
         propDefaultValue: "",
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, sx: { pl: 5 } },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -169,7 +169,7 @@ export default function JobDetail() {
         propValue: false,
         disabled: true,
         layoutProperties: { xs: 6 },
-        labelElementProperties: { xs: 4 },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propDefaultValue: false,
         propType: PropType.Switcher,
@@ -191,7 +191,7 @@ export default function JobDetail() {
         disabled: true,
         propValue: 0,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, sx: { pl: 5 } },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -210,7 +210,7 @@ export default function JobDetail() {
 
         disabled: true,
         layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 2 },
+        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propType: PropType.Textarea,
         textareaFieldMeta: {
@@ -230,7 +230,7 @@ export default function JobDetail() {
         disabled: true,
         propDefaultValue: '{}',
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2 },
+        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propType: PropType.CodeEditor,
         codeEditorMeta:
@@ -249,7 +249,7 @@ export default function JobDetail() {
         propName: 'content',
         propLabel: 'Job Content',
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2 },
+        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         isRequired: true,
 
