@@ -53,6 +53,13 @@ export default function JobSummary() {
     { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
     { id: 'name', label: 'Name', minWidth: 100 },
     {
+      id: 'status',
+      label: 'Status',
+      minWidth: 100,
+      align: 'left',
+      format: (value: string) => value
+    },
+    {
       id: 'state',
       label: 'Execution State',
       minWidth: 100,
@@ -60,7 +67,7 @@ export default function JobSummary() {
       format: (value: number) => value.toLocaleString('en-US'),
     },
     {
-      id: 'status',
+      id: 'executionStatus',
       label: 'Execution Status',
       minWidth: 100,
       align: 'left',

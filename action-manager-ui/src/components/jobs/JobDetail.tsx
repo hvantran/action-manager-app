@@ -28,6 +28,7 @@ import {
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
   JobAPI,
+  JobDefinition,
   JobDetailMetadata,
   ROOT_BREADCRUMB
 } from '../AppConstants';
@@ -134,7 +135,7 @@ export default function JobDetail() {
         propValue: [],
         propDefaultValue: [],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -289,8 +290,8 @@ export default function JobDetail() {
 
 
   React.useEffect(() => {
-    JobAPI.load(jobId, restClient, (jobDetail: any) => {
-      setIsPausedJob(jobDetail.isPaused)
+    JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
+      setIsPausedJob(jobDetail.status === "PAUSED")
       setIsScheduledJob(jobDetail.isScheduled)
       Object.keys(jobDetail).forEach((propertyName: string) => {
         setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
@@ -325,7 +326,7 @@ export default function JobDetail() {
         actionName: "refreshAction",
         onClick: () => 
           JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
-            setIsPausedJob(jobDetail.isPaused)
+            setIsPausedJob(jobDetail.status === "PAUSED")
             Object.keys(jobDetail).forEach((propertyName: string) => {
               setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
             })

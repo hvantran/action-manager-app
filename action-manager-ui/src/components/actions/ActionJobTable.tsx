@@ -36,6 +36,13 @@ export default function ActionJobTable(props: any) {
         { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
         { id: 'name', label: 'Name', minWidth: 100 },
         {
+            id: 'status',
+            label: 'Status',
+            minWidth: 100,
+            align: 'left',
+            format: (value: string) => value
+        },
+        {
             id: 'state',
             label: 'Execution State',
             minWidth: 100,
@@ -43,7 +50,7 @@ export default function ActionJobTable(props: any) {
             format: (value: number) => value.toLocaleString('en-US'),
         },
         {
-            id: 'status',
+            id: 'executionStatus',
             label: 'Execution Status',
             minWidth: 100,
             align: 'left',
@@ -107,7 +114,7 @@ export default function ActionJobTable(props: any) {
                     actionIcon: <ReadMoreIcon />,
                     actionLabel: "Action details",
                     actionName: "gotoActionDetail",
-                    onClick: (row: JobOverview) => () => navigate(`/actions/${targetAction}/jobs/${row.hash}`, {state: {isPaused: row.isPaused, name: row.name}})
+                    onClick: (row: JobOverview) => () => navigate(`/actions/${targetAction}/jobs/${row.hash}`, { state: { isPaused: row.isPaused, name: row.name } })
                 }
             ]
         }

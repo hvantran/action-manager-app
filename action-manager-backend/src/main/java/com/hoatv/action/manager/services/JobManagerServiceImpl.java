@@ -119,7 +119,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         Example<JobDocument> jobEx = Example.of(JobDocument.builder().isScheduled(false).build());
         long numberOfJobs = jobDocumentRepository.count(jobEx);
         jobManagementStatistics.totalNumberOfJobs.set(numberOfJobs);
-        Example<JobResultDocument> failureJobEx = Example.of(JobResultDocument.builder().jobStatus(JobExecutionStatus.FAILURE).build());
+        Example<JobResultDocument> failureJobEx = Example.of(JobResultDocument.builder().jobExecutionStatus(JobExecutionStatus.FAILURE).build());
         long numberOfFailureJobs = jobResultDocumentRepository.count(failureJobEx);
         jobManagementStatistics.numberOfFailureJobs.set(numberOfFailureJobs);
     }
@@ -327,7 +327,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         JobDocument jobDocument = jobDocumentRepository.save(JobTransformer.fromJobDefinition(jobDefinitionDTO, actionId));
         JobResultDocument.JobResultDocumentBuilder jobResultDocumentBuilder = JobResultDocument.builder()
                 .jobState(JobState.INITIAL)
-                .jobStatus(JobExecutionStatus.PENDING)
+                .jobExecutionStatus(JobExecutionStatus.PENDING)
                 .actionId(actionId)
                 .createdAt(DateTimeUtils.getCurrentEpochTimeInSecond())
                 .jobId(jobDocument.getHash());
@@ -374,14 +374,15 @@ public class JobManagerServiceImpl implements JobManagerService {
             Supplier<JobResultDocument> defaultJobResult = () -> JobResultDocument.builder().build();
             JobResultDocument jobStat = jobExecutionResultDocument.orElseGet(defaultJobResult);
             String jobState = Objects.isNull(jobStat.getJobState()) ? "" : jobStat.getJobState().name();
-            String jobStatus = Objects.isNull(jobStat.getJobStatus()) ? "" : jobStat.getJobStatus().name();
+            String jobStatus = Objects.isNull(jobStat.getJobExecutionStatus()) ? "" : jobStat.getJobExecutionStatus().name();
             return JobOverviewDTO.builder()
                     .name(jobDocument.getJobName())
                     .hash(jobId)
                     .jobState(jobState)
-                    .jobStatus(jobStatus)
+                    .jobExecutionStatus(jobStatus)
                     .isPaused(jobDocument.isPaused())
-                    .jobStatus(jobDocument.getJobStatus().name())
+                    .status(jobDocument.getJobStatus().name())
+                    .jobExecutionStatus(jobStat.getJobExecutionStatus().name())
                     .isSchedule(jobDocument.isScheduled())
                     .startedAt(jobStat.getStartedAt())
                     .updatedAt(jobStat.getUpdatedAt())
@@ -442,7 +443,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
 
         long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
-        JobExecutionStatus prevJobStatus = jobResultDocument.getJobStatus();
+        JobExecutionStatus prevJobStatus = jobResultDocument.getJobExecutionStatus();
         JobExecutionStatus nextJobStatus = JobExecutionStatus.FAILURE;
         String jobException = null;
 
@@ -451,7 +452,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                 jobResultDocument.setStartedAt(currentEpochTimeInMillisecond);
             }
             jobResultDocument.setUpdatedAt(currentEpochTimeInMillisecond);
-            jobResultDocument.setJobStatus(JobExecutionStatus.PROCESSING);
+            jobResultDocument.setJobExecutionStatus(JobExecutionStatus.PROCESSING);
             jobResultDocumentRepository.save(jobResultDocument);
 
             JobResultImmutable jobResult = process(jobDocument);
@@ -518,7 +519,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                                          long startedAt, String jobResult) {
         long endedAt = DateTimeUtils.getCurrentEpochTimeInMillisecond();
         jobResultDocument.setJobState(JobState.COMPLETED);
-        jobResultDocument.setJobStatus(nextJobStatus);
+        jobResultDocument.setJobExecutionStatus(nextJobStatus);
         jobResultDocument.setEndedAt(endedAt);
         jobResultDocument.setElapsedTime(endedAt - startedAt);
         jobResultDocument.setFailureNotes(jobResult);

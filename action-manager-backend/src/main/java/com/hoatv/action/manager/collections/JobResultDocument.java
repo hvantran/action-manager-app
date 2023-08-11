@@ -19,7 +19,7 @@ public class JobResultDocument {
     @Builder.Default
     private String hash = UUID.randomUUID().toString();
     private JobState jobState;
-    private JobExecutionStatus jobStatus;
+    private JobExecutionStatus jobExecutionStatus;
     private String failureNotes;
     private String jobId;
     private String actionId;

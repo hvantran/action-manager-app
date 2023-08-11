@@ -221,6 +221,7 @@ export interface JobOverview {
     actionHash: string
     name: string
     state: string
+    executionStatus: string
     status: string
     failureNotes?: string
     startedAt: number
@@ -237,11 +238,12 @@ export interface JobDetailMetadata {
     configurations?: string
     content?: string
     isAsync?: boolean
-    isScheduled?: boolean
+    isScheduled: boolean
     outputTargets?: Array<String>
     scheduleInterval?: number
     createdAt?: number
     isPaused: boolean
+    status?: string
 }
 
 
@@ -362,7 +364,7 @@ export class JobAPI {
       method: "PUT",
       headers: {}
     }
-    const targetURL = `${ACTION_MANAGER_API_URL}/jobs/${jobId}/pause`;
+    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}/pause`;
     await restClient.sendRequest(requestOptions, targetURL, async() => {
       return { 'message': `Job ${jobName} has been paused`, key: new Date().getTime() } as SnackbarMessage;
     });
