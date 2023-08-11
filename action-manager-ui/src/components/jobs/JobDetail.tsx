@@ -1,10 +1,11 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import EditIcon from '@mui/icons-material/Edit';
+import InfoIcon from '@mui/icons-material/Info';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveIcon from '@mui/icons-material/Save';
-import { Stack, Switch } from '@mui/material';
+import { Box, Stack, Switch } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
@@ -300,7 +301,7 @@ export default function JobDetail() {
   const onPauseResumeSwicherOnChange = (event: any) => {
     setIsPausedJob(event.target.checked);
     if (event.target.checked) {
-      JobAPI.pause(actionId, jobId, jobName, restClient);
+      JobAPI.pause(jobId, jobName, restClient);
       return;
     }
     JobAPI.resume(actionId, jobId, jobName, restClient);
@@ -331,6 +332,10 @@ export default function JobDetail() {
           })
       },{
         actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange}/>,
+        actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+         <InfoIcon />
+          <p>Paused function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
+        </Box>,
         actionLabel: "Pause/Resume",
         actionName: "pauseResumeAction"
       }
