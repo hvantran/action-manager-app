@@ -125,12 +125,6 @@ public class ActionControllerV1 {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(path = "/{hash}/jobs/{jobHash}/pause", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> pauseJob(@PathVariable("hash") String actionId, @PathVariable("jobHash") String jobId) {
-        jobManagerService.pause(jobId);
-        return ResponseEntity.noContent().build();
-    }
-
     @PutMapping(path = "/{hash}/jobs/{jobHash}/resume", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> resumeJob(@PathVariable("hash") String actionId, @PathVariable("jobHash") String jobId) {
         actionManagerService.resumeJob(jobId);

@@ -357,12 +357,12 @@ export class JobAPI {
     });
   }
 
-  static async pause(actionId: string, jobId: string, jobName: string, restClient: RestClient) {
+  static async pause(jobId: string, jobName: string, restClient: RestClient) {
     const requestOptions = {
       method: "PUT",
       headers: {}
     }
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/pause`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/jobs/${jobId}/pause`;
     await restClient.sendRequest(requestOptions, targetURL, async() => {
       return { 'message': `Job ${jobName} has been paused`, key: new Date().getTime() } as SnackbarMessage;
     });

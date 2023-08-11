@@ -14,6 +14,7 @@ public final class ActionTransformer {
                 .configurations(actionDefinitionDTO.getConfigurations())
                 .actionStatus(ActionStatus.valueOf(actionDefinitionDTO.getActionStatus()))
                 .isFavorite(actionDefinitionDTO.isFavorite())
+                .actionStatus(ActionStatus.valueOf(actionDefinitionDTO.getActionStatus()))
                 .createdAt(DateTimeUtils.getCurrentEpochTimeInSecond())
                 .build();
     }
@@ -26,6 +27,7 @@ public final class ActionTransformer {
                 .actionStatus(actionDocument.getActionStatus().name())
                 .actionDescription(actionDocument.getActionDescription())
                 .configurations(actionDocument.getConfigurations())
+                .actionStatus(actionDocument.getActionStatus().name())
                 .createdAt(actionDocument.getCreatedAt())
                 .build();
     }

@@ -74,6 +74,10 @@ public class JobDetailDTO {
     private String configurations;
 
     @JsonProperty("isPaused")
+    @Deprecated
     private boolean isPaused;
+
+    @JsonProperty("status")
+    private String status;
 
 }

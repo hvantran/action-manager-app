@@ -34,9 +34,11 @@ public class JobDocument implements JobImmutable {
     private boolean isScheduled;
     private int scheduleInterval;
     private String scheduleUnit;
+    @Deprecated
     private boolean isPaused;
     private long createdAt;
     private long updatedAt;
+    private JobStatus jobStatus;
 
 
     public void updateFromJobDefinitionDTO(JobDefinitionDTO jobDefinitionDTO) {

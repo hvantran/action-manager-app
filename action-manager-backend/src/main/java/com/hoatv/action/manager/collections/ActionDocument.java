@@ -22,6 +22,7 @@ public class ActionDocument {
     private boolean isFavorite;
     private String actionDescription;
     private String configurations;
+    private ActionStatus actionStatus;
     private long createdAt;
 
 }

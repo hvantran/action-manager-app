@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoatv.action.manager.api.JobImmutable;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.api.JobResultImmutable;
-import com.hoatv.action.manager.collections.JobDocument;
-import com.hoatv.action.manager.collections.JobExecutionStatus;
-import com.hoatv.action.manager.collections.JobResultDocument;
-import com.hoatv.action.manager.collections.JobState;
+import com.hoatv.action.manager.collections.*;
 import com.hoatv.action.manager.document.transformers.JobTransformer;
 import com.hoatv.action.manager.dtos.*;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
@@ -236,7 +233,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public void pause(String jobHash) {
         JobDocument jobDocument = getJobDocument(jobHash);
-        jobDocument.setPaused(true);
+        jobDocument.setJobStatus(JobStatus.PAUSED);
         Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
         checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Pause only support for schedule jobs"));
 
@@ -384,6 +381,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .jobState(jobState)
                     .jobStatus(jobStatus)
                     .isPaused(jobDocument.isPaused())
+                    .jobStatus(jobDocument.getJobStatus().name())
                     .isSchedule(jobDocument.isScheduled())
                     .startedAt(jobStat.getStartedAt())
                     .updatedAt(jobStat.getUpdatedAt())

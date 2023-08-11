@@ -1,6 +1,7 @@
 package com.hoatv.action.manager.document.transformers;
 
 import com.hoatv.action.manager.collections.JobDocument;
+import com.hoatv.action.manager.collections.JobStatus;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
@@ -16,6 +17,7 @@ public final class JobTransformer {
                 .jobDescription(jobDefinitionDTO.getJobDescription())
                 .configurations(jobDefinitionDTO.getConfigurations())
                 .jobContent(jobDefinitionDTO.getJobContent())
+                .jobStatus(JobStatus.valueOf(jobDefinitionDTO.getJobStatus()))
                 .jobCategory(jobDefinitionDTO.getJobCategory())
                 .isAsync(jobDefinitionDTO.isAsync())
                 .scheduleUnit(jobDefinitionDTO.getScheduleUnit())
@@ -41,6 +43,7 @@ public final class JobTransformer {
                 .createdAt(jobDocument.getCreatedAt())
                 .isAsync(jobDocument.isAsync())
                 .isPaused(jobDocument.isPaused())
+                .jobStatus(jobDocument.getJobStatus().name())
                 .build();
     }
 
@@ -57,6 +60,7 @@ public final class JobTransformer {
                 .scheduleTimeUnit(jobDocument.getScheduleUnit())
                 .isAsync(jobDocument.isAsync())
                 .isPaused(jobDocument.isPaused())
+                .status(jobDocument.getJobStatus().name())
                 .build();
     }
 }

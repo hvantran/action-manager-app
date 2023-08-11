@@ -58,4 +58,10 @@ public class JobControllerV1 {
         jobManagerService.processNonePersistenceJob(jobDefinitionDTO);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping(path = "/{jobHash}/pause", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> pauseJob(@PathVariable("jobHash") String jobId) {
+        jobManagerService.pause(jobId);
+        return ResponseEntity.noContent().build();
+    }
 }

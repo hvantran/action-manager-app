@@ -43,5 +43,9 @@ public class JobOverviewDTO {
     private String actionHash;
 
     @JsonProperty("isPaused")
+    @Deprecated
     private boolean isPaused;
+
+    @JsonProperty("status")
+    private String status;
 }
