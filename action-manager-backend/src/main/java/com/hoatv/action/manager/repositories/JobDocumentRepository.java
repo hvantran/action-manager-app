@@ -13,8 +13,8 @@ public interface JobDocumentRepository extends MongoRepository<JobDocument, Stri
 
     void deleteByActionId(String actionId);
     List<JobDocument> findJobByActionId(String actionId);
-    List<JobDocument> findByIsScheduledTrueAndIsPausedFalse();
-    List<JobDocument> findByIsScheduledTrueAndIsPausedFalseAndActionId(String actionId);
-    List<JobDocument> findByIsScheduledFalseAndIsPausedFalseAndActionId(String actionId);
+    List<JobDocument> findByIsScheduledTrueAndJobStatus(String status);
+    List<JobDocument> findByIsScheduledTrueAndJobStatusAndActionId(String status, String actionId);
+    List<JobDocument> findByIsScheduledFalseAndJobStatusAndActionId(String status, String actionId);
     Page<JobDocument> findJobByActionId(String actionId, Pageable pageable);
 }

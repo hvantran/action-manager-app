@@ -61,7 +61,7 @@ public class ActionControllerV1 {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
         Page<ActionOverviewDTO> actionResults =
-                actionManagerService.getAllActionsWithPaging(PageRequest.of(pageIndex, pageSize, defaultSorting));
+                actionManagerService.getActions(PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
     }
 
@@ -104,7 +104,7 @@ public class ActionControllerV1 {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
         Page<ActionOverviewDTO> actionResults =
-                actionManagerService.getAllActionsWithPaging(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
+                actionManagerService.searchActions(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
     }
 

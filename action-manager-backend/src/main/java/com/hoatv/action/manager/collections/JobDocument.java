@@ -5,6 +5,7 @@ import com.hoatv.action.manager.dtos.JobCategory;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -34,11 +35,14 @@ public class JobDocument implements JobImmutable {
     private boolean isScheduled;
     private int scheduleInterval;
     private String scheduleUnit;
-    @Deprecated
-    private boolean isPaused;
     private long createdAt;
     private long updatedAt;
-    private JobStatus jobStatus;
+    private String jobStatus;
+
+    @Transient
+    public JobStatus getJobStatus() {
+        return JobStatus.valueOf(this.jobStatus);
+    }
 
 
     public void updateFromJobDefinitionDTO(JobDefinitionDTO jobDefinitionDTO) {

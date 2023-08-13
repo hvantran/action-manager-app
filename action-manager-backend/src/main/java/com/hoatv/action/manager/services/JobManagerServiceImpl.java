@@ -167,7 +167,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @LoggingMonitor
     public Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId() {
-        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndIsPausedFalse();
+        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatus("ACTIVE");
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(scheduledJobDocuments);
 
         List<Triplet<String, String, String>> jobDocumentMapping = getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments);
@@ -208,7 +208,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @LoggingMonitor
     public Map<String, String> getEnabledOnetimeJobs(String actionId) {
-        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndIsPausedFalseAndActionId(actionId);
+        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndJobStatusAndActionId("ACTIVE", actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments)
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
@@ -217,7 +217,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @LoggingMonitor
     public Map<String, String> getEnabledScheduledJobs(String actionId) {
-        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndIsPausedFalseAndActionId(actionId);
+        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionId("ACTIVE", actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments)
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
@@ -233,7 +233,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public void pause(String jobHash) {
         JobDocument jobDocument = getJobDocument(jobHash);
-        jobDocument.setJobStatus(JobStatus.PAUSED);
+        jobDocument.setJobStatus(JobStatus.PAUSED.name());
         Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
         checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Pause only support for schedule jobs"));
 
@@ -250,7 +250,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public void deleteJobsByActionId(String actionId) {
         LOGGER.info("Deleted the job result documents belong to action {}", actionId);
-        List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndIsPausedFalseAndActionId(actionId);
+        List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionId("ACTIVE", actionId);
         List<String> jobIdStrings = jobIds.stream().map(JobDocument::getHash).toList();
 
         scheduledJobRegistry.entrySet().stream()
@@ -380,7 +380,6 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .hash(jobId)
                     .jobState(jobState)
                     .jobExecutionStatus(jobStatus)
-                    .isPaused(jobDocument.isPaused())
                     .status(jobDocument.getJobStatus().name())
                     .jobExecutionStatus(jobStat.getJobExecutionStatus().name())
                     .isSchedule(jobDocument.isScheduled())

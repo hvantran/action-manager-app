@@ -2,16 +2,12 @@ package com.hoatv.action.manager.services;
 
 import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
-import com.hoatv.action.manager.collections.ActionDocument;
-import com.hoatv.action.manager.collections.ActionStatisticsDocument;
+import com.hoatv.action.manager.collections.*;
 import com.hoatv.action.manager.collections.ActionStatisticsDocument.ActionStatisticsDocumentBuilder;
-import com.hoatv.action.manager.collections.JobDocument;
-import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.document.transformers.ActionTransformer;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
-import com.hoatv.action.manager.collections.JobExecutionStatus;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.ActionStatisticsDocumentRepository;
@@ -132,14 +128,14 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor
-    public Page<ActionOverviewDTO> getAllActionsWithPaging(String search, Pageable pageable) {
+    public Page<ActionOverviewDTO> searchActions(String search, Pageable pageable) {
         Page<ActionDocument> actionDocuments = actionDocumentRepository.findActionByName(search, pageable);
         return getActionOverviewDTOS(actionDocuments);
     }
 
     @Override
     @LoggingMonitor
-    public Page<ActionOverviewDTO> getAllActionsWithPaging(Pageable pageable) {
+    public Page<ActionOverviewDTO> getActions(Pageable pageable) {
         Page<ActionDocument> actionDocuments = actionDocumentRepository.findAll(pageable);
         return getActionOverviewDTOS(actionDocuments);
     }
@@ -208,6 +204,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         Set<String> actionIds = actionDocuments.stream()
                 .map(ActionDocument::getHash)
                 .collect(Collectors.toSet());
+
         List<ActionStatisticsDocument> actionStatics = actionStatisticsDocumentRepository.findByActionIdIn(actionIds);
         return actionDocuments.map(actionDocument -> {
             String actionId = actionDocument.getHash();
@@ -224,6 +221,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             return ActionOverviewDTO.builder()
                     .name(actionDocument.getActionName())
                     .hash(actionId)
+                    .actionStatus(actionDocument.getActionStatus().name())
                     .numberOfScheduleJobs(numberOfScheduleJobs)
                     .numberOfFailureJobs(numberOfFailureJobs)
                     .numberOfJobs(numberOfJobs)
@@ -319,7 +317,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @Override
     public void resumeJob(String jobHash) {
         JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
-        jobDocument.setPaused(false);
+        jobDocument.setJobStatus(JobStatus.ACTIVE.name());
         JobResultDocument jobResultDocument = jobManagerService.getJobResultDocumentByJobId(jobHash);
         ActionStatisticsDocument statisticsDocument = actionStatisticsDocumentRepository.findByActionId(jobDocument.getActionId());
         Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;

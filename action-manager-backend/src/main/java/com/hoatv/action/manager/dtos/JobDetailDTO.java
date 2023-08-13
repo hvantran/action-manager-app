@@ -73,10 +73,6 @@ public class JobDetailDTO {
     @NotEmpty(message = "Job configurations cannot be NULL/empty")
     private String configurations;
 
-    @JsonProperty("isPaused")
-    @Deprecated
-    private boolean isPaused;
-
     @JsonProperty("status")
     private String status;
 

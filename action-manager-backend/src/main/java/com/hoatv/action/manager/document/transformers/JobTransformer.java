@@ -17,7 +17,7 @@ public final class JobTransformer {
                 .jobDescription(jobDefinitionDTO.getJobDescription())
                 .configurations(jobDefinitionDTO.getConfigurations())
                 .jobContent(jobDefinitionDTO.getJobContent())
-                .jobStatus(JobStatus.valueOf(jobDefinitionDTO.getJobStatus()))
+                .jobStatus(jobDefinitionDTO.getJobStatus())
                 .jobCategory(jobDefinitionDTO.getJobCategory())
                 .isAsync(jobDefinitionDTO.isAsync())
                 .scheduleUnit(jobDefinitionDTO.getScheduleUnit())
@@ -42,7 +42,6 @@ public final class JobTransformer {
                 .scheduleUnit(jobDocument.getScheduleUnit())
                 .createdAt(jobDocument.getCreatedAt())
                 .isAsync(jobDocument.isAsync())
-                .isPaused(jobDocument.isPaused())
                 .jobStatus(jobDocument.getJobStatus().name())
                 .build();
     }
@@ -59,7 +58,6 @@ public final class JobTransformer {
                 .scheduleInterval(jobDocument.getScheduleInterval())
                 .scheduleTimeUnit(jobDocument.getScheduleUnit())
                 .isAsync(jobDocument.isAsync())
-                .isPaused(jobDocument.isPaused())
                 .status(jobDocument.getJobStatus().name())
                 .build();
     }

@@ -36,4 +36,7 @@ public class ActionOverviewDTO {
 
     @JsonProperty("isFavorite")
     private boolean isFavorite;
+
+    @JsonProperty("status")
+    private String actionStatus;
 }

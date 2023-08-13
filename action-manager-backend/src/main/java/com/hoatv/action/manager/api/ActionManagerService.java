@@ -17,9 +17,9 @@ public interface ActionManagerService {
 
     Optional<ActionDefinitionDTO> setFavoriteActionValue(String hash, boolean isFavorite);
 
-    Page<ActionOverviewDTO> getAllActionsWithPaging(String search, Pageable pageable);
+    Page<ActionOverviewDTO> searchActions(String search, Pageable pageable);
 
-    Page<ActionOverviewDTO> getAllActionsWithPaging(Pageable pageable);
+    Page<ActionOverviewDTO> getActions(Pageable pageable);
 
     void deleteAction(String hash);
 
