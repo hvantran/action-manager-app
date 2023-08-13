@@ -24,7 +24,7 @@ import {
 import ProcessTracking from '../common/ProcessTracking';
 
 import { red, yellow } from '@mui/material/colors';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
@@ -40,6 +40,7 @@ import ConfirmationDialog from '../common/ConfirmationDialog';
 
 
 export default function JobDetail() {
+  const navigate = useNavigate();
   const targetJob = useParams();
   const location = useLocation();
 
@@ -374,7 +375,7 @@ export default function JobDetail() {
       setDeleteConfirmationDialogOpen(false);
     },
     positiveAction() {
-      JobAPI.delete(jobId, jobName, restClient);
+      JobAPI.delete(jobId, jobName, restClient, () =>  navigate("/actions/" + actionId));
     },
   }
 

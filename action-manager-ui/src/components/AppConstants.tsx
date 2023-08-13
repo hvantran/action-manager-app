@@ -369,13 +369,31 @@ export class JobAPI {
     });
   }
 
-  static async delete(jobId: string, jobName: string, restClient: RestClient) {
+  static async new(actionId: string, jobDefinitions: Array<JobDefinition>, restClient: RestClient, successCallback: () => void) {
+
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(jobDefinitions)
+    };
+
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/new`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      successCallback()
+      return undefined;
+    }, async (response: Response) => {
+      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async delete(jobId: string, jobName: string, restClient: RestClient, successCallback: () => void) {
     const requestOptions = {
       method: "DELETE",
       headers: {}
     }
-    const targetURL = `${JOB_MANAGER_API_URL}/jobs/${jobId}`;
+    const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
     await restClient.sendRequest(requestOptions, targetURL, async() => {
+      successCallback();
       return { 'message': `Job ${jobName} has been deleted`, key: new Date().getTime() } as SnackbarMessage;
     });
   }

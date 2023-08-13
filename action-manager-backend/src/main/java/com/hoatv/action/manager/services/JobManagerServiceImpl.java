@@ -273,8 +273,8 @@ public class JobManagerServiceImpl implements JobManagerService {
             scheduleTaskMgmtService.cancel(scheduledFuture);
             LOGGER.info("Delete the metric tasks for job - {}", jobDocument.getJobName());
             metricService.removeMetric(jobId);
-            jobDocumentRepository.delete(jobDocument);
         }
+        jobDocumentRepository.delete(jobDocument);
         JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobId);
         jobResultDocumentRepository.delete(jobResultDocument);
         LOGGER.info("Deleted the job results for job - {}", jobDocument.getJobName());

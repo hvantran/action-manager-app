@@ -68,7 +68,7 @@ export default function JobCreation() {
         propValue: '',
         propDescription: 'This is name of job',
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.InputText,
         textFieldMeta: {
@@ -90,7 +90,7 @@ export default function JobCreation() {
         propLabel: 'Asynchronous',
         propValue: false,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Switcher,
         switcherFieldMeta: {
@@ -111,7 +111,7 @@ export default function JobCreation() {
         propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
         propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -131,7 +131,7 @@ export default function JobCreation() {
         propValue: JOB_CATEGORY_VALUES[0].value,
         propDefaultValue: JOB_CATEGORY_VALUES[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -148,7 +148,7 @@ export default function JobCreation() {
         propLabel: 'Supported schedule',
         propValue: false,
         layoutProperties: { xs: 6 },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propDefaultValue: false,
         propType: PropType.Switcher,
@@ -170,7 +170,7 @@ export default function JobCreation() {
         propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
         propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -187,7 +187,7 @@ export default function JobCreation() {
         propLabel: 'Description',
         propValue: '',
         layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propType: PropType.Textarea,
         textareaFieldMeta: {
@@ -205,7 +205,7 @@ export default function JobCreation() {
         propValue: '{}',
         propDefaultValue: '{}',
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propType: PropType.CodeEditor,
         codeEditorMeta:
@@ -227,7 +227,7 @@ export default function JobCreation() {
         propValue: DEFAULT_JOB_CONTENT,
         propType: PropType.CodeEditor,
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propDefaultValue: DEFAULT_JOB_CONTENT,
         codeEditorMeta:
@@ -258,7 +258,7 @@ export default function JobCreation() {
           propDescription: 'This is name of job',
           propType: PropType.InputText,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 4, sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           textFieldMeta: {
             onChangeEvent: function (event: any) {
@@ -277,7 +277,7 @@ export default function JobCreation() {
           propLabel: 'Asynchronous',
           propValue: false,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 4, sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Switcher,
           switcherFieldMeta: {
@@ -297,7 +297,7 @@ export default function JobCreation() {
           propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
           propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 4, sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Selection,
           selectionMeta: {
@@ -317,7 +317,7 @@ export default function JobCreation() {
           propValue: JOB_CATEGORY_VALUES[0].value,
           propDefaultValue: JOB_CATEGORY_VALUES[0].value,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 4, sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Selection,
           selectionMeta: {
@@ -334,7 +334,7 @@ export default function JobCreation() {
           propLabel: 'Supported schedule',
           propValue: false,
           layoutProperties: { xs: 6 },
-          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 4, sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propDefaultValue: false,
           propType: PropType.Switcher,
@@ -356,7 +356,7 @@ export default function JobCreation() {
           propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
           propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 4, sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Selection,
           selectionMeta: {
@@ -373,7 +373,7 @@ export default function JobCreation() {
           propLabel: 'Description',
           propValue: '',
           layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 2, sx: { pl: 10 } },
           valueElementProperties: { xs: 10 },
           propType: PropType.Textarea,
           textareaFieldMeta: {
@@ -391,7 +391,7 @@ export default function JobCreation() {
           propValue: '{}',
           propDefaultValue: '{}',
           layoutProperties: { xs: 12 },
-          labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 2, sx: { pl: 10 } },
           valueElementProperties: { xs: 10 },
           propType: PropType.CodeEditor,
           codeEditorMeta:
@@ -410,7 +410,7 @@ export default function JobCreation() {
           propName: 'jobContent',
           propLabel: 'Job Content',
           layoutProperties: { xs: 12 },
-          labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 2, sx: { pl: 10 } },
           valueElementProperties: { xs: 10 },
           isRequired: true,
           propValue: DEFAULT_JOB_CONTENT,
@@ -462,8 +462,8 @@ export default function JobCreation() {
         }
       },
       {
-        actionIcon: <AddTaskTwoToneIcon />, 
-        actionName: 'newJob', 
+        actionIcon: <AddTaskTwoToneIcon />,
+        actionName: 'newJob',
         actionLabel: 'New Job',
         onClick: () => {
           setStepMetadatas(previous => {
@@ -481,22 +481,9 @@ export default function JobCreation() {
         actionIcon: <SaveIcon />,
         actionLabel: "Save",
         actionName: "saveJob",
-        onClick: () => async () => {
+        onClick: () => {
           let jobDefinitions: Array<JobDefinition> = getJobDetails(stepMetadatas);
-
-          const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(jobDefinitions)
-          };
-
-          const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/new`;
-          await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-            navigate("/actions/" + actionId);
-            return undefined;
-          }, async (response: Response) => {
-            return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
-          });
+          JobAPI.new(actionId, jobDefinitions, restClient, () => navigate("/actions/" + actionId));
         }
       },
     ],
