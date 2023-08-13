@@ -57,6 +57,13 @@ export default function ActionSummary() {
     { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
     { id: 'name', label: 'Name', minWidth: 100 },
     {
+      id: 'status',
+      label: 'Status',
+      minWidth: 170,
+      align: 'left',
+      format: (value: string) => value,
+    },
+    {
       id: 'numberOfJobs',
       label: 'Total jobs',
       minWidth: 170,

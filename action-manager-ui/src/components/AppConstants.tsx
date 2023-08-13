@@ -202,6 +202,7 @@ export interface ActionOverview {
     numberOfFailureJobs: number
     numberOfScheduleJobs: number
     createdAt: number
+    status: string
     isFavorite: boolean
 }
 
@@ -228,7 +229,6 @@ export interface JobOverview {
     elapsedTime: number
     updatedAt: number
     schedule: boolean
-    isPaused: boolean
 }
 
 export interface JobDetailMetadata {
@@ -242,7 +242,6 @@ export interface JobDetailMetadata {
     outputTargets?: Array<String>
     scheduleInterval?: number
     createdAt?: number
-    isPaused: boolean
     status?: string
 }
 
@@ -367,6 +366,17 @@ export class JobAPI {
     const targetURL = `${JOB_MANAGER_API_URL}/${jobId}/pause`;
     await restClient.sendRequest(requestOptions, targetURL, async() => {
       return { 'message': `Job ${jobName} has been paused`, key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static async delete(jobId: string, jobName: string, restClient: RestClient) {
+    const requestOptions = {
+      method: "DELETE",
+      headers: {}
+    }
+    const targetURL = `${JOB_MANAGER_API_URL}/jobs/${jobId}`;
+    await restClient.sendRequest(requestOptions, targetURL, async() => {
+      return { 'message': `Job ${jobName} has been deleted`, key: new Date().getTime() } as SnackbarMessage;
     });
   }
 

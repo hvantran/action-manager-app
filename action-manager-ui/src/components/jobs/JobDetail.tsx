@@ -1,4 +1,5 @@
 import { javascript } from '@codemirror/lang-javascript';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { json } from '@codemirror/lang-json';
 import EditIcon from '@mui/icons-material/Edit';
 import InfoIcon from '@mui/icons-material/Info';
@@ -10,6 +11,7 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import {
+  DialogMetadata,
   GenericActionMetadata,
   PageEntityMetadata,
   PropType,
@@ -21,25 +23,26 @@ import {
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';
 
-import { yellow } from '@mui/material/colors';
+import { red, yellow } from '@mui/material/colors';
 import { useLocation, useParams } from 'react-router-dom';
 import {
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
   JobAPI,
-  JobDefinition,
   JobDetailMetadata,
   ROOT_BREADCRUMB
 } from '../AppConstants';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
+import ConfirmationDialog from '../common/ConfirmationDialog';
 
 
 
 export default function JobDetail() {
   const targetJob = useParams();
   const location = useLocation();
+
   const jobName = location.state?.name || "";
   const [isPausedJob, setIsPausedJob] = React.useState(false);
   const [isScheduledJob, setIsScheduledJob] = React.useState(false);
@@ -275,6 +278,7 @@ export default function JobDetail() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [openError, setOpenError] = React.useState(false);
   const [openSuccess, setOpenSuccess] = React.useState(false);
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
   const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess), []);
 
@@ -331,7 +335,15 @@ export default function JobDetail() {
               setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
             })
           })
-      },{
+      },
+      {
+        actionIcon: <DeleteIcon />,
+        properties: { sx: { color: red[800] } },
+        actionLabel: "Delete action",
+        actionName: "deleteAction",
+        onClick: () => setDeleteConfirmationDialogOpen(true)
+      },
+      {
         actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange}/>,
         actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
          <InfoIcon />
@@ -352,11 +364,26 @@ export default function JobDetail() {
     messageInfo
   }
 
+  let confirmationDeleteDialogMeta: DialogMetadata = {
+    open: deleteConfirmationDialogOpen,
+    title: "Delete Job",
+    content: `Are you sure you want to delete ${jobName} job?`,
+    positiveText: "Yes",
+    negativeText: "No",
+    negativeAction() {
+      setDeleteConfirmationDialogOpen(false);
+    },
+    positiveAction() {
+      JobAPI.delete(jobId, jobName, restClient);
+    },
+  }
+
   return (
     <Stack spacing={2}>
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
+      <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
   );
 }
