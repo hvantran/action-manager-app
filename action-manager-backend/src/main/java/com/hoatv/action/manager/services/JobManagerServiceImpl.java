@@ -59,13 +59,21 @@ import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
 public class JobManagerServiceImpl implements JobManagerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobManagerServiceImpl.class);
+
     public static final int NUMBER_OF_JOB_THREADS = 20;
+
     private static final String JOB_MANAGER_METRIC_NAME_PREFIX = "job-manager";
+
     public static final String IO_JOB_MANAGER_APPLICATION = "io-" + JOB_MANAGER_METRIC_NAME_PREFIX;
+
     public static final String CPU_JOB_MANAGER_APPLICATION = "cpu-" + JOB_MANAGER_METRIC_NAME_PREFIX;
+
     public static final int MAX_AWAIT_TERMINATION_MILLIS = 5000;
+
     public static final String ACTION_MANAGER = "action-manager";
+
     private static final Map<String, String> DEFAULT_CONFIGURATIONS = new HashMap<>();
+
     private static final String TEMPLATE_ENGINE_NAME = "templateEngineName";
 
     private final ScriptEngineService scriptEngineService;
@@ -77,12 +85,15 @@ public class JobManagerServiceImpl implements JobManagerService {
     private final JobExecutionResultDocumentRepository jobResultDocumentRepository;
 
     private final TaskMgmtServiceV1 ioTaskMgmtService;
+
     private final TaskMgmtServiceV1 cpuTaskMgmtService;
 
     private final ScheduleTaskMgmtService scheduleTaskMgmtService;
 
     private final MetricService metricService;
+
     private final JobManagementStatistics jobManagementStatistics;
+
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
 
 
@@ -110,7 +121,9 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private static class JobManagementStatistics {
         private final AtomicLong totalNumberOfJobs = new AtomicLong(0);
+
         private final AtomicLong numberOfActiveJobs = new AtomicLong(0);
+
         private final AtomicLong numberOfFailureJobs = new AtomicLong(0);
     }
 
@@ -235,7 +248,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         JobDocument jobDocument = getJobDocument(jobHash);
         jobDocument.setJobStatus(JobStatus.PAUSED.name());
         Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
-        checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Pause only support for schedule jobs"));
+        checkThenThrow(!jobDocument.isScheduled(), () -> argumentChecker.apply("Pause only support for schedule jobs"));
 
         scheduledJobRegistry.entrySet().stream()
                 .filter(p -> jobHash.equals(p.getKey()))
@@ -246,6 +259,27 @@ public class JobManagerServiceImpl implements JobManagerService {
         metricService.removeMetric(jobHash);
         update(jobDocument);
     }
+
+    @Override
+    @LoggingMonitor
+    public void delete(String jobId) {
+        Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(jobId);
+        ObjectUtils.checkThenThrow(jobDocumentOptional.isEmpty(), "Cannot find job: " + jobId);
+        JobDocument jobDocument = jobDocumentOptional.get();
+
+        if (jobDocument.isScheduled() && jobDocument.getJobStatus() == JobStatus.ACTIVE) {
+            LOGGER.info("Delete the schedule tasks for job - {}", jobDocument.getJobName());
+            ScheduledFuture<?> scheduledFuture = scheduledJobRegistry.get(jobId);
+            scheduleTaskMgmtService.cancel(scheduledFuture);
+            LOGGER.info("Delete the metric tasks for job - {}", jobDocument.getJobName());
+            metricService.removeMetric(jobId);
+            jobDocumentRepository.delete(jobDocument);
+        }
+        JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobId);
+        jobResultDocumentRepository.delete(jobResultDocument);
+        LOGGER.info("Deleted the job results for job - {}", jobDocument.getJobName());
+    }
+
     @Override
     @LoggingMonitor
     public void deleteJobsByActionId(String actionId) {
@@ -339,7 +373,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public void processNonePersistenceJob(JobDefinitionDTO jobDocument) {
         Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
-        checkThenThrow(jobDocument.isScheduled(),  () -> argumentChecker.apply("Schedule jobs is not supported by dry run jobs"));
+        checkThenThrow(jobDocument.isScheduled(), () -> argumentChecker.apply("Schedule jobs is not supported by dry run jobs"));
 
         List<String> outputTargets = jobDocument.getOutputTargets();
         boolean isContainConsoleOutputOnly = outputTargets.size() == 1 && outputTargets.contains(JobOutputTarget.CONSOLE.name());

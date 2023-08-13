@@ -54,4 +54,6 @@ public interface JobManagerService {
     JobDetailDTO getJob(String hash);
 
     void update(String hash, JobDefinitionDTO jobDefinitionDTO);
+
+    void delete(String jobId);
 }

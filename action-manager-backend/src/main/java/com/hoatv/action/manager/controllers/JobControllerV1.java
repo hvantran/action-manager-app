@@ -64,4 +64,10 @@ public class JobControllerV1 {
         jobManagerService.pause(jobId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping(path = "/{jobHash}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> delete(@PathVariable("jobHash") String jobId) {
+        jobManagerService.delete(jobId);
+        return ResponseEntity.noContent().build();
+    }
 }
