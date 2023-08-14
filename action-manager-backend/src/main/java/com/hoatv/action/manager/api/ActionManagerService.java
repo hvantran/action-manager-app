@@ -32,5 +32,7 @@ public interface ActionManagerService {
 
     void resumeJob(String jobHash);
 
-    void moveToTrash(String actionId);
+    void archive(String actionId);
+
+    void restore(String actionId);
 }

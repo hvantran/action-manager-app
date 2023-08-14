@@ -19,6 +19,11 @@ export const ACTION_STATUS_SELECTION: Array<SelectionData> = [
   {label: "INITIAL", value: "INITIAL"},
   {label: "READY", value:"READY"}
 ] 
+export const JOB_STATUS_SELECTION: Array<SelectionData> = [
+  {label: "INITIAL", value: "INITIAL"},
+  {label: "READY", value:"READY"},
+  {label: "PAUSED", value:"PAUSED"}
+] 
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
@@ -177,7 +182,6 @@ export interface JobDefinition {
     configurations: string | undefined
     content: string | undefined
     isAsync: boolean | undefined
-    isPaused: boolean | undefined
     isScheduled: boolean | undefined
     outputTargets: Array<String> | undefined
     scheduleInterval: number | undefined
@@ -265,6 +269,7 @@ export const getJobDefinitionFromStepMetadata = (stepMetadata: StepMetadata) => 
   let outputTargets = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobOutputTargets"))?.propValue;
   let isScheduled = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isScheduledJob"))?.propValue;
   let scheduleInterval = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("scheduleInterval"))?.propValue;
+  let status = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobStatus"))?.propValue;
 
   return {
     name,
@@ -275,6 +280,7 @@ export const getJobDefinitionFromStepMetadata = (stepMetadata: StepMetadata) => 
     outputTargets,
     isAsync,
     isScheduled,
+    status,
     scheduleInterval: isScheduled ? scheduleInterval : 0
   } as JobDefinition
 }
@@ -433,7 +439,7 @@ export class ActionAPI {
     });
   }
 
-  static moveToTrash = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
+  static archive = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
 
     const requestOptions = {
       method: "PUT",
@@ -450,6 +456,25 @@ export class ActionAPI {
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
+
+  static restore = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
+
+    const requestOptions = {
+      method: "PUT",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/restore`;
+    await restClient.sendRequest(requestOptions, targetURL, () => {
+      successCallback();
+      return undefined;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
 
   static replayAction = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
 

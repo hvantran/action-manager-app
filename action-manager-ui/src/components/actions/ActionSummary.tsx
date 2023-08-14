@@ -1,17 +1,16 @@
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import StarIcon from '@mui/icons-material/Star';
+import ArchiveIcon from '@mui/icons-material/Archive';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 import { Stack } from '@mui/material';
-import { green, red, yellow } from '@mui/material/colors';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
+import { green, red, yellow } from '@mui/material/colors';
 import React from 'react';
-import ProcessTracking from '../common/ProcessTracking';
 import {
   ColumnMetadata,
   PageEntityMetadata,
@@ -24,9 +23,10 @@ import {
   TableMetadata,
   WithLink
 } from '../GenericConstants';
+import ProcessTracking from '../common/ProcessTracking';
 
 import { useNavigate } from 'react-router-dom';
-import { ActionOverview, ACTION_MANAGER_API_URL, ROOT_BREADCRUMB, ActionAPI } from '../AppConstants';
+import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
@@ -137,13 +137,12 @@ export default function ActionSummary() {
           }
         },
         {
-          actionIcon: <DeleteForeverIcon />,
-          properties: { sx: { color: red[800] } },
-          actionLabel: "Delete action permanently",
-          actionName: "deleteAction",
+          actionIcon: <ArchiveIcon />,
+          actionLabel: "Archive",
+          actionName: "archive",
           onClick: (row: ActionOverview) => {
             return () => {
-              return ActionAPI.deleteAction(row.hash, restClient, () => {
+              return ActionAPI.archive(row.hash, restClient, () => {
                 ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
               });
             }

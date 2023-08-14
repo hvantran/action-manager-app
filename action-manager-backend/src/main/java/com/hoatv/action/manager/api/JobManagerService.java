@@ -6,9 +6,10 @@ import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.collections.JobExecutionStatus;
+import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.services.ActionExecutionContext;
 import com.hoatv.fwk.common.ultilities.Pair;
-import com.hoatv.monitor.mgmt.LoggingMonitor;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,11 +19,27 @@ import org.springframework.data.domain.PageRequest;
 
 public interface JobManagerService {
 
-    JobResultDocument getJobResultDocumentByJobId(String jobHash);
-
     void pause(String jobHash);
 
+    void update(JobDocument jobDocument);
+
+    void delete(String jobId);
+
+    void update(String hash, JobDefinitionDTO jobDefinitionDTO);
+
+    JobDocument getJobDocument(String hash);
+
+    JobDetailDTO getJobDetails(String hash);
+    List<JobDocumentRepository.JobIdImmutable> getJobIdsByAction(String actionId);
+
+    Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest);
+
+    JobResultDocument getJobResultDocumentByJobId(String jobHash);
+
     void deleteJobsByActionId(String actionId);
+
+    void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
+                    BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction);
 
     void processBulkJobs(ActionExecutionContext actionExecutionContext);
 
@@ -31,11 +48,6 @@ public interface JobManagerService {
     Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest);
 
     void processNonePersistenceJob(JobDefinitionDTO jobDocument);
-
-    JobDocument getJobDocument(String hash);
-
-    @LoggingMonitor
-    void update(JobDocument jobDocument);
 
     Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId);
 
@@ -46,15 +58,4 @@ public interface JobManagerService {
     Map<String, String> getEnabledOnetimeJobs(String actionId);
 
     Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId(Set<String> actionIds);
-
-    Page<JobOverviewDTO> getJobs(PageRequest pageRequest);
-
-    void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                    BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction);
-
-    JobDetailDTO getJob(String hash);
-
-    void update(String hash, JobDefinitionDTO jobDefinitionDTO);
-
-    void delete(String jobId);
 }

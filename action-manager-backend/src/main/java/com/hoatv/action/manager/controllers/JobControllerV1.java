@@ -36,7 +36,7 @@ public class JobControllerV1 {
                                      @RequestParam("pageSize") @Min(0) int pageSize) {
         Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
         Page<JobOverviewDTO> actionResults =
-                jobManagerService.getJobs(PageRequest.of(pageIndex, pageSize, defaultSorting));
+                jobManagerService.getOverviewJobs(PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
     }
 
@@ -49,7 +49,7 @@ public class JobControllerV1 {
 
     @GetMapping(path = "/{hash}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getJobById(@PathVariable("hash") String jobId) {
-        JobDetailDTO jobDetailDTO = jobManagerService.getJob(jobId);
+        JobDetailDTO jobDetailDTO = jobManagerService.getJobDetails(jobId);
         return ResponseEntity.ok(jobDetailDTO);
     }
 

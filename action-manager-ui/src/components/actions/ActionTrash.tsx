@@ -1,27 +1,27 @@
 
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import RestoreIcon from '@mui/icons-material/Restore';
 
 import { Stack } from '@mui/material';
 import Link from '@mui/material/Link';
-import { green, red } from '@mui/material/colors';
+import { red } from '@mui/material/colors';
 import React from 'react';
 import {
   ColumnMetadata,
+  DialogMetadata,
   PageEntityMetadata,
   PagingOptionMetadata,
   PagingResult,
   RestClient,
   SnackbarAlertMetadata,
   SnackbarMessage,
-  SpeedDialActionMetadata,
-  TableMetadata,
-  WithLink
+  TableMetadata
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';
 
 import { ActionAPI, ActionOverview } from '../AppConstants';
+import ConfirmationDialog from '../common/ConfirmationDialog';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
@@ -34,6 +34,10 @@ export default function ActionTrash() {
   const [openSuccess, setOpenSuccess] = React.useState(false);
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
+  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
+  const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
+  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
   const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
   const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
 
@@ -42,6 +46,18 @@ export default function ActionTrash() {
       Trash
     </Link>
   ];
+
+  const confirmationDeleteDialogMeta: DialogMetadata = {
+    open: deleteConfirmationDialogOpen,
+    title: confirmationDialogTitle,
+    content: confirmationDialogContent,
+    positiveText: "Yes",
+    negativeText: "No",
+    negativeAction() {
+      setDeleteConfirmationDialogOpen(false);
+    },
+    positiveAction: confirmationDialogPositiveAction
+  }
 
   const columns: ColumnMetadata[] = [
     { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
@@ -103,18 +119,32 @@ export default function ActionTrash() {
       align: 'right',
       actions: [
         {
-          actionIcon: <DeleteForeverIcon />,
-          properties: { sx: { color: red[800] } },
-          actionLabel: "Delete action permanently",
-          actionName: "deleteAction",
+          actionIcon: <RestoreIcon />,
+          actionLabel: "Restore",
+          actionName: "restoreAction",
           onClick: (row: ActionOverview) => {
             return () => {
-              return ActionAPI.deleteAction(row.hash, restClient, () => {
-                ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
+              return ActionAPI.restore(row.hash, restClient, () => {
+                ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
               });
             }
           }
         },
+        {
+          actionIcon: <DeleteForeverIcon />,
+          properties: { sx: { color: red[800] } },
+          actionLabel: "Delete action permanently",
+          actionName: "deleteAction",
+          onClick: (row: ActionOverview) => () => {
+            setConfirmationDialogTitle("Delete Action Permanently")
+            setConfirmationDialogContent(previous => `Are you sure you want to delete permanently ${row.name} action?`)
+            setConfirmationDialogPositiveAction(previous => () => ActionAPI.deleteAction(row.hash, restClient, () => {
+              setDeleteConfirmationDialogOpen(false);
+              ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+            }));
+            setDeleteConfirmationDialogOpen(true)
+          }
+        }
       ]
     }
   ];
@@ -169,6 +199,7 @@ export default function ActionTrash() {
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
+      <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
   );
 }

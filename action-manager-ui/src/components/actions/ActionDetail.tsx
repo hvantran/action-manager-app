@@ -1,16 +1,15 @@
 
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import ArchiveIcon from '@mui/icons-material/Archive';
 import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
-import AddIcon from '@mui/icons-material/Add';
 import { Box, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { green, orange, red } from '@mui/material/colors';
+import { green } from '@mui/material/colors';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ActionAPI, ActionDetails, ROOT_BREADCRUMB } from '../AppConstants';
 import { DialogMetadata, PageEntityMetadata, RestClient, SnackbarAlertMetadata, SnackbarMessage } from '../GenericConstants';
@@ -98,26 +97,13 @@ export default function ActionDetail() {
         onClick: () => ActionAPI.replayAction(actionId, restClient, () => setReplayActionFlag(previous => !previous))
       },
       {
-        actionIcon: <DeleteForeverIcon />,
-        properties: { sx: { color: red[800] } },
-        actionLabel: "Delete action permanently",
-        actionName: "deleteAction",
+        actionIcon: <ArchiveIcon />,
+        actionLabel: "Archive",
+        actionName: "archiveAction",
         onClick: () => {
-          setConfirmationDialogTitle("Delete Action")
-          setConfirmationDialogContent(previous => "Are you sure you want to delete this action permanently?")
-          setConfirmationDialogPositiveAction(previous => () => ActionAPI.deleteAction(actionId, restClient, () => navigate("/actions")));
-          setDeleteConfirmationDialogOpen(true)
-        }
-      },
-      {
-        actionIcon: <DeleteIcon />,
-        properties: { sx: { color: orange[800] } },
-        actionLabel: "Move action to trash",
-        actionName: "moveActionToTrash",
-        onClick: () => {
-          setConfirmationDialogTitle("Move To Trash")
-          setConfirmationDialogContent(previous => "Are you sure you want to move this action to trash?")
-          setConfirmationDialogPositiveAction(previous => () => ActionAPI.moveToTrash(actionId, restClient, () => navigate("/actions")));
+          setConfirmationDialogTitle("Archive")
+          setConfirmationDialogContent(previous => "Are you sure you want to archive this action?")
+          setConfirmationDialogPositiveAction(previous => () => ActionAPI.archive(actionId, restClient, () => navigate("/actions")));
           setDeleteConfirmationDialogOpen(true)
         }
       },

@@ -141,8 +141,14 @@ public class ActionControllerV1 {
     }
 
     @PutMapping(path = "/{hash}/moveToTrash", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> moveToTrash(@PathVariable("hash") String actionId) {
-        actionManagerService.moveToTrash(actionId);
+    public ResponseEntity<?> archive(@PathVariable("hash") String actionId) {
+        actionManagerService.archive(actionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping(path = "/{hash}/restore", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> restore(@PathVariable("hash") String actionId) {
+        actionManagerService.restore(actionId);
         return ResponseEntity.noContent().build();
     }
 

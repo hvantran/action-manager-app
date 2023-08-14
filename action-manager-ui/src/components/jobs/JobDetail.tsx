@@ -29,6 +29,7 @@ import {
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
+  JOB_STATUS_SELECTION,
   JobAPI,
   JobDetailMetadata,
   ROOT_BREADCRUMB
@@ -213,14 +214,31 @@ export default function JobDetail() {
         propName: 'description',
         propLabel: 'Description',
         propValue: '',
-
         disabled: true,
-        layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
-        valueElementProperties: { xs: 10 },
+        layoutProperties: { xs: 6 },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
         propType: PropType.Textarea,
         textareaFieldMeta: {
           onChangeEvent: function (event: any) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setPropertyMetadata(onChangeProperty(propName, propValue));
+          }
+        }
+      },
+      {
+        propName: 'status',
+        propLabel: 'Status',
+        disabled: true,
+        propValue: '',
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Selection,
+        selectionMeta: {
+          selections: JOB_STATUS_SELECTION,
+          onChangeEvent: function (event) {
             let propValue = event.target.value;
             let propName = event.target.name;
             setPropertyMetadata(onChangeProperty(propName, propValue));
@@ -340,7 +358,7 @@ export default function JobDetail() {
       {
         actionIcon: <DeleteForeverIcon />,
         properties: { sx: { color: red[800] } },
-        actionLabel: "Delete action",
+        actionLabel: "Delete",
         actionName: "deleteAction",
         onClick: () => setDeleteConfirmationDialogOpen(true)
       },

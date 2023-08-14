@@ -17,6 +17,7 @@ import {
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
+  JOB_STATUS_SELECTION,
   JobDefinition,
   ROOT_BREADCRUMB,
   getJobDefinitionFromStepMetadata
@@ -178,15 +179,33 @@ export default function ActionCreation() {
         propName: 'jobDescription',
         propLabel: 'Description',
         propValue: '',
-        layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
-        valueElementProperties: { xs: 10 },
+        layoutProperties: { xs: 6 },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
         propType: PropType.Textarea,
         textareaFieldMeta: {
           onChangeEvent: function (event: any) {
             let propValue = event.target.value;
             let propName = event.target.name;
             setStepMetadatas(onchangeStepDefault(propName, propValue))
+          }
+        }
+      },
+      {
+        propName: 'jobStatus',
+        propLabel: 'Status',
+        propValue: JOB_STATUS_SELECTION[0].value,
+        propDefaultValue: JOB_STATUS_SELECTION[0].value,
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Selection,
+        selectionMeta: {
+          selections: JOB_STATUS_SELECTION,
+          onChangeEvent: function (event) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue));
           }
         }
       },
@@ -450,15 +469,33 @@ export default function ActionCreation() {
           propName: 'jobDescription',
           propLabel: 'Description',
           propValue: '',
-          layoutProperties: { xs: 12, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 2,  sx: { pl: 10 } },
-          valueElementProperties: { xs: 10 },
+          layoutProperties: { xs: 6 },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          valueElementProperties: { xs: 8 },
           propType: PropType.Textarea,
           textareaFieldMeta: {
             onChangeEvent: function (event: any) {
               let propValue = event.target.value;
               let propName = event.target.name;
               setStepMetadatas(onchangeStepDefault(propName, propValue))
+            }
+          }
+        },
+        {
+          propName: 'jobStatus',
+          propLabel: 'Status',
+          propValue: JOB_STATUS_SELECTION[0].value,
+          propDefaultValue: JOB_STATUS_SELECTION[0].value,
+          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          valueElementProperties: { xs: 8 },
+          propType: PropType.Selection,
+          selectionMeta: {
+            selections: JOB_STATUS_SELECTION,
+            onChangeEvent: function (event) {
+              let propValue = event.target.value;
+              let propName = event.target.name;
+              setStepMetadatas(onchangeStepDefault(propName, propValue));
             }
           }
         },

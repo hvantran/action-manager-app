@@ -11,6 +11,7 @@ import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.ActionStatisticsDocumentRepository;
+import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.exceptions.InvalidArgumentException;
 import com.hoatv.fwk.common.services.BiCheckedConsumer;
@@ -37,7 +38,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
 
@@ -189,24 +189,43 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor
-    public void moveToTrash(String actionId) {
-        Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
-        ActionDocument actionDocument = actionDocumentOptional
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+    public void archive(String actionId) {
+        ActionDocument actionDocument = getActionDocument(actionId);
+        List<JobDocumentRepository.JobIdImmutable> immutableJobIds = jobManagerService.getJobIdsByAction(actionId);
+        immutableJobIds.stream().map(p -> p.getHash()).forEach(jobManagerService::pause);
         actionDocument.setActionStatus(ActionStatus.MOVE_TO_TRASH);
+        actionDocumentRepository.save(actionDocument);
+    }
+
+    @Override
+    public void restore(String actionId) {
+        ActionDocument actionDocument = getActionDocument(actionId);
+        List<JobDocumentRepository.JobIdImmutable> immutableJobIds = jobManagerService.getJobIdsByAction(actionId);
+        immutableJobIds.stream().map(p -> p.getHash()).forEach(this::resumeJob);
+
+        actionDocument.setActionStatus(ActionStatus.ACTIVE);
         actionDocumentRepository.save(actionDocument);
     }
 
     @Override
     public void resumeJob(String jobHash) {
         JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
+        if (!jobDocument.isScheduled()) {
+            LOGGER.warn("Skip resume for job {}, resume mechanisms only support for scheduled jobs", jobDocument.getJobName());
+            return;
+        }
         jobDocument.setJobStatus(JobStatus.ACTIVE.name());
         JobResultDocument jobResultDocument = jobManagerService.getJobResultDocumentByJobId(jobHash);
         ActionStatisticsDocument statisticsDocument = actionStatisticsDocumentRepository.findByActionId(jobDocument.getActionId());
-        Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
-        checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Resume only support for schedule jobs"));
         jobManagerService.update(jobDocument);
         jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(statisticsDocument), false);
+    }
+
+    private ActionDocument getActionDocument(String actionId) {
+        Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
+        ActionDocument actionDocument = actionDocumentOptional
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+        return actionDocument;
     }
 
     private CheckedFunction<ActionDocument, ActionExecutionContext> getActionExecutionContext(
@@ -263,9 +282,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private ActionExecutionContext getActionExecutionContextForNewJobs(String actionId,
                                                                        List<JobDefinitionDTO> jobDefinitionDTOs) {
-        Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
-        ActionDocument actionDocument = actionDocumentOptional
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+        ActionDocument actionDocument = getActionDocument(actionId);
         ActionStatisticsDocument actionStatisticsDocument = actionStatisticsDocumentRepository.findByActionId(actionId);
 
         Map<String, String> jobDocumentPairs = getJobDocumentPairs(jobDefinitionDTOs, actionDocument);
@@ -296,9 +313,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
 
     private ActionExecutionContext getActionExecutionContextForReplay(String actionId) {
-        Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
-        ActionDocument actionDocument = actionDocumentOptional
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+        ActionDocument actionDocument = getActionDocument(actionId);
 
         ActionStatisticsDocument actionStatisticsDocument = actionStatisticsDocumentRepository.findByActionId(actionId);
         Map<String, String> jobDocumentPairs = jobManagerService.getEnabledOnetimeJobs(actionId);
