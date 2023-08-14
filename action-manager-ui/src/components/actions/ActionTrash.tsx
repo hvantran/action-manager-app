@@ -123,19 +123,6 @@ export default function ActionTrash() {
     ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
   }, [pageIndex, pageSize])
 
-  const actions: Array<SpeedDialActionMetadata> = [
-    {
-      actionIcon: WithLink('/actions/new', <AddCircleOutlineIcon />), actionName: 'create', actionLabel: 'New Action', properties: {
-        sx: {
-          bgcolor: green[500],
-          '&:hover': {
-            bgcolor: green[800],
-          }
-        }
-      }
-    }
-  ];
-
   let pagingOptions: PagingOptionMetadata = {
     pageIndex,
     pageSize,
@@ -154,8 +141,7 @@ export default function ActionTrash() {
   }
 
   let pageEntityMetadata: PageEntityMetadata = {
-    pageName: 'action-summary',
-    floatingActions: actions,
+    pageName: 'action-trash',
     tableMetadata: tableMetadata,
     breadcumbsMeta: breadcrumbs,
     pageEntityActions: [
