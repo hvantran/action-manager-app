@@ -179,8 +179,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor
-    public Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId() {
-        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatus("ACTIVE");
+    public Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId(Set<String> actionIds) {
+        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionIdIn("ACTIVE", actionIds);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(scheduledJobDocuments);
 
         List<Triplet<String, String, String>> jobDocumentMapping = getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments);

@@ -125,6 +125,12 @@ public class ActionControllerV1 {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping(path = "/{hash}/moveToTrash", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> moveToTrash(@PathVariable("hash") String actionId) {
+        actionManagerService.moveToTrash(actionId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping(path = "/{hash}/jobs/{jobHash}/resume", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> resumeJob(@PathVariable("hash") String actionId, @PathVariable("jobHash") String jobId) {
         actionManagerService.resumeJob(jobId);

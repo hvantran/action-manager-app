@@ -337,6 +337,82 @@ export const getJobDetails = (currentStepMetadata: Array<StepMetadata>) => {
     return findRelatedJobs(currentStepMetadata);
 }
 
+export class ActionAPI {
+
+  static loadActionDetailAsync = async (actionId: string, restClient: RestClient, successCallback: (response: ActionDetails) => void) => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(actionId)}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let actionDetailResult = await response.json() as ActionDetails;
+      successCallback(actionDetailResult);
+      return undefined;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static deleteAction = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
+
+    const requestOptions = {
+      method: "DELETE",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}`;
+    await restClient.sendRequest(requestOptions, targetURL, () => {
+      successCallback();
+      return undefined;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static moveToTrash = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
+
+    const requestOptions = {
+      method: "PUT",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/moveToTrash`;
+    await restClient.sendRequest(requestOptions, targetURL, () => {
+      successCallback();
+      return undefined;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static replayAction = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
+
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/replay`;
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
+      successCallback();
+      return undefined
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+}
+
 
 export class JobAPI {
   static update = async (jobId: string, restClient: RestClient, propertyMetadata: Array<PropertyMetadata>, successCallback: () => void) => {

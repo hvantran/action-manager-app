@@ -11,6 +11,7 @@ import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,8 +30,6 @@ public interface JobManagerService {
 
     Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest);
 
-    Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId();
-
     void processNonePersistenceJob(JobDefinitionDTO jobDocument);
 
     JobDocument getJobDocument(String hash);
@@ -45,6 +44,8 @@ public interface JobManagerService {
     Map<String, String> getEnabledScheduledJobs(String actionId);
 
     Map<String, String> getEnabledOnetimeJobs(String actionId);
+
+    Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId(Set<String> actionIds);
 
     Page<JobOverviewDTO> getJobs(PageRequest pageRequest);
 

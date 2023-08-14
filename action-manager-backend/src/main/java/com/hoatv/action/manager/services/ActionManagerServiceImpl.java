@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
 
@@ -86,44 +87,29 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @PostConstruct
     public void initScheduleJobOnStartup() {
+        LOGGER.info("Init the scheduled jobs per actions on startup");
         long numberOfActions = actionDocumentRepository.count();
         actionStatistics.numberOfActions.set(numberOfActions);
+        LOGGER.info("Number of persisted actions: {}", numberOfActions);
+        List<ActionDocument> actionDocumentList = actionDocumentRepository.findByActionStatus(ActionStatus.ACTIVE);
+        Set<String> actionIdList = actionDocumentList.stream().map(ActionDocument::getHash).collect(Collectors.toSet());
+        LOGGER.info("Number of active actions: {}", actionIdList.size());
 
-        Map<String, Map<String, String>> actionJobMapping = jobManagerService.getEnabledScheduleJobsGroupByActionId();
-        Set<String> startupActionIds = actionJobMapping.keySet();
+        Map<String, Map<String, String>> actionJobMapping = jobManagerService.getEnabledScheduleJobsGroupByActionId(actionIdList);
+        Set<String> activeScheduleActions = actionJobMapping.keySet();
+        List<ActionStatisticsDocument> actionStatics = actionStatisticsDocumentRepository.findByActionIdIn(activeScheduleActions);
 
-        List<ActionDocument> actionDocuments = actionDocumentRepository.findByHashIn(startupActionIds);
-        List<ActionStatisticsDocument> actionStatics = actionStatisticsDocumentRepository.findByActionIdIn(startupActionIds);
         Map<String, List<ActionStatisticsDocument>> actionStatisticMapping = actionStatics.stream()
                 .collect(Collectors.groupingBy(ActionStatisticsDocument::getActionId));
 
         CheckedFunction<ActionDocument, ActionExecutionContext> executionContextFunction =
                 getActionExecutionContext(actionJobMapping, actionStatisticMapping);
-        List<ActionExecutionContext> executionContexts = actionDocuments.stream()
+
+        List<ActionExecutionContext> executionContexts = actionDocumentList.stream()
                 .map(executionContextFunction)
                 .filter(Objects::nonNull)
                 .toList();
         jobManagerService.processBulkJobs(executionContexts);
-    }
-
-    private CheckedFunction<ActionDocument, ActionExecutionContext> getActionExecutionContext(
-            Map<String, Map<String, String>> actionJobMapping,
-            Map<String, List<ActionStatisticsDocument>> actionStatisticMapping) {
-        return actionDocument -> {
-            try {
-                ActionStatisticsDocument actionStatisticsDocument =
-                        actionStatisticMapping.get(actionDocument.getHash()).get(0);
-                return ActionExecutionContext.builder()
-                        .actionDocument(actionDocument)
-                        .jobDocumentPairs(actionJobMapping.get(actionDocument.getHash()))
-                        .actionStatisticsDocument(actionStatisticsDocument)
-                        .onCompletedJobCallback(onCompletedJobCallback(actionStatisticsDocument))
-                        .build();
-            } catch (Exception exception) {
-                LOGGER.info("Cannot get action statistic from action id {}", actionDocument.getHash(), exception);
-                return null;
-            }
-        };
     }
 
     @Override
@@ -136,7 +122,11 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @Override
     @LoggingMonitor
     public Page<ActionOverviewDTO> getActions(Pageable pageable) {
-        Page<ActionDocument> actionDocuments = actionDocumentRepository.findAll(pageable);
+
+        List<ActionStatus> statuses = List.of(
+                ActionStatus.INITIAL, ActionStatus.READY, ActionStatus.PAUSED, ActionStatus.ACTIVE);
+        LOGGER.info("Get actions from statuses: {}", statuses);
+        Page<ActionDocument> actionDocuments = actionDocumentRepository.findByActionStatusIn(statuses, pageable);
         return getActionOverviewDTOS(actionDocuments);
     }
 
@@ -198,6 +188,48 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         actionStatisticsDocumentRepository.deleteByActionId(hash);
         jobManagerService.deleteJobsByActionId(hash);
         actionStatistics.numberOfActions.decrementAndGet();
+    }
+
+    @Override
+    @LoggingMonitor
+    public void moveToTrash(String actionId) {
+        Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
+        ActionDocument actionDocument = actionDocumentOptional
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+        actionDocument.setActionStatus(ActionStatus.MOVE_TO_TRASH);
+        actionDocumentRepository.save(actionDocument);
+    }
+
+    @Override
+    public void resumeJob(String jobHash) {
+        JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
+        jobDocument.setJobStatus(JobStatus.ACTIVE.name());
+        JobResultDocument jobResultDocument = jobManagerService.getJobResultDocumentByJobId(jobHash);
+        ActionStatisticsDocument statisticsDocument = actionStatisticsDocumentRepository.findByActionId(jobDocument.getActionId());
+        Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
+        checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Resume only support for schedule jobs"));
+        jobManagerService.update(jobDocument);
+        jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(statisticsDocument), false);
+    }
+
+    private CheckedFunction<ActionDocument, ActionExecutionContext> getActionExecutionContext(
+            Map<String, Map<String, String>> actionJobMapping,
+            Map<String, List<ActionStatisticsDocument>> actionStatisticMapping) {
+        return actionDocument -> {
+            try {
+                ActionStatisticsDocument actionStatisticsDocument =
+                        actionStatisticMapping.get(actionDocument.getHash()).get(0);
+                return ActionExecutionContext.builder()
+                        .actionDocument(actionDocument)
+                        .jobDocumentPairs(actionJobMapping.get(actionDocument.getHash()))
+                        .actionStatisticsDocument(actionStatisticsDocument)
+                        .onCompletedJobCallback(onCompletedJobCallback(actionStatisticsDocument))
+                        .build();
+            } catch (Exception exception) {
+                LOGGER.info("Cannot get action statistic from action id {}", actionDocument.getHash(), exception);
+                return null;
+            }
+        };
     }
 
     private Page<ActionOverviewDTO> getActionOverviewDTOS(Page<ActionDocument> actionDocuments) {
@@ -314,17 +346,6 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 .build();
     }
 
-    @Override
-    public void resumeJob(String jobHash) {
-        JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
-        jobDocument.setJobStatus(JobStatus.ACTIVE.name());
-        JobResultDocument jobResultDocument = jobManagerService.getJobResultDocumentByJobId(jobHash);
-        ActionStatisticsDocument statisticsDocument = actionStatisticsDocumentRepository.findByActionId(jobDocument.getActionId());
-        Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
-        checkThenThrow(!jobDocument.isScheduled(),  () -> argumentChecker.apply("Resume only support for schedule jobs"));
-        jobManagerService.update(jobDocument);
-        jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(statisticsDocument), false);
-    }
 
     private BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback(ActionStatisticsDocument actionStatisticsDocument) {
         return (prevJobStatus, currentJobStatus) -> {

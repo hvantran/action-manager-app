@@ -1,4 +1,4 @@
-import { Box, Grid, IconButton, Stack, Tooltip } from '@mui/material';
+import { Box, Divider, Grid, IconButton, Stack, Tooltip } from '@mui/material';
 import * as React from 'react';
 import { PageEntityMetadata } from '../GenericConstants';
 import FloatingSpeedDialButtons from '../common/FloatingActions';
@@ -45,8 +45,10 @@ export default function PageRender(props: PageEntityMetadata) {
                 );
             })}</Box>
         </Grid>))
+        gridItems.push((<Grid item xs={12}><Divider/></Grid>))
     } else if (breadcrumbsMetadata) {
         gridItems.push((<Grid item xs={12}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
+        gridItems.push((<Grid item xs={12}><Divider/></Grid>))
     } else if (pageEntityActions) {
         gridItems.push((<Grid item xs={12} justifyContent="flex-end">
             <Box display="flex" justifyContent="flex-end">{pageEntityActions.map(action => {
@@ -66,6 +68,7 @@ export default function PageRender(props: PageEntityMetadata) {
                 );
             })}</Box>
         </Grid>))
+        gridItems.push((<Grid item xs={12}><Divider/></Grid>))
     }
     nodes.push((<Grid container spacing={2}>{gridItems}</Grid>));
     if (propertiesMetadata) {

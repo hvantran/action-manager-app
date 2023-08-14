@@ -1,5 +1,5 @@
 import { javascript } from '@codemirror/lang-javascript';
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { json } from '@codemirror/lang-json';
 import EditIcon from '@mui/icons-material/Edit';
 import InfoIcon from '@mui/icons-material/Info';
@@ -338,7 +338,7 @@ export default function JobDetail() {
           })
       },
       {
-        actionIcon: <DeleteIcon />,
+        actionIcon: <DeleteForeverIcon />,
         properties: { sx: { color: red[800] } },
         actionLabel: "Delete action",
         actionName: "deleteAction",

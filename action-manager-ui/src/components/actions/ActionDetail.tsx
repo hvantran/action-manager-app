@@ -1,4 +1,5 @@
 
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -9,9 +10,9 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { green, red } from '@mui/material/colors';
+import { green, orange, red } from '@mui/material/colors';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ACTION_MANAGER_API_URL, ActionDetails, ROOT_BREADCRUMB } from '../AppConstants';
+import { ActionAPI, ActionDetails, ROOT_BREADCRUMB } from '../AppConstants';
 import { DialogMetadata, PageEntityMetadata, RestClient, SnackbarAlertMetadata, SnackbarMessage } from '../GenericConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import ProcessTracking from '../common/ProcessTracking';
@@ -43,69 +44,29 @@ export default function ActionDetail() {
   const [_, setActionDetailData] = React.useState(initialActionDetailData);
   const [openError, setOpenError] = React.useState(false);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
+  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
+  const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
+  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => {});
   const [openSuccess, setOpenSuccess] = React.useState(false);
   const [replayFlag, setReplayActionFlag] = React.useState(false);
   const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
   const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
 
-  const loadActionDetailAsync = async () => {
-    const requestOptions = {
-      method: "GET",
-      headers: {
-        "Accept": "application/json"
-      }
-    }
-
-    const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(actionId)}`;
-    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-      let actionDetailResult = await response.json() as ActionDetails;
-      setActionDetailData(actionDetailResult);
-      return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
-  const deleteAction = async (actionId: string) => {
-
-    const requestOptions = {
-      method: "DELETE",
-      headers: {
-        "Accept": "application/json"
-      }
-    }
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}`;
-    await restClient.sendRequest(requestOptions, targetURL, () => {
-      navigate("/actions");
-      return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
-  const replayAction = async (actionId: string) => {
-
-    const requestOptions = {
-      method: "GET",
-      headers: {
-        "Accept": "application/json"
-      }
-    }
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/replay`;
-    await restClient.sendRequest(requestOptions, targetURL, async () => {
-      setReplayActionFlag(previous => !previous);
-      return undefined
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
   React.useEffect(() => {
-    loadActionDetailAsync();
+    ActionAPI.loadActionDetailAsync(actionId, restClient, setActionDetailData);
   }, []);
+
+  let confirmationDeleteDialogMeta: DialogMetadata = {
+    open: deleteConfirmationDialogOpen,
+    title: confirmationDialogTitle,
+    content: confirmationDialogContent,
+    positiveText: "Yes",
+    negativeText: "No",
+    negativeAction() {
+      setDeleteConfirmationDialogOpen(false);
+    },
+    positiveAction: confirmationDialogPositiveAction
+  }
 
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'action-details',
@@ -121,7 +82,7 @@ export default function ActionDetail() {
         actionLabel: "Refresh action",
         actionName: "refreshAction",
         onClick: () => {
-          loadActionDetailAsync();
+          ActionAPI.loadActionDetailAsync(actionId, restClient, setActionDetailData);
           setReplayActionFlag(previous => !previous);
         }
       },
@@ -134,14 +95,31 @@ export default function ActionDetail() {
             <p>Replay function only support for one time jobs, <b>doesn't support for schedule jobs</b></p>
           </Box>,
         actionName: "replayAction",
-        onClick: () => replayAction(actionId)
+        onClick: () => ActionAPI.replayAction(actionId, restClient, () => setReplayActionFlag(previous => !previous))
       },
       {
-        actionIcon: <DeleteIcon />,
+        actionIcon: <DeleteForeverIcon />,
         properties: { sx: { color: red[800] } },
         actionLabel: "Delete action",
         actionName: "deleteAction",
-        onClick: () => setDeleteConfirmationDialogOpen(true)
+        onClick: () => {
+          setConfirmationDialogTitle("Delete Action")
+          setConfirmationDialogContent(previous => "Are you sure you want to delete this action permanently?")
+          setConfirmationDialogPositiveAction(previous => () => ActionAPI.deleteAction(actionId, restClient, () => navigate("/actions")));
+          setDeleteConfirmationDialogOpen(true)
+        }
+      },
+      {
+        actionIcon: <DeleteIcon />,
+        properties: { sx: { color: orange[800] } },
+        actionLabel: "Move action to trash",
+        actionName: "moveActionToTrash",
+        onClick: () => {
+          setConfirmationDialogTitle("Move To Trash")
+          setConfirmationDialogContent(previous => "Are you sure you want to move this action to trash?")
+          setConfirmationDialogPositiveAction(previous => () => ActionAPI.moveToTrash(actionId, restClient, () => navigate("/actions")));
+          setDeleteConfirmationDialogOpen(true)
+        }
       },
       {
         actionIcon: <AddIcon />,
@@ -170,20 +148,6 @@ export default function ActionDetail() {
     setOpenError,
     setOpenSuccess,
     replayFlag
-  }
-
-  let confirmationDeleteDialogMeta: DialogMetadata = {
-    open: deleteConfirmationDialogOpen,
-    title: "Delete Action",
-    content: "Are you sure you want to delete this action?",
-    positiveText: "Yes",
-    negativeText: "No",
-    negativeAction() {
-      setDeleteConfirmationDialogOpen(false);
-    },
-    positiveAction() {
-      deleteAction(actionId);
-    },
   }
 
 

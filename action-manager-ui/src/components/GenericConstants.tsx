@@ -288,8 +288,8 @@ export interface StepMetadata extends EntityMetadata {
 
 export interface DialogMetadata {
     open: boolean
-    title: string,
-    content: string,
+    title?: string,
+    content?: string,
     negativeText: string
     positiveText: string
     negativeAction?: () => void

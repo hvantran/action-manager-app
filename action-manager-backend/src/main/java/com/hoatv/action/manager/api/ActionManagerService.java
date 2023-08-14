@@ -30,4 +30,6 @@ public interface ActionManagerService {
     void dryRunAction (ActionDefinitionDTO actionDefinition);
 
     void resumeJob(String jobHash);
+
+    void moveToTrash(String actionId);
 }

@@ -1,6 +1,6 @@
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
@@ -113,14 +113,6 @@ export default function ActionSummary() {
       align: 'right',
       actions: [
         {
-          actionIcon: <ReadMoreIcon />,
-          actionLabel: "Action details",
-          actionName: "gotoActionDetail",
-          onClick: (row: ActionOverview) => {
-            return () => navigate(`/actions/${row.hash}`)
-          }
-        },
-        {
           actionIcon: <StarBorderIcon />,
           properties: {sx:{color: yellow[800]}},
           actionLabel: "Favorite action",
@@ -141,12 +133,20 @@ export default function ActionSummary() {
           }
         },
         {
-          actionIcon: <DeleteIcon />,
+          actionIcon: <DeleteForeverIcon />,
           properties: {sx:{color: red[800]}},
           actionLabel: "Delete action",
           actionName: "deleteAction",
           onClick: (row: ActionOverview) => {
             return () => deleteAction(row.hash)
+          }
+        },
+        {
+          actionIcon: <ReadMoreIcon />,
+          actionLabel: "Action details",
+          actionName: "gotoActionDetail",
+          onClick: (row: ActionOverview) => {
+            return () => navigate(`/actions/${row.hash}`)
           }
         }
       ]
