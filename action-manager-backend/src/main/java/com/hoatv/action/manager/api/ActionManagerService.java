@@ -1,5 +1,6 @@
 package com.hoatv.action.manager.api;
 
+import com.hoatv.action.manager.collections.ActionStatus;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
@@ -19,7 +20,7 @@ public interface ActionManagerService {
 
     Page<ActionOverviewDTO> searchActions(String search, Pageable pageable);
 
-    Page<ActionOverviewDTO> getActions(Pageable pageable);
+    Page<ActionOverviewDTO> getActions(List<ActionStatus> filterStatus, Pageable pageable);
 
     void deleteAction(String hash);
 

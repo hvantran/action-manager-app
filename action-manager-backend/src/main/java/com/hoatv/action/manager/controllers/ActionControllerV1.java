@@ -3,6 +3,7 @@ package com.hoatv.action.manager.controllers;
 
 import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
+import com.hoatv.action.manager.collections.ActionStatus;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
@@ -55,13 +56,27 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getAllActionsWithPaging(
+    public ResponseEntity<?> getActions(
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
+        List<ActionStatus> statuses = List.of(
+                ActionStatus.INITIAL, ActionStatus.READY, ActionStatus.PAUSED, ActionStatus.ACTIVE);
         Page<ActionOverviewDTO> actionResults =
-                actionManagerService.getActions(PageRequest.of(pageIndex, pageSize, defaultSorting));
+                actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
+        return ResponseEntity.ok(actionResults);
+    }
+
+    @GetMapping(value = "/trash", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getActionInTrash(
+            @RequestParam("pageIndex") @Min(0) int pageIndex,
+            @RequestParam("pageSize") @Min(0) int pageSize) {
+
+        Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
+        List<ActionStatus> statuses = List.of(ActionStatus.MOVE_TO_TRASH);
+        Page<ActionOverviewDTO> actionResults =
+                actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
     }
 

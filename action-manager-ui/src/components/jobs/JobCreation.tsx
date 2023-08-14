@@ -1,19 +1,16 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import AddTaskTwoToneIcon from '@mui/icons-material/AddTaskTwoTone';
-import ArrowBackTwoToneIcon from '@mui/icons-material/ArrowBackTwoTone';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import SaveIcon from '@mui/icons-material/Save';
 
 import { Stack } from '@mui/material';
-import { blue, green } from '@mui/material/colors';
 
 import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ACTION_MANAGER_API_URL,
   DEFAULT_JOB_CONTENT,
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
@@ -21,7 +18,7 @@ import {
   JobAPI,
   JobDefinition,
   ROOT_BREADCRUMB,
-  getJobDetails,
+  getJobDetails
 } from '../AppConstants';
 import {
   PageEntityMetadata,
@@ -29,9 +26,7 @@ import {
   RestClient,
   SnackbarAlertMetadata,
   SnackbarMessage,
-  SpeedDialActionMetadata,
   StepMetadata,
-  WithLink,
   onchangeStepDefault
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';

@@ -1,17 +1,12 @@
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import StarIcon from '@mui/icons-material/Star';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { Stack } from '@mui/material';
-import { green, red, yellow } from '@mui/material/colors';
 import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
+import { green, red } from '@mui/material/colors';
 import React from 'react';
-import ProcessTracking from '../common/ProcessTracking';
 import {
   ColumnMetadata,
   PageEntityMetadata,
@@ -24,16 +19,14 @@ import {
   TableMetadata,
   WithLink
 } from '../GenericConstants';
+import ProcessTracking from '../common/ProcessTracking';
 
-import { useNavigate } from 'react-router-dom';
-import { ActionOverview, ACTION_MANAGER_API_URL, ROOT_BREADCRUMB, ActionAPI } from '../AppConstants';
+import { ActionAPI, ActionOverview } from '../AppConstants';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
-
-export default function ActionSummary() {
-  const navigate = useNavigate();
+export default function ActionTrash() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
@@ -46,11 +39,8 @@ export default function ActionSummary() {
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href='#'>
-      {ROOT_BREADCRUMB}
-    </Link>,
-    <Typography key="3" color="text.primary">
-      Summary
-    </Typography>
+      Trash
+    </Link>
   ];
 
   const columns: ColumnMetadata[] = [
@@ -113,30 +103,6 @@ export default function ActionSummary() {
       align: 'right',
       actions: [
         {
-          actionIcon: <StarBorderIcon />,
-          properties: { sx: { color: yellow[800] } },
-          actionLabel: "Favorite action",
-          visible: (row: ActionOverview) => !row.isFavorite,
-          actionName: "favoriteAction",
-          onClick: (row: ActionOverview) => {
-            return () => ActionAPI.setFavoriteAction(row.hash, true, restClient, () => {
-              ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
-            });
-          }
-        },
-        {
-          actionIcon: <StarIcon />,
-          properties: { sx: { color: yellow[800] } },
-          actionLabel: "Unfavorite action",
-          visible: (row: ActionOverview) => row.isFavorite,
-          actionName: "unFavoriteAction",
-          onClick: (row: ActionOverview) => {
-            return () => ActionAPI.setFavoriteAction(row.hash, false, restClient, () => {
-              ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
-            });
-          }
-        },
-        {
           actionIcon: <DeleteForeverIcon />,
           properties: { sx: { color: red[800] } },
           actionLabel: "Delete action permanently",
@@ -149,20 +115,12 @@ export default function ActionSummary() {
             }
           }
         },
-        {
-          actionIcon: <ReadMoreIcon />,
-          actionLabel: "Action details",
-          actionName: "gotoActionDetail",
-          onClick: (row: ActionOverview) => {
-            return () => navigate(`/actions/${row.hash}`)
-          }
-        }
       ]
     }
   ];
 
   React.useEffect(() => {
-    ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+    ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
   }, [pageIndex, pageSize])
 
   const actions: Array<SpeedDialActionMetadata> = [
@@ -205,7 +163,9 @@ export default function ActionSummary() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
+        onClick: () => {
+          ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+        }
       }
     ]
   }

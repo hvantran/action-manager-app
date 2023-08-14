@@ -17,15 +17,15 @@ import JobStatus from '../common/JobStatus';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
-import { JOB_MANAGER_API_URL, JobOverview } from '../AppConstants';
+import { useNavigate } from 'react-router-dom';
+import { JOB_MANAGER_API_URL, JobAPI, JobOverview } from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import SnackbarAlert from '../common/SnackbarAlert';
 import TextTruncate from '../common/TextTruncate';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
-import { useNavigate } from 'react-router-dom';
 
 
 export default function JobSummary() {
@@ -137,26 +137,8 @@ export default function JobSummary() {
     }
   ];
 
-  const loadRelatedJobsAsync = async (pageIndex: number, pageSize: number) => {
-    const requestOptions = {
-      method: "GET",
-      headers: {
-        "Accept": "application/json"
-      }
-    }
-
-    const targetURL = `${JOB_MANAGER_API_URL}?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}`;
-    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-      let responseJSON = await response.json() as PagingResult;
-      setPagingResult(responseJSON);
-      return { 'message': 'Loading jobs sucessfully!!!', key: new Date().getTime() } as SnackbarMessage;
-    }, async (response: Response) => {
-      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
-    });
-  }
-
   React.useEffect(() => {
-    loadRelatedJobsAsync(pageIndex, pageSize);
+    JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult);
   }, [])
 
   let pagingOptions: PagingOptionMetadata = {
@@ -167,7 +149,7 @@ export default function JobSummary() {
     onPageChange: (pageIndex: number, pageSize: number) => {
       setPageIndex(pageIndex);
       setPageSize(pageSize);
-      loadRelatedJobsAsync(pageIndex, pageSize);
+      JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult);
     }
   }
 
@@ -186,7 +168,7 @@ export default function JobSummary() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => loadRelatedJobsAsync(pageIndex, pageSize)
+        onClick: () => JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult)
       }
     ]
   }

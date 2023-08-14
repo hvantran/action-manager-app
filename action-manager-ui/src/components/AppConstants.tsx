@@ -1,4 +1,4 @@
-import { PropertyMetadata, RestClient, SelectionData, SnackbarMessage, StepMetadata } from "./GenericConstants"
+import { PagingResult, PropertyMetadata, RestClient, SelectionData, SnackbarMessage, StepMetadata } from "./GenericConstants"
 
 export const ROOT_BREADCRUMB = 'Actions'
 export const JOB_CATEGORY_VALUES: Array<SelectionData> = [{label: "IO", value: "IO"}, {label: "CPU", value: "CPU"}]
@@ -339,6 +339,63 @@ export const getJobDetails = (currentStepMetadata: Array<StepMetadata>) => {
 
 export class ActionAPI {
 
+  static setFavoriteAction =async (actionId: string, isFavorite: boolean, restClient: RestClient, successCallback: () => void) => {
+
+    const requestOptions = {
+      method: "PATCH",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/favorite?isFavorite=${isFavorite}`;
+    await restClient.sendRequest(requestOptions, targetURL, () => {
+      successCallback();
+      return undefined;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+  static loadTrashSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult : PagingResult) => void) => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${ACTION_MANAGER_API_URL}/trash?pageIndex=${pageIndex}&pageSize=${pageSize}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let actionPagingResult = await response.json() as PagingResult;
+      successCallback(actionPagingResult);
+      return { 'message': 'Load actions successfully!!', key: new Date().getTime() } as SnackbarMessage;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static loadActionSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult : PagingResult) => void) => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${ACTION_MANAGER_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let actionPagingResult = await response.json() as PagingResult;
+      successCallback(actionPagingResult);
+      return { 'message': 'Load actions successfully!!', key: new Date().getTime() } as SnackbarMessage;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+
   static loadActionDetailAsync = async (actionId: string, restClient: RestClient, successCallback: (response: ActionDetails) => void) => {
     const requestOptions = {
       method: "GET",
@@ -501,6 +558,24 @@ export class JobAPI {
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static loadRelatedJobsAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (data: any) => void) => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${JOB_MANAGER_API_URL}?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let responseJSON = await response.json() as PagingResult;
+      successCallback(responseJSON);
+      return { 'message': 'Loading jobs sucessfully!!!', key: new Date().getTime() } as SnackbarMessage;
+    }, async (response: Response) => {
+      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
     });
   }
 

@@ -100,7 +100,7 @@ export default function ActionDetail() {
       {
         actionIcon: <DeleteForeverIcon />,
         properties: { sx: { color: red[800] } },
-        actionLabel: "Delete action",
+        actionLabel: "Delete action permanently",
         actionName: "deleteAction",
         onClick: () => {
           setConfirmationDialogTitle("Delete Action")

@@ -121,12 +121,9 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor
-    public Page<ActionOverviewDTO> getActions(Pageable pageable) {
-
-        List<ActionStatus> statuses = List.of(
-                ActionStatus.INITIAL, ActionStatus.READY, ActionStatus.PAUSED, ActionStatus.ACTIVE);
-        LOGGER.info("Get actions from statuses: {}", statuses);
-        Page<ActionDocument> actionDocuments = actionDocumentRepository.findByActionStatusIn(statuses, pageable);
+    public Page<ActionOverviewDTO> getActions(List<ActionStatus> filterStatuses, Pageable pageable) {
+        LOGGER.info("Get actions from statuses: {}", filterStatuses);
+        Page<ActionDocument> actionDocuments = actionDocumentRepository.findByActionStatusIn(filterStatuses, pageable);
         return getActionOverviewDTOS(actionDocuments);
     }
 

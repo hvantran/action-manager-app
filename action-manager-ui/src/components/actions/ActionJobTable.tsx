@@ -7,14 +7,14 @@ import {
 } from '../GenericConstants';
 
 
-import { useNavigate } from 'react-router-dom';
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
+import { useNavigate } from 'react-router-dom';
 import { ACTION_MANAGER_API_URL, JobOverview } from '../AppConstants';
 import JobStatus from '../common/JobStatus';
 import TextTruncate from '../common/TextTruncate';
 import PageEntityRender from '../renders/PageEntityRender';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
 
 
 export default function ActionJobTable(props: any) {

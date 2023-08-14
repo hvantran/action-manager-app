@@ -1,9 +1,9 @@
 import { javascript } from '@codemirror/lang-javascript';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { json } from '@codemirror/lang-json';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
-import InfoIcon from '@mui/icons-material/Info';
 import EngineeringIcon from '@mui/icons-material/Engineering';
+import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Stack, Switch } from '@mui/material';
@@ -24,7 +24,7 @@ import {
 import ProcessTracking from '../common/ProcessTracking';
 
 import { red, yellow } from '@mui/material/colors';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
@@ -33,9 +33,9 @@ import {
   JobDetailMetadata,
   ROOT_BREADCRUMB
 } from '../AppConstants';
+import ConfirmationDialog from '../common/ConfirmationDialog';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
-import ConfirmationDialog from '../common/ConfirmationDialog';
 
 
 

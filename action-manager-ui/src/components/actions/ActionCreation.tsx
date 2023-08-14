@@ -10,31 +10,31 @@ import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import {
-  ActionDefinition,
   ACTION_MANAGER_API_URL,
+  ACTION_STATUS_SELECTION,
+  ActionDefinition,
   DEFAULT_JOB_CONTENT,
-  JobDefinition,
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
+  JobDefinition,
   ROOT_BREADCRUMB,
-  getJobDefinitionFromStepMetadata,
-  ACTION_STATUS_SELECTION
+  getJobDefinitionFromStepMetadata
 } from '../AppConstants';
-import ProcessTracking from '../common/ProcessTracking';
-import SnackbarAlert from '../common/SnackbarAlert';
 import {
-  onchangeStepDefault,
   PageEntityMetadata,
-  PropertyMetadata,
   PropType,
+  PropertyMetadata,
   RestClient,
   SnackbarAlertMetadata,
   SnackbarMessage,
   SpeedDialActionMetadata,
   StepMetadata,
-  WithLink
+  WithLink,
+  onchangeStepDefault
 } from '../GenericConstants';
+import ProcessTracking from '../common/ProcessTracking';
+import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
