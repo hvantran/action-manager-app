@@ -22,7 +22,7 @@ export const ACTION_STATUS_SELECTION: Array<SelectionData> = [
 export const JOB_STATUS_SELECTION: Array<SelectionData> = [
   {label: "INITIAL", value: "INITIAL"},
   {label: "READY", value:"READY"},
-  {label: "PAUSED", value:"PAUSED"}
+  {label: "PAUSED", value:"PAUSED"},
   {label: "ACTIVE", value:"ACTIVE"}
 ] 
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
