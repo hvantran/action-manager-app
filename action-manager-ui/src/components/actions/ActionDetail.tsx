@@ -1,5 +1,5 @@
 
-import AddIcon from '@mui/icons-material/Add';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -108,7 +108,7 @@ export default function ActionDetail() {
         }
       },
       {
-        actionIcon: <AddIcon />,
+        actionIcon: <AddCircleOutlineIcon />,
         properties: { sx: { color: green[800] } },
         actionLabel: "Add Jobs",
         actionName: "addAction",
