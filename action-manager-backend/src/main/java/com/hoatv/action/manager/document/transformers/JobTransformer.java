@@ -11,6 +11,22 @@ public final class JobTransformer {
     public static JobDocument fromJobDefinition(JobDefinitionDTO jobDefinitionDTO) {
         return fromJobDefinition(jobDefinitionDTO, "");
     }
+
+
+    public static void updateFromJobDefinitionDTO(JobDocument jobDocument, JobDefinitionDTO jobDefinitionDTO) {
+        jobDocument.setJobName(jobDefinitionDTO.getJobName());
+        jobDocument.setJobDescription(jobDefinitionDTO.getJobDescription());
+        jobDocument.setConfigurations(jobDefinitionDTO.getConfigurations());
+        jobDocument.setJobContent(jobDefinitionDTO.getJobContent());
+        jobDocument.setJobCategory(jobDefinitionDTO.getJobCategory());
+        jobDocument.setAsync(jobDefinitionDTO.isAsync());
+        jobDocument.setScheduleUnit(jobDefinitionDTO.getScheduleUnit());
+        jobDocument.setJobStatus(jobDefinitionDTO.getJobStatus());
+        jobDocument.setScheduled(jobDefinitionDTO.isScheduled());
+        jobDocument.setScheduleInterval(jobDefinitionDTO.getScheduleInterval());
+        jobDocument.setOutputTargets(jobDefinitionDTO.getOutputTargets());
+    }
+
     public static JobDocument fromJobDefinition(JobDefinitionDTO jobDefinitionDTO, String actionId) {
         return JobDocument.builder()
                 .jobName(jobDefinitionDTO.getJobName())

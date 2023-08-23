@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.hoatv.action.manager.document.transformers.JobTransformer.updateFromJobDefinitionDTO;
 import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
 
 @Service
@@ -408,7 +409,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public void update(String hash, JobDefinitionDTO jobDefinitionDTO) {
         JobDocument persistenceJobDocument = getJobDocument(hash);
-        persistenceJobDocument.updateFromJobDefinitionDTO(jobDefinitionDTO);
+        updateFromJobDefinitionDTO(persistenceJobDocument, jobDefinitionDTO);
         jobDocumentRepository.save(persistenceJobDocument);
     }
 
@@ -490,9 +491,10 @@ public class JobManagerServiceImpl implements JobManagerService {
     private void processPersistenceJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                                        BiConsumer<JobExecutionStatus, JobExecutionStatus> onJobStatusChange) {
         if (!VALID_PROCESS_JOB_STATUS.contains(jobDocument.getJobStatus())) {
-            LOGGER.warn("Job status {} is not supported to process, only support {}", jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
-            return;
+            String errorMessage = String.format("Job status %s is not supported to process, only support %s", jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
+            throw new InvalidArgumentException(errorMessage);
         }
+
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
         long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
         JobExecutionStatus prevJobStatus = jobResultDocument.getJobExecutionStatus();
