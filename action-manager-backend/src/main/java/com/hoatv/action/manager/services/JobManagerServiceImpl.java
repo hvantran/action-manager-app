@@ -390,13 +390,6 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @LoggingMonitor
     public void processNonePersistenceJob(JobDefinitionDTO jobDocument) {
-        Function<String, InvalidArgumentException> argumentChecker = InvalidArgumentException::new;
-        checkThenThrow(jobDocument.isScheduled(), () -> argumentChecker.apply("Schedule jobs is not supported by dry run jobs"));
-
-        List<String> outputTargets = jobDocument.getOutputTargets();
-        boolean isContainConsoleOutputOnly = outputTargets.size() == 1 && outputTargets.contains(JobOutputTarget.CONSOLE.name());
-        checkThenThrow(!isContainConsoleOutputOnly, () -> argumentChecker.apply("Target output metric is not supported by dry run jobs"));
-
         try {
             JobResultImmutable jobResultImmutable = process(jobDocument);
             LOGGER.info("Job result: {}", jobResultImmutable);
