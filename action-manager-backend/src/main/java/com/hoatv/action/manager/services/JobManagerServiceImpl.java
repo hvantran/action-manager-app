@@ -76,6 +76,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     private static final Map<String, String> DEFAULT_CONFIGURATIONS = new HashMap<>();
 
     private static final String TEMPLATE_ENGINE_NAME = "templateEngineName";
+
     private static final List<JobStatus> VALID_PROCESS_JOB_STATUS = List.of(JobStatus.READY, JobStatus.ACTIVE);
 
     private final ScriptEngineService scriptEngineService;
@@ -248,18 +249,20 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor
     public void pause(String jobHash) {
         JobDocument jobDocument = getJobDocument(jobHash);
+        String jobName = jobDocument.getJobName();
         if (!VALID_PROCESS_JOB_STATUS.contains(jobDocument.getJobStatus())) {
-            LOGGER.warn("Unable to pause job because status is: {}, only accept: {}", jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
+            LOGGER.warn("[{}]Unable to pause job because status is: {}, only accept: {}", jobName,
+                    jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
             return;
         }
 
         if (jobDocument.isScheduled()) {
-            LOGGER.info("Pause schedule job: {}", jobHash);
+            LOGGER.info("[{}]Pause schedule job: {}", jobName, jobHash);
             jobDocument.setJobStatus(JobStatus.PAUSED.name());
             scheduledJobRegistry.entrySet().stream()
                     .filter(p -> jobHash.equals(p.getKey()))
                     .filter(p -> Objects.nonNull(p.getValue()))
-                    .peek(p -> LOGGER.info("Delete the schedule tasks - {}", p.getKey()))
+                    .peek(p -> LOGGER.info("[{}] Delete the schedule tasks - {}", jobName, p.getKey()))
                     .map(Map.Entry::getValue)
                     .forEach(scheduleTaskMgmtService::cancel);
             metricService.removeMetric(jobHash);
@@ -267,7 +270,7 @@ public class JobManagerServiceImpl implements JobManagerService {
             return;
         }
 
-        LOGGER.info("Pause one time job: {}", jobHash);
+        LOGGER.info("[{}]Pause one time job: {}", jobName, jobHash);
         jobDocument.setJobStatus(JobStatus.READY.name());
         update(jobDocument);
     }
@@ -279,17 +282,18 @@ public class JobManagerServiceImpl implements JobManagerService {
         ObjectUtils.checkThenThrow(jobDocumentOptional.isEmpty(), "Cannot find job: " + jobId);
         JobDocument jobDocument = jobDocumentOptional.get();
 
+        String jobName = jobDocument.getJobName();
         if (jobDocument.isScheduled() && jobDocument.getJobStatus() == JobStatus.ACTIVE) {
-            LOGGER.info("Delete the schedule tasks for job - {}", jobDocument.getJobName());
+            LOGGER.info("[{}]Delete the schedule tasks for job", jobName);
             ScheduledFuture<?> scheduledFuture = scheduledJobRegistry.get(jobId);
             scheduleTaskMgmtService.cancel(scheduledFuture);
-            LOGGER.info("Delete the metric tasks for job - {}", jobDocument.getJobName());
+            LOGGER.info("[{}]Delete the metric tasks for job", jobName);
             metricService.removeMetric(jobId);
         }
         jobDocumentRepository.delete(jobDocument);
         JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobId);
         jobResultDocumentRepository.delete(jobResultDocument);
-        LOGGER.info("Deleted the job results for job - {}", jobDocument.getJobName());
+        LOGGER.info("[{}]Deleted the job results for job ", jobName);
     }
 
     @Override
@@ -390,11 +394,12 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @LoggingMonitor
     public void processNonePersistenceJob(JobDefinitionDTO jobDocument) {
+        String jobName = jobDocument.getJobName();
         try {
             JobResultImmutable jobResultImmutable = process(jobDocument);
-            LOGGER.info("Job result: {}", jobResultImmutable);
+            LOGGER.info("[{}]Job result: {}", jobName, jobResultImmutable);
         } catch (Exception exception) {
-            LOGGER.error("An exception occurred while processing job", exception);
+            LOGGER.error("[{}]An exception occurred while processing job", jobName, exception);
         }
     }
 
@@ -483,8 +488,13 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private void processPersistenceJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                                        BiConsumer<JobExecutionStatus, JobExecutionStatus> onJobStatusChange) {
-        if (!VALID_PROCESS_JOB_STATUS.contains(jobDocument.getJobStatus())) {
-            LOGGER.error("Job status {} is not supported to process, only support {}", jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
+        String jobName = jobDocument.getJobName();
+        JobStatus jobStatus = jobDocument.getJobStatus();
+        if (!VALID_PROCESS_JOB_STATUS.contains(jobStatus)) {
+            LOGGER.error(
+                    "[{}]Job status {} is not supported to process, only support {}",
+                    jobName, jobStatus, VALID_PROCESS_JOB_STATUS
+            );
         }
 
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
@@ -502,13 +512,13 @@ public class JobManagerServiceImpl implements JobManagerService {
             jobResultDocumentRepository.save(jobResultDocument);
 
             JobResultImmutable jobResult = process(jobDocument);
-            processOutputTargets(jobDocument, jobDocument.getJobName(), jobResult);
+            processOutputTargets(jobDocument, jobName, jobResult);
 
             nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ? JobExecutionStatus.FAILURE : JobExecutionStatus.SUCCESS;
             jobException = jobResult.getException();
 
         } catch (Exception exception) {
-            LOGGER.error("An exception occurred while processing job", exception);
+            LOGGER.error("[{}]An exception occurred while processing job", jobName, exception);
             jobException = exception.getMessage();
         } finally {
             updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobException);
@@ -541,11 +551,11 @@ public class JobManagerServiceImpl implements JobManagerService {
                               BiConsumer<JobExecutionStatus, JobExecutionStatus> callback) {
         Runnable jobProcessRunnable = () -> processPersistenceJob(jobDocument, jobResultDocument, callback);
         if (jobDocument.getJobCategory() == JobCategory.CPU) {
-            LOGGER.info("Using CPU threads to execute job: {}", jobDocument.getJobName());
+            LOGGER.info("[{}]Using CPU threads to execute job", jobDocument.getJobName());
             cpuTaskMgmtService.execute(jobProcessRunnable);
             return;
         }
-        LOGGER.info("Using IO threads to execute job: {}", jobDocument.getJobName());
+        LOGGER.info("[{}]Using IO threads to execute job", jobDocument.getJobName());
         ioTaskMgmtService.execute(jobProcessRunnable);
     }
 
@@ -597,10 +607,10 @@ public class JobManagerServiceImpl implements JobManagerService {
 
         if (jobResult instanceof JobResultDict jobResultDict) {
             Map<String, String> multipleJobResultMap = jobResultDict.getData();
-            LOGGER.info("Reset all metric values for related job {} back to 0", metricNamePrefix);
+            LOGGER.info("[{}]Reset all metric values for related job {} back to 0", jobName, metricNamePrefix);
             List<ComplexValue> regexMetrics = metricService.getRegexMetrics(metricNamePrefix + ".*");
             regexMetrics.stream().flatMap(p -> p.getTags().stream())
-                    .peek(p -> LOGGER.info("Reset metric {} value to 0", p.getAttributes().get("name")))
+                    .peek(p -> LOGGER.info("[{}]Reset metric {} value to 0", jobName, p.getAttributes().get("name")))
                     .forEach(p -> p.setValue("0"));
 
             multipleJobResultMap.forEach((name, value) -> {
