@@ -491,8 +491,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     private void processPersistenceJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                                        BiConsumer<JobExecutionStatus, JobExecutionStatus> onJobStatusChange) {
         if (!VALID_PROCESS_JOB_STATUS.contains(jobDocument.getJobStatus())) {
-            String errorMessage = String.format("Job status %s is not supported to process, only support %s", jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
-            throw new InvalidArgumentException(errorMessage);
+            LOGGER.error("Job status {} is not supported to process, only support {}", jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS)
         }
 
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
