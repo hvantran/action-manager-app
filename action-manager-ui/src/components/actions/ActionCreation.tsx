@@ -20,7 +20,7 @@ import {
   JOB_STATUS_SELECTION,
   JobDefinition,
   ROOT_BREADCRUMB,
-  getJobDefinitionFromStepMetadata
+  getJobDefinition
 } from '../AppConstants';
 import {
   PageEntityMetadata,
@@ -55,7 +55,7 @@ export default function ActionCreation() {
     description: 'This step is used to define job information',
     properties: [
       {
-        propName: 'jobName',
+        propName: 'name',
         propLabel: 'Name',
         isRequired: true,
         propValue: '',
@@ -68,7 +68,7 @@ export default function ActionCreation() {
           onChangeEvent: function (event: any) {
             let propValue = event.target.value;
             let propName = event.target.name;
-            let jobIndex = propName.replace('jobName', '');
+            let jobIndex = propName.replace('name', '');
 
             setStepMetadatas(onchangeStepDefault(propName, propValue, (stepMetadata) => {
               if (stepMetadata.name === `job${jobIndex}`) {
@@ -99,7 +99,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'jobOutputTargets',
+        propName: 'outputTargets',
         propLabel: 'Output',
         propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
         propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
@@ -118,7 +118,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'jobCategory',
+        propName: 'category',
         propLabel: 'Category',
         disabled: true,
         propValue: JOB_CATEGORY_VALUES[0].value,
@@ -137,7 +137,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'isScheduledJob',
+        propName: 'isScheduled',
         propLabel: 'Supported schedule',
         propValue: false,
         layoutProperties: { xs: 6 },
@@ -148,7 +148,7 @@ export default function ActionCreation() {
         switcherFieldMeta: {
           onChangeEvent: function (event, propValue) {
             let propName = event.target.name;
-            let jobIndex = propName.replace('isScheduledJob', '');
+            let jobIndex = propName.replace('isScheduled', '');
             setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
               if (propertyMetadata.propName === `scheduleInterval${jobIndex}`) {
                 propertyMetadata.disabled = !propValue;
@@ -176,7 +176,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'jobDescription',
+        propName: 'description',
         propLabel: 'Description',
         propValue: '',
         layoutProperties: { xs: 6 },
@@ -192,7 +192,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'jobStatus',
+        propName: 'status',
         propLabel: 'Status',
         propValue: JOB_STATUS_SELECTION[0].value,
         propDefaultValue: JOB_STATUS_SELECTION[0].value,
@@ -210,7 +210,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'jobConfigurations',
+        propName: 'configurations',
         propLabel: 'Configurations',
         isRequired: true,
         propValue: '{}',
@@ -232,7 +232,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'jobContent',
+        propName: 'content',
         propLabel: 'Job Content',
         isRequired: true,
         propValue: DEFAULT_JOB_CONTENT,
@@ -348,7 +348,7 @@ export default function ActionCreation() {
       description: 'This step is used to define job information',
       properties: [
         {
-          propName: 'jobName',
+          propName: 'name',
           propLabel: 'Name',
           propValue: '',
           isRequired: true,
@@ -381,7 +381,7 @@ export default function ActionCreation() {
             onChangeEvent: function (event, propValue) {
               let propName = event.target.name;
               setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
-                if (propertyMetadata.propName === 'jobCategory') {
+                if (propertyMetadata.propName === 'category') {
                   propertyMetadata.disabled = !propValue;
                 }
               }));
@@ -389,7 +389,7 @@ export default function ActionCreation() {
           }
         },
         {
-          propName: 'jobOutputTargets',
+          propName: 'outputTargets',
           propLabel: 'Output',
           propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
           propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
@@ -408,7 +408,7 @@ export default function ActionCreation() {
           }
         },
         {
-          propName: 'jobCategory',
+          propName: 'category',
           propLabel: 'Category',
           disabled: true,
           propValue: JOB_CATEGORY_VALUES[0].value,
@@ -427,7 +427,7 @@ export default function ActionCreation() {
           }
         },
         {
-          propName: 'isScheduledJob',
+          propName: 'isScheduled',
           propLabel: 'Supported schedule',
           propValue: false,
           layoutProperties: { xs: 6 },
@@ -466,7 +466,7 @@ export default function ActionCreation() {
           }
         },
         {
-          propName: 'jobDescription',
+          propName: 'description',
           propLabel: 'Description',
           propValue: '',
           layoutProperties: { xs: 6 },
@@ -482,7 +482,7 @@ export default function ActionCreation() {
           }
         },
         {
-          propName: 'jobStatus',
+          propName: 'status',
           propLabel: 'Status',
           propValue: JOB_STATUS_SELECTION[0].value,
           propDefaultValue: JOB_STATUS_SELECTION[0].value,
@@ -500,7 +500,7 @@ export default function ActionCreation() {
           }
         },
         {
-          propName: 'jobConfigurations',
+          propName: 'configurations',
           propLabel: 'Configurations',
           isRequired: true,
           propValue: '{}',
@@ -522,7 +522,7 @@ export default function ActionCreation() {
           }
         },
         {
-          propName: 'jobContent',
+          propName: 'content',
           propLabel: 'Job Content',
           layoutProperties: { xs: 12 },
           labelElementProperties: { xs: 2,  sx: { pl: 10 } },
@@ -619,7 +619,7 @@ export default function ActionCreation() {
       const reviewStepIndex = currentStepMetadata.length - 1;
       return currentStepMetadata
         .filter((_, index) => index !== 0 && index !== reviewStepIndex)
-        .map(getJobDefinitionFromStepMetadata)
+        .map(p => getJobDefinition(p.properties))
     }
 
     return getAction();

@@ -259,33 +259,6 @@ const findPropertyByCondition = (properties: Array<PropertyMetadata> | undefined
     return properties ? properties.find(filter) : undefined;
 }
 
-export const getJobDefinitionFromStepMetadata = (stepMetadata: StepMetadata) => {
-
-  let name = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobName"))?.propValue;
-  let description = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobDescription"))?.propValue;
-  let configurations = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobConfigurations"))?.propValue;
-  let content = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobContent"))?.propValue;
-  let isAsync = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isAsync"))?.propValue;
-  let category = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobCategory"))?.propValue;
-  let outputTargets = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobOutputTargets"))?.propValue;
-  let isScheduled = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isScheduledJob"))?.propValue;
-  let scheduleInterval = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("scheduleInterval"))?.propValue;
-  let status = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobStatus"))?.propValue;
-
-  return {
-    name,
-    category,
-    description,
-    configurations,
-    content,
-    outputTargets,
-    isAsync,
-    isScheduled,
-    status,
-    scheduleInterval: isScheduled ? scheduleInterval : 0
-  } as JobDefinition
-}
-
 export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
 
     let name = findPropertyByCondition(properties, property => property.propName.startsWith("name"))?.propValue;
@@ -297,6 +270,7 @@ export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
     let outputTargets = findPropertyByCondition(properties, property => property.propName.startsWith("outputTargets"))?.propValue;
     let isScheduled = findPropertyByCondition(properties, property => property.propName.startsWith("isScheduled"))?.propValue;
     let scheduleInterval = findPropertyByCondition(properties, property => property.propName.startsWith("scheduleInterval"))?.propValue;
+    let status = findPropertyByCondition(properties, property => property.propName.startsWith("status"))?.propValue;
 
     return {
         name,
@@ -306,6 +280,7 @@ export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
         content,
         outputTargets,
         isAsync,
+        status,
         isScheduled,
         scheduleInterval: isScheduled ? scheduleInterval : 0
     } as JobDefinition
@@ -316,29 +291,7 @@ export const getJobDetails = (currentStepMetadata: Array<StepMetadata>) => {
 
     const findRelatedJobs = (currentStepMetadata: Array<StepMetadata>): Array<JobDefinition> => {
         return currentStepMetadata
-            .map(stepMetadata => {
-                let name = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobName"))?.propValue;
-                let description = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobDescription"))?.propValue;
-                let configurations = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobConfigurations"))?.propValue;
-                let content = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobContent"))?.propValue;
-                let isAsync = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isAsync"))?.propValue;
-                let category = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobCategory"))?.propValue;
-                let outputTargets = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("jobOutputTargets"))?.propValue;
-                let isScheduled = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("isScheduledJob"))?.propValue;
-                let scheduleInterval = findStepPropertyByCondition(stepMetadata, property => property.propName.startsWith("scheduleInterval"))?.propValue;
-
-                return {
-                    name,
-                    category,
-                    description,
-                    configurations,
-                    content,
-                    outputTargets,
-                    isAsync,
-                    isScheduled,
-                    scheduleInterval: isScheduled ? scheduleInterval : 0
-                } as JobDefinition
-            })
+            .map(stepMetadata => getJobDefinition(stepMetadata.properties))
     }
 
     return findRelatedJobs(currentStepMetadata);
