@@ -91,21 +91,28 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         long numberOfActions = actionDocumentRepository.count();
         actionStatistics.numberOfActions.set(numberOfActions);
         LOGGER.info("Number of persisted actions: {}", numberOfActions);
+        LOGGER.info("Looking for the active actions");
         List<ActionDocument> actionDocumentList = actionDocumentRepository.findByActionStatus(ActionStatus.ACTIVE);
         Set<String> actionIdList = actionDocumentList.stream().map(ActionDocument::getHash).collect(Collectors.toSet());
         LOGGER.info("Number of active actions: {}", actionIdList.size());
 
+        LOGGER.info("Get enabled schedule jobs from active actions: {}", actionIdList);
         Map<String, Map<String, String>> actionJobMapping = jobManagerService.getEnabledScheduleJobsGroupByActionId(actionIdList);
-        Set<String> activeScheduleActions = actionJobMapping.keySet();
-        List<ActionStatisticsDocument> actionStatics = actionStatisticsDocumentRepository.findByActionIdIn(activeScheduleActions);
 
+        Set<String> activeScheduleActionIds = actionJobMapping.keySet();
+        List<ActionDocument> activeScheduleActions = actionDocumentList.stream()
+                .filter(p -> activeScheduleActionIds.contains(p.getHash()))
+                .collect(Collectors.toList());
+        LOGGER.info("Initial schedule jobs for actions {}", activeScheduleActionIds);
+
+        List<ActionStatisticsDocument> actionStatics = actionStatisticsDocumentRepository.findByActionIdIn(activeScheduleActionIds);
         Map<String, List<ActionStatisticsDocument>> actionStatisticMapping = actionStatics.stream()
                 .collect(Collectors.groupingBy(ActionStatisticsDocument::getActionId));
 
         CheckedFunction<ActionDocument, ActionExecutionContext> executionContextFunction =
                 getActionExecutionContext(actionJobMapping, actionStatisticMapping);
 
-        List<ActionExecutionContext> executionContexts = actionDocumentList.stream()
+        List<ActionExecutionContext> executionContexts = activeScheduleActions.stream()
                 .map(executionContextFunction)
                 .filter(Objects::nonNull)
                 .toList();
@@ -233,6 +240,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             Map<String, List<ActionStatisticsDocument>> actionStatisticMapping) {
         return actionDocument -> {
             try {
+                LOGGER.info("Initial execution context for action {}", actionDocument.getActionName());
                 ActionStatisticsDocument actionStatisticsDocument =
                         actionStatisticMapping.get(actionDocument.getHash()).get(0);
                 return ActionExecutionContext.builder()
