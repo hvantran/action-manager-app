@@ -1,10 +1,12 @@
 package com.hoatv.action.manager.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.collections.*;
 import com.hoatv.action.manager.collections.ActionStatisticsDocument.ActionStatisticsDocumentBuilder;
 import com.hoatv.action.manager.document.transformers.ActionTransformer;
+import com.hoatv.action.manager.document.transformers.JobTransformer;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
@@ -13,7 +15,6 @@ import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.ActionStatisticsDocumentRepository;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
-import com.hoatv.fwk.common.exceptions.InvalidArgumentException;
 import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedFunction;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
@@ -23,6 +24,7 @@ import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.ServletOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,16 +32,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @MetricProvider(application = MetricProviders.OTHER_APPLICATION, category = "action-manager-stats-data")
@@ -121,7 +124,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor
-    public Page<ActionOverviewDTO> searchActions(String search, Pageable pageable) {
+    public Page<ActionOverviewDTO> search(String search, Pageable pageable) {
         Page<ActionDocument> actionDocuments = actionDocumentRepository.findActionByName(search, pageable);
         return getActionOverviewDTOS(actionDocuments);
     }
@@ -142,7 +145,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
-    public Optional<ActionDefinitionDTO> setFavoriteActionValue(String hash, boolean isFavorite) {
+    public Optional<ActionDefinitionDTO> setFavorite(String hash, boolean isFavorite) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(hash);
         if (actionDocumentOptional.isEmpty()) {
             return Optional.empty();
@@ -154,7 +157,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
-    public void dryRunAction(ActionDefinitionDTO actionDefinition) {
+    public void dryRun(ActionDefinitionDTO actionDefinition) {
         actionDefinition.getJobs().forEach(jobManagerService::processNonePersistenceJob);
     }
 
@@ -178,7 +181,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor
-    public boolean replayAction(String actionId) {
+    public boolean replay(String actionId) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContextForReplay(actionId);
         jobManagerService.processBulkJobs(actionExecutionContext);
         actionStatistics.numberOfReplayActions.incrementAndGet();
@@ -187,7 +190,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor
-    public void deleteAction(String hash) {
+    public void delete(String hash) {
         actionDocumentRepository.deleteById(hash);
         actionStatisticsDocumentRepository.deleteByActionId(hash);
         jobManagerService.deleteJobsByActionId(hash);
@@ -208,14 +211,14 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public void restore(String actionId) {
         ActionDocument actionDocument = getActionDocument(actionId);
         List<JobDocumentRepository.JobIdImmutable> immutableJobIds = jobManagerService.getJobIdsByAction(actionId);
-        immutableJobIds.stream().map(p -> p.getHash()).forEach(this::resumeJob);
+        immutableJobIds.stream().map(p -> p.getHash()).forEach(this::resume);
 
         actionDocument.setActionStatus(ActionStatus.ACTIVE);
         actionDocumentRepository.save(actionDocument);
     }
 
     @Override
-    public void resumeJob(String jobHash) {
+    public void resume(String jobHash) {
         JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
         if (!jobDocument.isScheduled()) {
             LOGGER.warn("Skip resume for job {}, resume mechanisms only support for scheduled jobs", jobDocument.getJobName());
@@ -226,6 +229,39 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         ActionStatisticsDocument statisticsDocument = actionStatisticsDocumentRepository.findByActionId(jobDocument.getActionId());
         jobManagerService.update(jobDocument);
         jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(statisticsDocument), false);
+    }
+
+    @Override
+    public Pair<String, byte[]> export(String actionId, ServletOutputStream responseOutputStream) {
+        ActionDocument actionDocument = getActionDocument(actionId);
+        LOGGER.info("[{}] Looking for job documents", actionDocument.getActionName());
+        List<JobDocument> jobDocumentsByAction = jobManagerService.getJobDocumentsByAction(actionId);
+        List<JobDefinitionDTO> jobDefinitionDTOs = jobDocumentsByAction.stream()
+                .map(JobTransformer::toJobDefinition)
+                .collect(Collectors.toList());
+
+        ActionDefinitionDTO actionDefinition = ActionTransformer.toActionDefinition(actionDocument);
+        actionDefinition.setJobs(jobDefinitionDTOs);
+
+        CheckedFunction<ActionDefinitionDTO, byte[]> zipActionFunction = zipActionDefinition();
+        return Pair.of(actionDocument.getActionName(), zipActionFunction.apply(actionDefinition));
+    }
+
+    private static CheckedFunction<ActionDefinitionDTO, byte[]> zipActionDefinition() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        return actionDefinition -> {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            LOGGER.info("[{}] Put content of action to zip file", actionDefinition.getActionName());
+            ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
+            ZipEntry entry = new ZipEntry("content.json");
+            zipOutputStream.putNextEntry(entry);
+            String actionAsString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(actionDefinition);
+            zipOutputStream.write(actionAsString.getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+            zipOutputStream.close();
+            return byteArrayOutputStream.toByteArray();
+        };
     }
 
     private ActionDocument getActionDocument(String actionId) {

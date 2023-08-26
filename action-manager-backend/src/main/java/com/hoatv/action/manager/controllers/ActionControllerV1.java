@@ -9,11 +9,20 @@ import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
+import com.hoatv.fwk.common.ultilities.Pair;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.zip.ZipOutputStream;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -35,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ActionControllerV1 {
 
     private final ActionManagerService actionManagerService;
+
     private final JobManagerService jobManagerService;
 
     public ActionControllerV1(ActionManagerService actionManagerService, JobManagerService jobManagerService) {
@@ -91,7 +101,7 @@ public class ActionControllerV1 {
     @PatchMapping(value = "/{hash}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> setFavoriteActionValue(@PathVariable("hash") String hash,
                                                     @RequestParam("isFavorite") boolean isFavorite) {
-        Optional<ActionDefinitionDTO> actionResult = actionManagerService.setFavoriteActionValue(hash, isFavorite);
+        Optional<ActionDefinitionDTO> actionResult = actionManagerService.setFavorite(hash, isFavorite);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
         return ResponseEntity.ok(actionDefinitionDTO);
@@ -99,7 +109,7 @@ public class ActionControllerV1 {
 
     @GetMapping(value = "/{hash}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> replayAction(@PathVariable("hash") String hash) {
-        boolean isReplaySuccess = actionManagerService.replayAction(hash);
+        boolean isReplaySuccess = actionManagerService.replay(hash);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
 
@@ -108,7 +118,7 @@ public class ActionControllerV1 {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
-        actionManagerService.deleteAction(actionDefinitionDTO.getHash());
+        actionManagerService.delete(actionDefinitionDTO.getHash());
         return ResponseEntity.noContent().build();
     }
 
@@ -119,7 +129,7 @@ public class ActionControllerV1 {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
         Page<ActionOverviewDTO> actionResults =
-                actionManagerService.searchActions(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
+                actionManagerService.search(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
     }
 
@@ -136,7 +146,7 @@ public class ActionControllerV1 {
 
     @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> dryRun(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
-        actionManagerService.dryRunAction(actionDefinition);
+        actionManagerService.dryRun(actionDefinition);
         return ResponseEntity.noContent().build();
     }
 
@@ -154,7 +164,18 @@ public class ActionControllerV1 {
 
     @PutMapping(path = "/{hash}/jobs/{jobHash}/resume", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> resumeJob(@PathVariable("hash") String actionId, @PathVariable("jobHash") String jobId) {
-        actionManagerService.resumeJob(jobId);
+        actionManagerService.resume(jobId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(path = "/{hash}/export")
+    public ResponseEntity<?> export(@PathVariable("hash") String actionId, HttpServletResponse response) throws IOException {
+        Pair<String, byte[]> outputStreamPair = actionManagerService.export(actionId, response.getOutputStream());
+        LocalDate localDate = LocalDate.now();
+        String fileName = outputStreamPair.getKey().concat("-").concat(localDate.format(DateTimeFormatter.ISO_DATE));
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment;filename=\"" + fileName + ".zip\"")
+                .header("Content-Type","application/octet-stream")
+                .body(outputStreamPair.getValue());
     }
 }

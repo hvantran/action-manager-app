@@ -5,6 +5,7 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { Stack } from '@mui/material';
 import Link from '@mui/material/Link';
@@ -145,6 +146,16 @@ export default function ActionSummary() {
               return ActionAPI.archive(row.hash, restClient, () => {
                 ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
               });
+            }
+          }
+        },
+        {
+          actionIcon: <FileDownloadIcon />,
+          actionLabel: "Export",
+          actionName: "export",
+          onClick: (row: ActionOverview) => {
+            return () => {
+              return ActionAPI.export(row.hash, row.name, restClient);
             }
           }
         },

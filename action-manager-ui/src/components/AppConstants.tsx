@@ -1,4 +1,5 @@
 import { PagingResult, PropertyMetadata, RestClient, SelectionData, SnackbarMessage, StepMetadata } from "./GenericConstants"
+import fileDownload from 'js-file-download';
 
 export const ROOT_BREADCRUMB = 'Actions'
 export const JOB_CATEGORY_VALUES: Array<SelectionData> = [{label: "IO", value: "IO"}, {label: "CPU", value: "CPU"}]
@@ -387,6 +388,25 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static export = async (actionId: string, actionName: string, restClient: RestClient) => {
+
+    const requestOptions = {
+      method: "GET",
+      headers: {
+      }
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/export`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let blob = await response.blob();
+      let fileName = response.headers.get('X-DOWNLOAD-FILE-NAME');
+      fileDownload(blob, fileName || `${actionName}.zip`)
+      return { 'message': "The action is export sucessfully", key: new Date().getTime() } as SnackbarMessage;
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;

@@ -30,6 +30,7 @@ public interface JobManagerService {
     JobDocument getJobDocument(String hash);
 
     JobDetailDTO getJobDetails(String hash);
+    List<JobDocument> getJobDocumentsByAction(String actionId);
     List<JobDocumentRepository.JobIdImmutable> getJobIdsByAction(String actionId);
 
     Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest);

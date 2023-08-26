@@ -370,6 +370,11 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    public List<JobDocument> getJobDocumentsByAction(String actionId) {
+        return jobDocumentRepository.findJobByActionId(actionId);
+    }
+
+    @Override
     @LoggingMonitor
     public void update(JobDocument jobDocument) {
         jobDocumentRepository.save(jobDocument);
