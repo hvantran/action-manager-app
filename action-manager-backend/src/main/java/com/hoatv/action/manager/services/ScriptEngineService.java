@@ -43,7 +43,7 @@ public class ScriptEngineService {
         LOGGER.info("Putting execution context into script engine: {}", executionContext);
         executionContext.forEach(scriptEngine::put);
 
-        LOGGER.info("Eval the script content {}", scriptContent);
+        LOGGER.debug("Eval the script content {}", scriptContent);
         CheckedSupplier<Object> evalObjectSupplier = () -> scriptEngine.eval(scriptContent);
         evalObjectSupplier.get();
 
@@ -51,7 +51,6 @@ public class ScriptEngineService {
         Launcher launcher = invocable.getInterface(klass);
 
         Map<String, String> preExecuteParams = launcher.preExecute();
-        LOGGER.info("Executing the job {}", launcher);
         Object executed = null;
         try {
             executed = launcher.execute(preExecuteParams);

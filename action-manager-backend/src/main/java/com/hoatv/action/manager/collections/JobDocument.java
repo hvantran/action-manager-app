@@ -37,12 +37,5 @@ public class JobDocument implements JobImmutable {
     private String scheduleUnit;
     private long createdAt;
     private long updatedAt;
-    private String jobStatus;
-
-    @Transient
-    public JobStatus getJobStatus() {
-        return JobStatus.valueOf(this.jobStatus);
-    }
-
-
+    private JobStatus jobStatus;
 }

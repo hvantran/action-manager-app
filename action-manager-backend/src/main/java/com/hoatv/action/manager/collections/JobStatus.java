@@ -6,5 +6,5 @@ public enum JobStatus {
     ACTIVE,
     PAUSED,
     DELETED,
-    MOVE_TO_TRASH
+    ARCHIVED
 }

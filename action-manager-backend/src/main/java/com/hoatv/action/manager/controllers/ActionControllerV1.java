@@ -14,14 +14,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.zip.ZipOutputStream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -84,7 +82,7 @@ public class ActionControllerV1 {
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
-        List<ActionStatus> statuses = List.of(ActionStatus.MOVE_TO_TRASH);
+        List<ActionStatus> statuses = List.of(ActionStatus.ARCHIVED);
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);

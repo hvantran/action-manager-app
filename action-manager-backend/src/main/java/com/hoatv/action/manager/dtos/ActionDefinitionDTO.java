@@ -48,7 +48,7 @@ public class ActionDefinitionDTO {
 
 
     @Valid
-    @JsonProperty("relatedJobs")
+    @JsonProperty("jobs")
     @NotEmpty(message = "Jobs cannot be NULL/empty")
     private List<JobDefinitionDTO> jobs;
 }

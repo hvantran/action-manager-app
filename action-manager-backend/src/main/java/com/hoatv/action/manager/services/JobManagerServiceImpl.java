@@ -12,7 +12,6 @@ import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
 import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.exceptions.AppException;
-import com.hoatv.fwk.common.exceptions.InvalidArgumentException;
 import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.TemplateEngineEnum;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
@@ -48,12 +47,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.hoatv.action.manager.document.transformers.JobTransformer.updateFromJobDefinitionDTO;
-import static com.hoatv.fwk.common.ultilities.ObjectUtils.checkThenThrow;
 
 @Service
 @MetricProvider(application = JobManagerServiceImpl.ACTION_MANAGER, category = MetricProviders.MetricCategories.STATS_DATA_CATEGORY)
@@ -181,9 +178,9 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get enabled schedule jobs from active actions: {argument0}")
     public Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId(Set<String> actionIds) {
-        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionIdIn("ACTIVE", actionIds);
+        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionIdIn(JobStatus.ACTIVE, actionIds);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(scheduledJobDocuments);
 
         List<Triplet<String, String, String>> jobDocumentMapping = getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments);
@@ -199,21 +196,21 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get job summary with page info: {argument1}")
     public Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest) {
         Page<JobDocument> jobDocuments = jobDocumentRepository.findAll(pageRequest);
         return getJobOverviewDTOs(jobDocuments);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get jobs from action hash: {argument0}, page info: {argument1}")
     public Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest) {
         Page<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId, pageRequest);
         return getJobOverviewDTOs(jobDocuments);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get jobs from action hash {argument0}")
     public Map<String, String> getJobsFromAction(String actionId) {
         List<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
@@ -222,47 +219,47 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get one time jobs from action hash {argument0}")
     public Map<String, String> getEnabledOnetimeJobs(String actionId) {
-        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndJobStatusAndActionId("ACTIVE", actionId);
+        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndJobStatusAndActionId(JobStatus.ACTIVE, actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments)
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get enabled scheduled jobs from action hash {argument0}")
     public Map<String, String> getEnabledScheduledJobs(String actionId) {
-        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionId("ACTIVE", actionId);
+        List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionId(JobStatus.ACTIVE, actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return getJobDocumentPairs(jobDocuments, jobResultDocuments)
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get job execution result from job hash {argument0}")
     public JobResultDocument getJobResultDocumentByJobId(String jobHash) {
         return jobResultDocumentRepository.findByJobId(jobHash);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Pause job by hash: {argument0}")
     public void pause(String jobHash) {
         JobDocument jobDocument = getJobDocument(jobHash);
         String jobName = jobDocument.getJobName();
         if (!VALID_PROCESS_JOB_STATUS.contains(jobDocument.getJobStatus())) {
-            LOGGER.warn("[{}]Unable to pause job because status is: {}, only accept: {}", jobName,
+            LOGGER.warn("Unable to pause {} job because status is: {}, only accept: {}", jobName,
                     jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
             return;
         }
 
         if (jobDocument.isScheduled()) {
-            LOGGER.info("[{}]Pause schedule job: {}", jobName, jobHash);
-            jobDocument.setJobStatus(JobStatus.PAUSED.name());
+            LOGGER.info("Pause schedule {} job: {}", jobName, jobHash);
+            jobDocument.setJobStatus(JobStatus.PAUSED);
             scheduledJobRegistry.entrySet().stream()
                     .filter(p -> jobHash.equals(p.getKey()))
                     .filter(p -> Objects.nonNull(p.getValue()))
-                    .peek(p -> LOGGER.info("[{}] Delete the schedule tasks - {}", jobName, p.getKey()))
+                    .peek(p -> LOGGER.info("Delete the schedule tasks - {} on {} job", p.getKey(), jobName))
                     .map(Map.Entry::getValue)
                     .forEach(scheduleTaskMgmtService::cancel);
             metricService.removeMetric(jobHash);
@@ -270,13 +267,13 @@ public class JobManagerServiceImpl implements JobManagerService {
             return;
         }
 
-        LOGGER.info("[{}]Pause one time job: {}", jobName, jobHash);
-        jobDocument.setJobStatus(JobStatus.READY.name());
+        LOGGER.info("Pause one time {} job with hash {}", jobName, jobHash);
+        jobDocument.setJobStatus(JobStatus.READY);
         update(jobDocument);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Delete job from hash: {argument0}")
     public void delete(String jobId) {
         Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(jobId);
         ObjectUtils.checkThenThrow(jobDocumentOptional.isEmpty(), "Cannot find job: " + jobId);
@@ -284,23 +281,23 @@ public class JobManagerServiceImpl implements JobManagerService {
 
         String jobName = jobDocument.getJobName();
         if (jobDocument.isScheduled() && jobDocument.getJobStatus() == JobStatus.ACTIVE) {
-            LOGGER.info("[{}]Delete the schedule tasks for job", jobName);
+            LOGGER.info("Delete the schedule tasks for {} job", jobName);
             ScheduledFuture<?> scheduledFuture = scheduledJobRegistry.get(jobId);
             scheduleTaskMgmtService.cancel(scheduledFuture);
-            LOGGER.info("[{}]Delete the metric tasks for job", jobName);
+            LOGGER.info("Delete the metric tasks for {} job", jobName);
             metricService.removeMetric(jobId);
         }
         jobDocumentRepository.delete(jobDocument);
         JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobId);
         jobResultDocumentRepository.delete(jobResultDocument);
-        LOGGER.info("[{}]Deleted the job results for job ", jobName);
+        LOGGER.info("Deleted the job results for {} job ", jobName);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Delete job by action: {argument0}")
     public void deleteJobsByActionId(String actionId) {
         LOGGER.info("Deleted the job result documents belong to action {}", actionId);
-        List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionId("ACTIVE", actionId);
+        List<JobDocument> jobIds = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionId(JobStatus.ACTIVE, actionId);
         List<String> jobIdStrings = jobIds.stream().map(JobDocument::getHash).toList();
 
         scheduledJobRegistry.entrySet().stream()
@@ -334,7 +331,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Process job: {argument0.getJobName()}")
     public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                            BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction) {
         jobManagementStatistics.totalNumberOfJobs.incrementAndGet();
@@ -351,7 +348,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get job detail from hash: {argument0}")
     public JobDetailDTO getJobDetails(String hash) {
         JobDocument jobDocument = getJobDocument(hash);
         return JobTransformer.jobDetailDTO(jobDocument);
@@ -363,26 +360,31 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get job document from hash: {argument0}")
     public JobDocument getJobDocument(String hash) {
         Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(hash);
         return jobDocumentOptional.orElseThrow(() -> new EntityNotFoundException("Cannot find job ID: " + hash));
     }
 
     @Override
+    @LoggingMonitor(description = "Get job documents from action: {argument0}")
     public List<JobDocument> getJobDocumentsByAction(String actionId) {
         return jobDocumentRepository.findJobByActionId(actionId);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Call update on job: {argument0.getJobName()}")
     public void update(JobDocument jobDocument) {
         jobDocumentRepository.save(jobDocument);
     }
 
+    @Override
+    public void updateBulks(List<JobDocument> jobDocuments) {
+        jobDocumentRepository.saveAll(jobDocuments);
+    }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Initial job: {argument0.getJobName()} from job definition")
     public Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId) {
         JobDocument entity = JobTransformer.fromJobDefinition(jobDefinitionDTO, actionId);
         JobDocument jobDocument = jobDocumentRepository.save(entity);
@@ -397,19 +399,19 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Dry run job: {argument0.getJobName()}")
     public void processNonePersistenceJob(JobDefinitionDTO jobDocument) {
         String jobName = jobDocument.getJobName();
         try {
             JobResultImmutable jobResultImmutable = process(jobDocument);
-            LOGGER.info("[{}]Job result: {}", jobName, jobResultImmutable);
+            LOGGER.info("Job result: {}", jobResultImmutable);
         } catch (Exception exception) {
-            LOGGER.error("[{}]An exception occurred while processing job", jobName, exception);
+            LOGGER.error("An exception occurred while processing {} job", jobName, exception);
         }
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Update job: {argument1.getJobName()}")
     public void update(String hash, JobDefinitionDTO jobDefinitionDTO) {
         JobDocument persistenceJobDocument = getJobDocument(hash);
         updateFromJobDefinitionDTO(persistenceJobDocument, jobDefinitionDTO);
@@ -497,8 +499,8 @@ public class JobManagerServiceImpl implements JobManagerService {
         JobStatus jobStatus = jobDocument.getJobStatus();
         if (!VALID_PROCESS_JOB_STATUS.contains(jobStatus)) {
             LOGGER.error(
-                    "[{}]Job status {} is not supported to process, only support {}",
-                    jobName, jobStatus, VALID_PROCESS_JOB_STATUS
+                    "Job status {} for {} is not supported to process, only support {}", jobStatus,
+                    jobName, VALID_PROCESS_JOB_STATUS
             );
         }
 
@@ -523,7 +525,7 @@ public class JobManagerServiceImpl implements JobManagerService {
             jobException = jobResult.getException();
 
         } catch (Exception exception) {
-            LOGGER.error("[{}]An exception occurred while processing job", jobName, exception);
+            LOGGER.error("An exception occurred while processing {} job", jobName, exception);
             jobException = exception.getMessage();
         } finally {
             updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobException);
@@ -556,11 +558,11 @@ public class JobManagerServiceImpl implements JobManagerService {
                               BiConsumer<JobExecutionStatus, JobExecutionStatus> callback) {
         Runnable jobProcessRunnable = () -> processPersistenceJob(jobDocument, jobResultDocument, callback);
         if (jobDocument.getJobCategory() == JobCategory.CPU) {
-            LOGGER.info("[{}]Using CPU threads to execute job", jobDocument.getJobName());
+            LOGGER.info("Using CPU threads to execute {} job", jobDocument.getJobName());
             cpuTaskMgmtService.execute(jobProcessRunnable);
             return;
         }
-        LOGGER.info("[{}]Using IO threads to execute job", jobDocument.getJobName());
+        LOGGER.info("Using IO threads to execute {} job", jobDocument.getJobName());
         ioTaskMgmtService.execute(jobProcessRunnable);
     }
 
@@ -612,10 +614,10 @@ public class JobManagerServiceImpl implements JobManagerService {
 
         if (jobResult instanceof JobResultDict jobResultDict) {
             Map<String, String> multipleJobResultMap = jobResultDict.getData();
-            LOGGER.info("[{}]Reset all metric values for related job {} back to 0", jobName, metricNamePrefix);
+            LOGGER.info("Reset all metric values for related {} job {} back to 0", jobName, metricNamePrefix);
             List<ComplexValue> regexMetrics = metricService.getRegexMetrics(metricNamePrefix + ".*");
             regexMetrics.stream().flatMap(p -> p.getTags().stream())
-                    .peek(p -> LOGGER.info("[{}]Reset metric {} value to 0", jobName, p.getAttributes().get("name")))
+                    .peek(p -> LOGGER.info("Reset metric {} value to 0", p.getAttributes().get("name")))
                     .forEach(p -> p.setValue("0"));
 
             multipleJobResultMap.forEach((name, value) -> {

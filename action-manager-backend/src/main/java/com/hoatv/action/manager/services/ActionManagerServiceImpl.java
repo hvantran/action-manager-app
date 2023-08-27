@@ -99,7 +99,6 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         Set<String> actionIdList = actionDocumentList.stream().map(ActionDocument::getHash).collect(Collectors.toSet());
         LOGGER.info("Number of active actions: {}", actionIdList.size());
 
-        LOGGER.info("Get enabled schedule jobs from active actions: {}", actionIdList);
         Map<String, Map<String, String>> actionJobMapping = jobManagerService.getEnabledScheduleJobsGroupByActionId(actionIdList);
 
         Set<String> activeScheduleActionIds = actionJobMapping.keySet();
@@ -123,14 +122,14 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Search actions with {argument0}")
     public Page<ActionOverviewDTO> search(String search, Pageable pageable) {
         Page<ActionDocument> actionDocuments = actionDocumentRepository.findActionByName(search, pageable);
         return getActionOverviewDTOS(actionDocuments);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get action by statuses: {argument0}, page info: ${argument1}")
     public Page<ActionOverviewDTO> getActions(List<ActionStatus> filterStatuses, Pageable pageable) {
         LOGGER.info("Get actions from statuses: {}", filterStatuses);
         Page<ActionDocument> actionDocuments = actionDocumentRepository.findByActionStatusIn(filterStatuses, pageable);
@@ -138,13 +137,14 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Get action by id {argument0}")
     public Optional<ActionDefinitionDTO> getActionById(String hash) {
         return actionDocumentRepository.findById(hash)
                 .map(ActionTransformer::toActionDefinition);
     }
 
     @Override
+    @LoggingMonitor(description = "Set favorite value: {argument1} for action {argument0}")
     public Optional<ActionDefinitionDTO> setFavorite(String hash, boolean isFavorite) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(hash);
         if (actionDocumentOptional.isEmpty()) {
@@ -157,12 +157,13 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @LoggingMonitor(description = "Dry dun action: {argument0.getActionName()}")
     public void dryRun(ActionDefinitionDTO actionDefinition) {
         actionDefinition.getJobs().forEach(jobManagerService::processNonePersistenceJob);
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Process action: {argument0.getActionName()}")
     public String processAction(ActionDefinitionDTO actionDefinition) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContext(actionDefinition);
         jobManagerService.processBulkJobs(actionExecutionContext);
@@ -198,12 +199,16 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Archive action by id: {argument0}")
     public void archive(String actionId) {
         ActionDocument actionDocument = getActionDocument(actionId);
-        List<JobDocumentRepository.JobIdImmutable> immutableJobIds = jobManagerService.getJobIdsByAction(actionId);
-        immutableJobIds.stream().map(p -> p.getHash()).forEach(jobManagerService::pause);
-        actionDocument.setActionStatus(ActionStatus.MOVE_TO_TRASH);
+        List<JobDocument> jobDocuments = jobManagerService.getJobDocumentsByAction(actionId);
+        jobDocuments.stream().forEach(jobDocument -> jobDocument.setJobStatus(JobStatus.ARCHIVED));
+        jobManagerService.updateBulks(jobDocuments);
+
+        jobDocuments.stream().map(p -> p.getHash()).forEach(jobManagerService::pause);
+
+        actionDocument.setActionStatus(ActionStatus.ARCHIVED);
         actionDocumentRepository.save(actionDocument);
     }
 
@@ -218,13 +223,14 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @LoggingMonitor(description = "Resume job {argument0}")
     public void resume(String jobHash) {
         JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
         if (!jobDocument.isScheduled()) {
             LOGGER.warn("Skip resume for job {}, resume mechanisms only support for scheduled jobs", jobDocument.getJobName());
             return;
         }
-        jobDocument.setJobStatus(JobStatus.ACTIVE.name());
+        jobDocument.setJobStatus(JobStatus.ACTIVE);
         JobResultDocument jobResultDocument = jobManagerService.getJobResultDocumentByJobId(jobHash);
         ActionStatisticsDocument statisticsDocument = actionStatisticsDocumentRepository.findByActionId(jobDocument.getActionId());
         jobManagerService.update(jobDocument);
@@ -232,9 +238,10 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @LoggingMonitor(description = "Exporting action: {argument0} to zip file")
     public Pair<String, byte[]> export(String actionId, ServletOutputStream responseOutputStream) {
         ActionDocument actionDocument = getActionDocument(actionId);
-        LOGGER.info("[{}] Looking for job documents", actionDocument.getActionName());
+        LOGGER.info("Looking for job documents from {} action", actionDocument.getActionName());
         List<JobDocument> jobDocumentsByAction = jobManagerService.getJobDocumentsByAction(actionId);
         List<JobDefinitionDTO> jobDefinitionDTOs = jobDocumentsByAction.stream()
                 .map(JobTransformer::toJobDefinition)
@@ -252,7 +259,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
         return actionDefinition -> {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            LOGGER.info("[{}] Put content of action to zip file", actionDefinition.getActionName());
+            LOGGER.info("Put {} action content of action to zip file", actionDefinition.getActionName());
             ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
             ZipEntry entry = new ZipEntry("content.json");
             zipOutputStream.putNextEntry(entry);

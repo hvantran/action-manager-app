@@ -21,7 +21,7 @@ public final class JobTransformer {
         jobDocument.setJobCategory(jobDefinitionDTO.getJobCategory());
         jobDocument.setAsync(jobDefinitionDTO.isAsync());
         jobDocument.setScheduleUnit(jobDefinitionDTO.getScheduleUnit());
-        jobDocument.setJobStatus(jobDefinitionDTO.getJobStatus());
+        jobDocument.setJobStatus(JobStatus.valueOf(jobDefinitionDTO.getJobStatus()));
         jobDocument.setScheduled(jobDefinitionDTO.isScheduled());
         jobDocument.setScheduleInterval(jobDefinitionDTO.getScheduleInterval());
         jobDocument.setOutputTargets(jobDefinitionDTO.getOutputTargets());
@@ -33,7 +33,7 @@ public final class JobTransformer {
                 .jobDescription(jobDefinitionDTO.getJobDescription())
                 .configurations(jobDefinitionDTO.getConfigurations())
                 .jobContent(jobDefinitionDTO.getJobContent())
-                .jobStatus(jobDefinitionDTO.getJobStatus())
+                .jobStatus(JobStatus.valueOf(jobDefinitionDTO.getJobStatus()))
                 .jobCategory(jobDefinitionDTO.getJobCategory())
                 .isAsync(jobDefinitionDTO.isAsync())
                 .scheduleUnit(jobDefinitionDTO.getScheduleUnit())

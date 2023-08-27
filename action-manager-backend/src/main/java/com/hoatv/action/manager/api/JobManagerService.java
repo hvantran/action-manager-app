@@ -23,6 +23,8 @@ public interface JobManagerService {
 
     void update(JobDocument jobDocument);
 
+    void updateBulks(List<JobDocument> jobDocuments);
+
     void delete(String jobId);
 
     void update(String hash, JobDefinitionDTO jobDefinitionDTO);
