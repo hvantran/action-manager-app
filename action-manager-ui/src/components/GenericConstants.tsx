@@ -265,6 +265,7 @@ export interface TableMetadata {
     columns: Array<ColumnMetadata>
     pagingOptions: PagingOptionMetadata
     pagingResult: PagingResult
+    onRowClickCallback?: (record: any) => any
 }
 
 

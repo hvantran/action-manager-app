@@ -18,7 +18,8 @@ export const JOB_SCHEDULE_TIME_SELECTION: Array<SelectionData>  = [
 ]
 export const ACTION_STATUS_SELECTION: Array<SelectionData> = [
   {label: "INITIAL", value: "INITIAL"},
-  {label: "READY", value:"READY"}
+  {label: "READY", value:"READY"},
+  {label: "ACTIVE", value:"ACTIVE"}
 ] 
 export const JOB_STATUS_SELECTION: Array<SelectionData> = [
   {label: "INITIAL", value: "INITIAL"},

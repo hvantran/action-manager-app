@@ -1,6 +1,6 @@
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import ArchiveIcon from '@mui/icons-material/Archive';
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -97,7 +97,7 @@ export default function ActionDetail() {
         onClick: () => ActionAPI.replayAction(actionId, restClient, () => setReplayActionFlag(previous => !previous))
       },
       {
-        actionIcon: <ArchiveIcon />,
+        actionIcon: <ArchiveOutlinedIcon />,
         actionLabel: "Archive",
         actionName: "archiveAction",
         onClick: () => {

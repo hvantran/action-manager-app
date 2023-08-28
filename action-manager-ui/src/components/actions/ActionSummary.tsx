@@ -1,16 +1,16 @@
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import ArchiveIcon from '@mui/icons-material/Archive';
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import { Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import { green, red, yellow } from '@mui/material/colors';
+import { green, yellow } from '@mui/material/colors';
 import React from 'react';
 import {
   ColumnMetadata,
@@ -138,7 +138,7 @@ export default function ActionSummary() {
           }
         },
         {
-          actionIcon: <ArchiveIcon />,
+          actionIcon: <ArchiveOutlinedIcon />,
           actionLabel: "Archive",
           actionName: "archive",
           onClick: (row: ActionOverview) => {
@@ -150,7 +150,7 @@ export default function ActionSummary() {
           }
         },
         {
-          actionIcon: <FileDownloadIcon />,
+          actionIcon: <FileDownloadOutlinedIcon />,
           actionLabel: "Export",
           actionName: "export",
           onClick: (row: ActionOverview) => {
@@ -201,6 +201,7 @@ export default function ActionSummary() {
 
   let tableMetadata: TableMetadata = {
     columns,
+    onRowClickCallback: (row: ActionOverview) => navigate(`/actions/${row.hash}`),
     pagingOptions: pagingOptions,
     pagingResult: pagingResult
   }

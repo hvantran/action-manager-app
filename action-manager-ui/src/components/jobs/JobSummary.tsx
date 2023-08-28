@@ -155,6 +155,9 @@ export default function JobSummary() {
 
   let tableMetadata: TableMetadata = {
     columns,
+    onRowClickCallback(row) {
+      navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, {state: {name: row.name}})
+    },
     pagingOptions: pagingOptions,
     pagingResult: pagingResult
   }

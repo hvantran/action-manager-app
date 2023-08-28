@@ -156,6 +156,9 @@ export default function ActionJobTable(props: any) {
 
     let tableMetadata: TableMetadata = {
         columns,
+        onRowClickCallback(row) {
+            navigate(`/actions/${targetAction}/jobs/${row.hash}`, { state: { name: row.name } })
+        },
         pagingOptions: pagingOptions,
         pagingResult: pagingResult
     }

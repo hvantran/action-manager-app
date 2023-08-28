@@ -57,7 +57,8 @@ export default function TableRender(props: TableMetadata) {
                         {pagingContent
                             .map((row) => {
                                 return (
-                                    <TableRow hover role="checkbox" tabIndex={-1} key={row[keyColumn]}>
+                                    <TableRow hover role="checkbox" tabIndex={-1} key={row[keyColumn]} 
+                                        onClick={() => props.onRowClickCallback ? props.onRowClickCallback(row): undefined}>
                                         {props.columns.map((column) => {
                                             if (column.actions) {
                                                 return (
