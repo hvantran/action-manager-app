@@ -391,15 +391,17 @@ export class ActionAPI {
     });
   }
   
-  static async importFromFile(uploadFormData: FormData, restClient: RestClient) {
+  static async importFromFile(uploadFormData: FormData, restClient: RestClient, successCallback: (actionName: string) => void) {
     
     const requestOptions = {
       method: "POST",
       body: uploadFormData
     }
     const targetURL = `${ACTION_MANAGER_API_URL}/import`;
-    await restClient.sendRequest(requestOptions, targetURL, async () => {
-      return { 'message': "The action is imported sucessfully", key: new Date().getTime() } as SnackbarMessage;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let responseJSON = await response.json();
+       successCallback(responseJSON.name)
+       return undefined
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;

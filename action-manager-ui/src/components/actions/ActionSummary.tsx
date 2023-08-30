@@ -15,6 +15,7 @@ import { green, yellow } from '@mui/material/colors';
 import React from 'react';
 import {
   ColumnMetadata,
+  DialogMetadata,
   PageEntityMetadata,
   PagingOptionMetadata,
   PagingResult,
@@ -31,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
+import ConfirmationDialog from '../common/ConfirmationDialog';
 
 
 
@@ -45,6 +47,22 @@ export default function ActionSummary() {
   const [pageSize, setPageSize] = React.useState(10);
   const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
   const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
+  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
+  const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
+  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => {});
+
+  let confirmationDeleteDialogMeta: DialogMetadata = {
+    open: deleteConfirmationDialogOpen,
+    title: confirmationDialogTitle,
+    content: confirmationDialogContent,
+    positiveText: "Yes",
+    negativeText: "No",
+    negativeAction() {
+      setDeleteConfirmationDialogOpen(false);
+    },
+    positiveAction: confirmationDialogPositiveAction
+  }
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href='#'>
@@ -144,9 +162,14 @@ export default function ActionSummary() {
           actionName: "archive",
           onClick: (row: ActionOverview) => {
             return () => {
-              return ActionAPI.archive(row.hash, restClient, () => {
-                ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
-              });
+
+              setConfirmationDialogTitle("Archive")
+              setConfirmationDialogContent(previous => "Are you sure you want to archive this action?")
+              setConfirmationDialogPositiveAction(previous => () => ActionAPI.archive(row.hash, restClient, () => {
+                ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+                setDeleteConfirmationDialogOpen(previous => !previous);
+              }))
+              setDeleteConfirmationDialogOpen(previous => !previous)
             }
           }
         },
@@ -209,13 +232,14 @@ export default function ActionSummary() {
   const importActionFunc = function (target: any) {
     let importAction = (document.getElementById("raised-button-file") as HTMLInputElement);
     setMessageInfo(previous => { return { 'message': "File is empty", key: new Date().getTime() } as SnackbarMessage });
-    if (importAction ===null || importAction.files === null) {
-      setOpenError(true);
+    if (importAction === null || importAction.files === null || importAction.files.length === 0) {
       return
     }
     let uploadFormData = new FormData()
     uploadFormData.append('file', importAction.files[0])
-    ActionAPI.importFromFile(uploadFormData, restClient)
+    ActionAPI.importFromFile(uploadFormData, restClient, (actionName) => {
+      ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+    })
   }
 
   let pageEntityMetadata: PageEntityMetadata = {
@@ -224,36 +248,17 @@ export default function ActionSummary() {
     tableMetadata: tableMetadata,
     breadcumbsMeta: breadcrumbs,
     pageEntityActions: [
-      // {
-      //   actionIcon: 
-      //   <IconButton color="primary" aria-label="Upload an action" component="label">
-      //     <input type="file" id="importAction" accept=".zip" hidden/><FileUploadOutlinedIcon />
-      //   </IconButton>,
-      //   actionLabel: "Import action",
-      //   actionName: "importAction",
-      //   onClick: () => { 
-      // let importAction = (document.getElementById("importAction") as HTMLInputElement);
-      // setMessageInfo(previous => { return {'message': "File is empty", key: new Date().getTime() } as SnackbarMessage});
-      // if (importAction.files === null) {
-      //   setOpenError(true);
-      //   return
-      // }
-      // let uploadFormData = new FormData()
-      // uploadFormData.append('file', importAction.files[0])
-      // ActionAPI.importFromFile(uploadFormData, restClient)
-      //   }
-      // },
       {
         actionIcon: <Box><input
-          accept=".zip"
-          style={{ display: 'none' }}
           id="raised-button-file"
+          accept=".zip"
+          hidden
           multiple
           onChange={importActionFunc}
           type="file"
         />
           <label htmlFor="raised-button-file">
-            <IconButton component="span" onClick={importActionFunc}>
+            <IconButton component="span" color="primary">
               <FileUploadOutlinedIcon />
             </IconButton>
           </label>
@@ -283,6 +288,7 @@ export default function ActionSummary() {
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
+      <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
   );
 }
