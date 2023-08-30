@@ -609,7 +609,7 @@ export default function ActionCreation() {
         name: actionMetadata?.label,
         description: actionDescription?.propValue,
         configurations: actionConfigurations?.propValue,
-        relatedJobs: relatedJobs,
+        jobs: relatedJobs,
         status: actionStatus?.propValue
       }
       return actionDefinition;

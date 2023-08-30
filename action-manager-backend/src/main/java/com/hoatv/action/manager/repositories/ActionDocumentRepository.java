@@ -16,6 +16,9 @@ import java.util.Set;
 public interface ActionDocumentRepository extends MongoRepository<ActionDocument, String> {
 
     @Query("{actionName: {$regex : ?0, $options: 'i'}}")
+    List<ActionDocument> findActionByName(String actionName);
+
+    @Query("{actionName: {$regex : ?0, $options: 'i'}}")
     Page<ActionDocument> findActionByName(String actionName, Pageable pageable);
 
     List<ActionDocument> findByHashIn(Set<String> actionIds);

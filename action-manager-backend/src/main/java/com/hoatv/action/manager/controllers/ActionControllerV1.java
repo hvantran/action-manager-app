@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping(value = "/v1/actions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -52,7 +53,7 @@ public class ActionControllerV1 {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> executeAction(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
-        String actionId = actionManagerService.processAction(actionDefinition);
+        String actionId = actionManagerService.createAction(actionDefinition);
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
@@ -173,7 +174,13 @@ public class ActionControllerV1 {
         String fileName = outputStreamPair.getKey().concat("-").concat(localDate.format(DateTimeFormatter.ISO_DATE));
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment;filename=\"" + fileName + ".zip\"")
-                .header("Content-Type","application/octet-stream")
+                .header("Content-Type", "application/octet-stream")
                 .body(outputStreamPair.getValue());
+    }
+
+    @PostMapping(path = "/import", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> importAction(@RequestParam(value = "file", required = true) Object multipartFile) throws IOException {
+        String actionName = actionManagerService.importAction((MultipartFile) multipartFile);
+        return ResponseEntity.ok(Map.of("name", actionName));
     }
 }

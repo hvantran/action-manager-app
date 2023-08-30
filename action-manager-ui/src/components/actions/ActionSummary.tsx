@@ -2,12 +2,13 @@
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 
-import { Stack } from '@mui/material';
+import { Box, IconButton, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { green, yellow } from '@mui/material/colors';
@@ -205,6 +206,17 @@ export default function ActionSummary() {
     pagingOptions: pagingOptions,
     pagingResult: pagingResult
   }
+  const importActionFunc = function (target: any) {
+    let importAction = (document.getElementById("raised-button-file") as HTMLInputElement);
+    setMessageInfo(previous => { return { 'message': "File is empty", key: new Date().getTime() } as SnackbarMessage });
+    if (importAction ===null || importAction.files === null) {
+      setOpenError(true);
+      return
+    }
+    let uploadFormData = new FormData()
+    uploadFormData.append('file', importAction.files[0])
+    ActionAPI.importFromFile(uploadFormData, restClient)
+  }
 
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'action-summary',
@@ -212,6 +224,43 @@ export default function ActionSummary() {
     tableMetadata: tableMetadata,
     breadcumbsMeta: breadcrumbs,
     pageEntityActions: [
+      // {
+      //   actionIcon: 
+      //   <IconButton color="primary" aria-label="Upload an action" component="label">
+      //     <input type="file" id="importAction" accept=".zip" hidden/><FileUploadOutlinedIcon />
+      //   </IconButton>,
+      //   actionLabel: "Import action",
+      //   actionName: "importAction",
+      //   onClick: () => { 
+      // let importAction = (document.getElementById("importAction") as HTMLInputElement);
+      // setMessageInfo(previous => { return {'message': "File is empty", key: new Date().getTime() } as SnackbarMessage});
+      // if (importAction.files === null) {
+      //   setOpenError(true);
+      //   return
+      // }
+      // let uploadFormData = new FormData()
+      // uploadFormData.append('file', importAction.files[0])
+      // ActionAPI.importFromFile(uploadFormData, restClient)
+      //   }
+      // },
+      {
+        actionIcon: <Box><input
+          accept=".zip"
+          style={{ display: 'none' }}
+          id="raised-button-file"
+          multiple
+          onChange={importActionFunc}
+          type="file"
+        />
+          <label htmlFor="raised-button-file">
+            <IconButton component="span" onClick={importActionFunc}>
+              <FileUploadOutlinedIcon />
+            </IconButton>
+          </label>
+        </Box>,
+        actionLabel: "Import action",
+        actionName: "importAction"
+      },
       {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",

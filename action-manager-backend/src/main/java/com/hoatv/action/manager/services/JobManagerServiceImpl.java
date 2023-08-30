@@ -186,7 +186,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         List<Triplet<String, String, String>> jobDocumentMapping = getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments);
 
         Map<String, List<Triplet<String, String, String>>> scheduleJobMapping = jobDocumentMapping.stream()
-                .collect(Collectors.groupingBy(p -> p.getFirst()));
+                .collect(Collectors.groupingBy(Triplet::getFirst));
 
         return scheduleJobMapping.entrySet().stream().map(p -> {
             Map<String, String> jobJobResultMapping =
@@ -324,8 +324,12 @@ public class JobManagerServiceImpl implements JobManagerService {
         boolean isRelayAction = actionExecutionContext.isRelayAction();
         Map<String, String> jobDocumentInAction = actionExecutionContext.getJobDocumentPairs();
         jobDocumentInAction.forEach((jobHash, jobResultHash) -> {
-            JobDocument jobDocument = jobDocumentRepository.findById(jobHash).get();
-            JobResultDocument jobResultDocument = jobResultDocumentRepository.findById(jobResultHash).get();
+            Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(jobHash);
+            ObjectUtils.checkThenThrow(jobDocumentOptional.isEmpty(), "Cannot find job with hash" + jobHash);
+            JobDocument jobDocument = jobDocumentOptional.get();
+            Optional<JobResultDocument> jobResultDocumentOp = jobResultDocumentRepository.findById(jobResultHash);
+            ObjectUtils.checkThenThrow(jobResultDocumentOp.isEmpty(), "Cannot find job result with hash" + jobResultHash);
+            JobResultDocument jobResultDocument = jobResultDocumentOp.get();
             processJob(jobDocument, jobResultDocument, actionExecutionContext.getOnCompletedJobCallback(), isRelayAction);
         });
     }

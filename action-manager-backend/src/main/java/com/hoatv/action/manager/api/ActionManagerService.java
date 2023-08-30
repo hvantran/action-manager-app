@@ -1,5 +1,6 @@
 package com.hoatv.action.manager.api;
 
+import com.hoatv.action.manager.collections.ActionDocument;
 import com.hoatv.action.manager.collections.ActionStatus;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
@@ -9,15 +10,17 @@ import java.io.IOException;
 import java.util.List;
 
 import com.hoatv.fwk.common.ultilities.Pair;
+import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.servlet.ServletOutputStream;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
 public interface ActionManagerService {
 
-    String processAction(ActionDefinitionDTO actionDefinition);
+    String createAction(ActionDefinitionDTO actionDefinition);
 
     Optional<ActionDefinitionDTO> getActionById(String hash);
 
@@ -31,6 +34,8 @@ public interface ActionManagerService {
 
     boolean replay(String hash);
 
+    ActionDocument createActionDocument(ActionDefinitionDTO actionDefinition);
+
     String addJobsToAction (String hash, List<JobDefinitionDTO> jobDefinitionDTOs);
 
     void dryRun(ActionDefinitionDTO actionDefinition);
@@ -42,4 +47,6 @@ public interface ActionManagerService {
     void restore(String actionId);
 
     Pair<String, byte[]> export(String actionId, ServletOutputStream responseOutputStream) throws IOException;
+
+    String importAction(MultipartFile multipartFile) throws IOException;
 }

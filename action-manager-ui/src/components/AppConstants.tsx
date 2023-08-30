@@ -198,7 +198,7 @@ export interface ActionDefinition {
     configurations: string | undefined
     createdAt?: number | undefined
     status: string | undefined
-    relatedJobs: Array<JobDefinition> | undefined
+    jobs: Array<JobDefinition> | undefined
 }
 
 export interface ActionOverview {
@@ -252,10 +252,6 @@ export interface JobDetailMetadata {
     status?: string
 }
 
-
-const findStepPropertyByCondition = (stepMetadata: StepMetadata | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
-    return stepMetadata ? findPropertyByCondition(stepMetadata.properties, filter) : undefined;
-}
 
 const findPropertyByCondition = (properties: Array<PropertyMetadata> | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
     return properties ? properties.find(filter) : undefined;
@@ -389,6 +385,21 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+  
+  static async importFromFile(uploadFormData: FormData, restClient: RestClient) {
+    
+    const requestOptions = {
+      method: "POST",
+      data: uploadFormData
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/import`;
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
+      return { 'message': "The action is imported sucessfully", key: new Date().getTime() } as SnackbarMessage;
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
