@@ -319,7 +319,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor
+    @LoggingMonitor(description = "Process bulk jobs {argument0.getJobDocumentPairs()}")
     public void processBulkJobs(ActionExecutionContext actionExecutionContext) {
         boolean isRelayAction = actionExecutionContext.isRelayAction();
         Map<String, String> jobDocumentInAction = actionExecutionContext.getJobDocumentPairs();

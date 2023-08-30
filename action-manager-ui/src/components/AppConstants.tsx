@@ -395,7 +395,7 @@ export class ActionAPI {
     
     const requestOptions = {
       method: "POST",
-      data: uploadFormData
+      body: uploadFormData
     }
     const targetURL = `${ACTION_MANAGER_API_URL}/import`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {

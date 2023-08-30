@@ -42,6 +42,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping(value = "/v1/actions", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ActionControllerV1 {
 
+    public static final String ACTION_CREATED_AT_PROP = "createdAt";
+
     private final ActionManagerService actionManagerService;
 
     private final JobManagerService jobManagerService;
@@ -69,7 +71,7 @@ public class ActionControllerV1 {
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
+        Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc(ACTION_CREATED_AT_PROP));
         List<ActionStatus> statuses = List.of(
                 ActionStatus.INITIAL, ActionStatus.READY, ActionStatus.PAUSED, ActionStatus.ACTIVE);
         Page<ActionOverviewDTO> actionResults =

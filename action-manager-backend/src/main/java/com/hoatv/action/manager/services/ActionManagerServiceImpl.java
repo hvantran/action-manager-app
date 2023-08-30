@@ -171,7 +171,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         ActionExecutionContext actionExecutionContext = getActionExecutionContext(actionDefinition, actionDocument);
         jobManagerService.processBulkJobs(actionExecutionContext);
         actionStatistics.numberOfActions.incrementAndGet();
-        return actionExecutionContext.getActionDocument().getActionName();
+        return actionDefinition.getActionName();
     }
 
     @Override

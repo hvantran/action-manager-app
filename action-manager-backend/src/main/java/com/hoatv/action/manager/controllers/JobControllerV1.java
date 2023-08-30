@@ -7,8 +7,6 @@ import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,8 +21,7 @@ import java.util.Map;
 @RequestMapping(value = "/v1/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
 public class JobControllerV1 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobControllerV1.class);
-    private JobManagerService jobManagerService;
+    private final JobManagerService jobManagerService;
 
     @Autowired
     public JobControllerV1(JobManagerService jobManagerService) {
