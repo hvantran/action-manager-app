@@ -57,8 +57,7 @@ export default function TableRender(props: TableMetadata) {
                         {pagingContent
                             .map((row) => {
                                 return (
-                                    <TableRow hover role="checkbox" tabIndex={-1} key={row[keyColumn]} 
-                                        onClick={() => props.onRowClickCallback ? props.onRowClickCallback(row): undefined}>
+                                    <TableRow hover role="checkbox" tabIndex={-1} key={row[keyColumn]}>
                                         {props.columns.map((column) => {
                                             if (column.actions) {
                                                 return (
@@ -87,7 +86,7 @@ export default function TableRender(props: TableMetadata) {
                                             }
                                             const value = row[column.id];
                                             return (
-                                                <TableCell
+                                                <TableCell onClick={() => props.onRowClickCallback ? props.onRowClickCallback(row): undefined}
                                                     sx={{ display: column.isHidden ? 'none' : 'table-cell' }}
                                                     key={column.id}
                                                     align={column.align}>
