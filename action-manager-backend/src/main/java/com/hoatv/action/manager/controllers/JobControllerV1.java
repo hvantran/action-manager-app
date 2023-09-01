@@ -37,15 +37,15 @@ public class JobControllerV1 {
         return ResponseEntity.ok(actionResults);
     }
 
-    @PutMapping(path = "/{hash}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateJob(@PathVariable("hash") String hash,
+    @PutMapping(path = "/{jobId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateJob(@PathVariable("jobId") String hash,
                                        @RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
         jobManagerService.update(hash, jobDefinitionDTO);
         return ResponseEntity.ok(Map.of("uuid", hash));
     }
 
-    @GetMapping(path = "/{hash}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getJobById(@PathVariable("hash") String jobId) {
+    @GetMapping(path = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getJobById(@PathVariable("jobId") String jobId) {
         JobDetailDTO jobDetailDTO = jobManagerService.getJobDetails(jobId);
         return ResponseEntity.ok(jobDetailDTO);
     }
@@ -56,14 +56,14 @@ public class JobControllerV1 {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(path = "/{jobHash}/pause", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> pauseJob(@PathVariable("jobHash") String jobId) {
+    @PutMapping(path = "/{jobId}/pause", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> pauseJob(@PathVariable("jobId") String jobId) {
         jobManagerService.pause(jobId);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping(path = "/{jobHash}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> delete(@PathVariable("jobHash") String jobId) {
+    @DeleteMapping(path = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> delete(@PathVariable("jobId") String jobId) {
         jobManagerService.delete(jobId);
         return ResponseEntity.noContent().build();
     }

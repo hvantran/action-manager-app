@@ -435,7 +435,7 @@ export class ActionAPI {
         "Accept": "application/json"
       }
     }
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/moveToTrash`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/archive`;
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;

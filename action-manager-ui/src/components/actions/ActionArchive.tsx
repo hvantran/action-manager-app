@@ -26,7 +26,7 @@ import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
-export default function ActionTrash() {
+export default function ActionArchive() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
@@ -43,7 +43,7 @@ export default function ActionTrash() {
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href='#'>
-      Trash
+      Archive Actions
     </Link>
   ];
 

@@ -59,8 +59,8 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
-    @PostMapping(value = "/{hash}/jobs/new", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> addNewJobs(@PathVariable("hash") String hash,
+    @PostMapping(value = "/{actionId}/jobs/new", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> addNewJobs(@PathVariable("actionId") String hash,
                                         @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
         String actionId = actionManagerService.addJobsToAction(hash, jobDefinitionDTOs);
         return ResponseEntity.ok(Map.of("actionId", actionId));
@@ -91,16 +91,16 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(actionResults);
     }
 
-    @GetMapping(value = "/{hash}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getActionDetail(@PathVariable("hash") String hash) {
+    @GetMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getActionDetail(@PathVariable("actionId") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
         return ResponseEntity.ok(actionDefinitionDTO);
     }
 
-    @PatchMapping(value = "/{hash}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> setFavoriteActionValue(@PathVariable("hash") String hash,
+    @PatchMapping(value = "/{actionId}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> setFavoriteActionValue(@PathVariable("actionId") String hash,
                                                     @RequestParam("isFavorite") boolean isFavorite) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.setFavorite(hash, isFavorite);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
@@ -108,14 +108,14 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(actionDefinitionDTO);
     }
 
-    @GetMapping(value = "/{hash}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> replayAction(@PathVariable("hash") String hash) {
+    @GetMapping(value = "/{actionId}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> replayAction(@PathVariable("actionId") String hash) {
         boolean isReplaySuccess = actionManagerService.replay(hash);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
 
-    @DeleteMapping(value = "/{hash}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> deleteAction(@PathVariable("hash") String hash) {
+    @DeleteMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> deleteAction(@PathVariable("actionId") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
@@ -134,8 +134,8 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(actionResults);
     }
 
-    @GetMapping(value = "/{hash}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getJobsFromAction(@PathVariable("hash") String actionId,
+    @GetMapping(value = "/{actionId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getJobsFromAction(@PathVariable("actionId") String actionId,
                                                @RequestParam("pageIndex") @Min(0) int pageIndex,
                                                @RequestParam("pageSize") @Min(0) int pageSize) {
 
@@ -151,26 +151,26 @@ public class ActionControllerV1 {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(path = "/{hash}/moveToTrash", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> archive(@PathVariable("hash") String actionId) {
+    @PutMapping(path = "/{actionId}/archive", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> archive(@PathVariable("actionId") String actionId) {
         actionManagerService.archive(actionId);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(path = "/{hash}/restore", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> restore(@PathVariable("hash") String actionId) {
+    @PutMapping(path = "/{actionId}/restore", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> restore(@PathVariable("actionId") String actionId) {
         actionManagerService.restore(actionId);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(path = "/{hash}/jobs/{jobHash}/resume", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> resumeJob(@PathVariable("hash") String actionId, @PathVariable("jobHash") String jobId) {
+    @PutMapping(path = "/{actionId}/jobs/{jobHash}/resume", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> resumeJob(@PathVariable("actionId") String actionId, @PathVariable("jobHash") String jobId) {
         actionManagerService.resume(jobId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping(path = "/{hash}/export")
-    public ResponseEntity<?> export(@PathVariable("hash") String actionId, HttpServletResponse response) throws IOException {
+    @GetMapping(path = "/{actionId}/export")
+    public ResponseEntity<?> export(@PathVariable("actionId") String actionId, HttpServletResponse response) throws IOException {
         Pair<String, byte[]> outputStreamPair = actionManagerService.export(actionId, response.getOutputStream());
         LocalDate localDate = LocalDate.now();
         String fileName = outputStreamPair.getKey().concat("-").concat(localDate.format(DateTimeFormatter.ISO_DATE));
