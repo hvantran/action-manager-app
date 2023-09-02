@@ -22,7 +22,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
 import { useNavigate } from 'react-router-dom';
-import { JOB_MANAGER_API_URL, JobAPI, JobOverview } from '../AppConstants';
+import { JobAPI, JobOverview } from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import SnackbarAlert from '../common/SnackbarAlert';
 import TextTruncate from '../common/TextTruncate';
