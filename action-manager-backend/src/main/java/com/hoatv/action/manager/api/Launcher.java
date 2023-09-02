@@ -1,9 +1,9 @@
 package com.hoatv.action.manager.api;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 @FunctionalInterface
 public interface Launcher {

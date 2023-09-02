@@ -1,10 +1,11 @@
 package com.hoatv.action.manager.services;
 
 import com.hoatv.action.manager.api.JobResultImmutable;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+
+import java.util.Map;
 
 @ToString
 @Getter

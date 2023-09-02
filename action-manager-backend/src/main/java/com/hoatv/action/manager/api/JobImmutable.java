@@ -1,6 +1,7 @@
 package com.hoatv.action.manager.api;
 
 import com.hoatv.action.manager.dtos.JobCategory;
+
 import java.util.List;
 
 public interface JobImmutable {

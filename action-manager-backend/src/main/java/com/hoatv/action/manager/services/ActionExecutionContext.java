@@ -3,10 +3,10 @@ package com.hoatv.action.manager.services;
 import com.hoatv.action.manager.collections.ActionDocument;
 import com.hoatv.action.manager.collections.ActionStatisticsDocument;
 import com.hoatv.action.manager.collections.JobExecutionStatus;
+import lombok.*;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
-import lombok.*;
 
 @Builder
 @Getter

@@ -2,19 +2,13 @@ package com.hoatv.action.manager.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hoatv.action.manager.dtos.JobCategory;
-import com.hoatv.action.manager.dtos.JobOutputTarget;
 import com.hoatv.springboot.common.validation.ValueOfEnum;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.*;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Builder
