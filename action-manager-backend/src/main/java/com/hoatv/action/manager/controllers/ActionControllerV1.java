@@ -44,20 +44,20 @@ public class ActionControllerV1 {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity executeAction(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
+    public ResponseEntity<Object> executeAction(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
         String actionId = actionManagerService.createAction(actionDefinition);
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
     @PostMapping(value = "/{actionId}/jobs/new", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity addNewJobs(@PathVariable("actionId") String hash,
+    public ResponseEntity<Object> addNewJobs(@PathVariable("actionId") String hash,
                                         @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
         String actionId = actionManagerService.addJobsToAction(hash, jobDefinitionDTOs);
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getActions(
+    public ResponseEntity<Object> getActions(
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
@@ -70,7 +70,7 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(value = "/trash", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getActionInTrash(
+    public ResponseEntity<Object> getActionInTrash(
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
@@ -82,7 +82,7 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getActionDetail(@PathVariable("actionId") String hash) {
+    public ResponseEntity<Object> getActionDetail(@PathVariable("actionId") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
@@ -90,7 +90,7 @@ public class ActionControllerV1 {
     }
 
     @PatchMapping(value = "/{actionId}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity setFavoriteActionValue(@PathVariable("actionId") String hash,
+    public ResponseEntity<Object> setFavoriteActionValue(@PathVariable("actionId") String hash,
                                                     @RequestParam("isFavorite") boolean isFavorite) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.setFavorite(hash, isFavorite);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
@@ -99,13 +99,13 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(value = "/{actionId}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity replayAction(@PathVariable("actionId") String hash) {
+    public ResponseEntity<Object> replayAction(@PathVariable("actionId") String hash) {
         boolean isReplaySuccess = actionManagerService.replay(hash);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
 
     @DeleteMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity deleteAction(@PathVariable("actionId") String hash) {
+    public ResponseEntity<Object> deleteAction(@PathVariable("actionId") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
@@ -114,7 +114,7 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getActions(@RequestParam("search") String search,
+    public ResponseEntity<Object> getActions(@RequestParam("search") String search,
                                         @RequestParam("pageIndex") @Min(0) int pageIndex,
                                         @RequestParam("pageSize") @Min(0) int pageSize) {
 
@@ -125,7 +125,7 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(value = "/{actionId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getJobsFromAction(@PathVariable("actionId") String actionId,
+    public ResponseEntity<Object> getJobsFromAction(@PathVariable("actionId") String actionId,
                                                @RequestParam("pageIndex") @Min(0) int pageIndex,
                                                @RequestParam("pageSize") @Min(0) int pageSize) {
 
@@ -136,31 +136,31 @@ public class ActionControllerV1 {
     }
 
     @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity dryRun(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
+    public ResponseEntity<Object> dryRun(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
         actionManagerService.dryRun(actionDefinition);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping(path = "/{actionId}/archive", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity archive(@PathVariable("actionId") String actionId) {
+    public ResponseEntity<Object> archive(@PathVariable("actionId") String actionId) {
         actionManagerService.archive(actionId);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping(path = "/{actionId}/restore", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity restore(@PathVariable("actionId") String actionId) {
+    public ResponseEntity<Object> restore(@PathVariable("actionId") String actionId) {
         actionManagerService.restore(actionId);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping(path = "/{actionId}/jobs/{jobHash}/resume", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity resumeJob(@PathVariable("actionId") String actionId, @PathVariable("jobHash") String jobId) {
+    public ResponseEntity<Object> resumeJob(@PathVariable("actionId") String actionId, @PathVariable("jobHash") String jobId) {
         actionManagerService.resume(jobId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping(path = "/{actionId}/export")
-    public ResponseEntity export(@PathVariable("actionId") String actionId, HttpServletResponse response) throws IOException {
+    public ResponseEntity<Object> export(@PathVariable("actionId") String actionId, HttpServletResponse response) throws IOException {
         Pair<String, byte[]> outputStreamPair = actionManagerService.export(actionId, response.getOutputStream());
         LocalDate localDate = LocalDate.now();
         String fileName = outputStreamPair.getKey().concat("-").concat(localDate.format(DateTimeFormatter.ISO_DATE));
@@ -171,7 +171,7 @@ public class ActionControllerV1 {
     }
 
     @PostMapping(path = "/import", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity importAction(@RequestParam(value = "file", required = true) Object multipartFile) throws IOException {
+    public ResponseEntity<Object> importAction(@RequestParam(value = "file", required = true) Object multipartFile) throws IOException {
         String actionName = actionManagerService.importAction((MultipartFile) multipartFile);
         return ResponseEntity.ok(Map.of("name", actionName));
     }

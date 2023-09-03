@@ -29,7 +29,7 @@ public class JobControllerV1 {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getJobs(@RequestParam("pageIndex") @Min(0) int pageIndex,
+    public ResponseEntity<Object> getJobs(@RequestParam("pageIndex") @Min(0) int pageIndex,
                                      @RequestParam("pageSize") @Min(0) int pageSize) {
         Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
         Page<JobOverviewDTO> actionResults =
@@ -38,32 +38,32 @@ public class JobControllerV1 {
     }
 
     @PutMapping(path = "/{jobId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateJob(@PathVariable("jobId") String hash,
+    public ResponseEntity<Object> updateJob(@PathVariable("jobId") String hash,
                                        @RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
         jobManagerService.update(hash, jobDefinitionDTO);
         return ResponseEntity.ok(Map.of("uuid", hash));
     }
 
     @GetMapping(path = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getJobById(@PathVariable("jobId") String jobId) {
+    public ResponseEntity<Object> getJobById(@PathVariable("jobId") String jobId) {
         JobDetailDTO jobDetailDTO = jobManagerService.getJobDetails(jobId);
         return ResponseEntity.ok(jobDetailDTO);
     }
 
     @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity dryRun(@RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
+    public ResponseEntity<Object> dryRun(@RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
         jobManagerService.processNonePersistenceJob(jobDefinitionDTO);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping(path = "/{jobId}/pause", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity pauseJob(@PathVariable("jobId") String jobId) {
+    public ResponseEntity<Object> pauseJob(@PathVariable("jobId") String jobId) {
         jobManagerService.pause(jobId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping(path = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity delete(@PathVariable("jobId") String jobId) {
+    public ResponseEntity<Object> delete(@PathVariable("jobId") String jobId) {
         jobManagerService.delete(jobId);
         return ResponseEntity.noContent().build();
     }
