@@ -6,11 +6,8 @@ export default function ProcessTracking(props: any) {
   let isLoading: boolean = props.isLoading;
   return (
     <div>
-      <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={isLoading}
-      >
-        <CircularProgress color="inherit" />
+      <Backdrop open={isLoading}>
+        <CircularProgress {...props}/>
       </Backdrop>
     </div>
   );
