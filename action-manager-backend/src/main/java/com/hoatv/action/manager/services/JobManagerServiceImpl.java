@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -494,7 +495,12 @@ public class JobManagerServiceImpl implements JobManagerService {
 
         Map<String, Object> jobExecutionContext = new HashMap<>(configurationMap);
         jobExecutionContext.put("templateEngine", templateEngine);
-        return scriptEngineService.execute(jobContent, jobExecutionContext);
+        try {
+            MDC.put("jobName", jobName);
+            return scriptEngineService.execute(jobContent, jobExecutionContext);
+        } finally {
+            MDC.clear();
+        }
     }
 
     private void processPersistenceJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
