@@ -51,6 +51,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     public static final String ACTION_CONTENT_FILE = "content.json";
 
+    private static final List<ActionStatus> VALID_ACTION_STATUS_TO_RUN = List.of(ActionStatus.ACTIVE);
+
     private final ActionDocumentRepository actionDocumentRepository;
 
     private final ActionStatisticsDocumentRepository actionStatisticsDocumentRepository;
@@ -169,7 +171,9 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public String createAction(ActionDefinitionDTO actionDefinition) {
         ActionDocument actionDocument = createActionDocument(actionDefinition);
         ActionExecutionContext actionExecutionContext = getActionExecutionContext(actionDefinition, actionDocument);
-        jobManagerService.processBulkJobs(actionExecutionContext);
+        if (VALID_ACTION_STATUS_TO_RUN.contains(actionDocument.getActionStatus())) {
+            jobManagerService.processBulkJobs(actionExecutionContext);
+        }
         actionStatistics.numberOfActions.incrementAndGet();
         return actionDefinition.getActionName();
     }

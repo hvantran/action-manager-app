@@ -75,7 +75,7 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private static final String TEMPLATE_ENGINE_NAME = "templateEngineName";
 
-    private static final List<JobStatus> VALID_PROCESS_JOB_STATUS = List.of(JobStatus.READY, JobStatus.ACTIVE);
+    private static final List<JobStatus> VALID_JOB_STATUS_TO_RUN = List.of(JobStatus.READY, JobStatus.ACTIVE);
 
     private final ScriptEngineService scriptEngineService;
 
@@ -248,9 +248,9 @@ public class JobManagerServiceImpl implements JobManagerService {
     public void pause(String jobHash) {
         JobDocument jobDocument = getJobDocument(jobHash);
         String jobName = jobDocument.getJobName();
-        if (!VALID_PROCESS_JOB_STATUS.contains(jobDocument.getJobStatus())) {
+        if (!VALID_JOB_STATUS_TO_RUN.contains(jobDocument.getJobStatus())) {
             LOGGER.warn("Unable to pause {} job because status is: {}, only accept: {}", jobName,
-                    jobDocument.getJobStatus(), VALID_PROCESS_JOB_STATUS);
+                    jobDocument.getJobStatus(), VALID_JOB_STATUS_TO_RUN);
             return;
         }
 
@@ -507,11 +507,10 @@ public class JobManagerServiceImpl implements JobManagerService {
                                        BiConsumer<JobExecutionStatus, JobExecutionStatus> onJobStatusChange) {
         String jobName = jobDocument.getJobName();
         JobStatus jobStatus = jobDocument.getJobStatus();
-        if (!VALID_PROCESS_JOB_STATUS.contains(jobStatus)) {
-            LOGGER.error(
-                    "Job status {} for {} is not supported to process, only support {}", jobStatus,
-                    jobName, VALID_PROCESS_JOB_STATUS
-            );
+
+        if (!VALID_JOB_STATUS_TO_RUN.contains(jobStatus)) {
+            LOGGER.error("Job status {} for {} is not supported to process, only support {}", jobStatus, jobName, VALID_JOB_STATUS_TO_RUN);
+            return;
         }
 
         jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
