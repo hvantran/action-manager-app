@@ -437,6 +437,9 @@ public class JobManagerServiceImpl implements JobManagerService {
             JobResultDocument jobStat = jobExecutionResultDocument.orElseGet(defaultJobResult);
             String jobState = Objects.isNull(jobStat.getJobState()) ? "" : jobStat.getJobState().name();
             String jobStatus = Objects.isNull(jobStat.getJobExecutionStatus()) ? "" : jobStat.getJobExecutionStatus().name();
+            long elapsedTimeAsLong = jobStat.getElapsedTime();
+            String elapsedTimeString = DurationFormatUtils.formatDuration(elapsedTimeAsLong, "HH:mm:ss.S");
+            String elapsedTime = elapsedTimeAsLong == 0 ? "" : elapsedTimeString;
             return JobOverviewDTO.builder()
                     .name(jobDocument.getJobName())
                     .hash(jobId)
@@ -447,7 +450,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .isSchedule(jobDocument.isScheduled())
                     .startedAt(jobStat.getStartedAt())
                     .updatedAt(jobStat.getUpdatedAt())
-                    .elapsedTime(DurationFormatUtils.formatDuration(jobStat.getElapsedTime(), "HH:mm:ss.S"))
+                    .elapsedTime(elapsedTime)
                     .failureNotes(jobStat.getFailureNotes())
                     .actionHash(jobDocument.getActionId())
                     .build();
