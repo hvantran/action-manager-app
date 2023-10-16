@@ -75,7 +75,7 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private static final String TEMPLATE_ENGINE_NAME = "templateEngineName";
 
-    private static final List<JobStatus> VALID_JOB_STATUS_TO_RUN = List.of(JobStatus.READY, JobStatus.ACTIVE);
+    private static final List<JobStatus> VALID_JOB_STATUS_TO_RUN = List.of(JobStatus.ACTIVE);
 
     private final ScriptEngineService scriptEngineService;
 
@@ -254,9 +254,9 @@ public class JobManagerServiceImpl implements JobManagerService {
             return;
         }
 
+        LOGGER.info("Pause job {} - hash: {}", jobName, jobHash);
+        jobDocument.setJobStatus(JobStatus.PAUSED);
         if (jobDocument.isScheduled()) {
-            LOGGER.info("Pause schedule {} job: {}", jobName, jobHash);
-            jobDocument.setJobStatus(JobStatus.PAUSED);
             scheduledJobRegistry.entrySet().stream()
                     .filter(p -> jobHash.equals(p.getKey()))
                     .filter(p -> Objects.nonNull(p.getValue()))
@@ -264,12 +264,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .map(Map.Entry::getValue)
                     .forEach(scheduleTaskMgmtService::cancel);
             metricService.removeMetric(jobHash);
-            update(jobDocument);
-            return;
         }
-
-        LOGGER.info("Pause one time {} job with hash {}", jobName, jobHash);
-        jobDocument.setJobStatus(JobStatus.READY);
         update(jobDocument);
     }
 
