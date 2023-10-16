@@ -32,7 +32,8 @@ import {
   JOB_STATUS_SELECTION,
   JobAPI,
   JobDetailMetadata,
-  ROOT_BREADCRUMB
+  ROOT_BREADCRUMB,
+  isAllDependOnPropsValid
 } from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import SnackbarAlert from '../common/SnackbarAlert';
@@ -65,10 +66,17 @@ export default function JobDetail() {
       return previous;
     });
     setPropertyMetadata(previous => {
+
       return [...previous].map(p => {
-        if (p.propName !== "name") {
+
+        if ( p.dependOn && !isAllDependOnPropsValid(p.dependOn, previous)) {
+          return p;
+        }
+        
+        if (!p.disablePerpetualy) {
           p.disabled = !isEnabled;
         }
+
         return p;
       })
     })
@@ -100,6 +108,7 @@ export default function JobDetail() {
         propValue: '',
         isRequired: true,
         disabled: true,
+        disablePerpetualy: true,
         propDescription: 'This is name of job',
         propType: PropType.InputText,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
@@ -158,6 +167,7 @@ export default function JobDetail() {
         disabled: true,
         propValue: "",
         propDefaultValue: "",
+        dependOn: ["isAsync", true],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4,  sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
@@ -196,6 +206,7 @@ export default function JobDetail() {
         propName: 'scheduleInterval',
         propLabel: 'Interval minutes',
         disabled: true,
+        dependOn: ["isScheduled", true],
         propValue: 0,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4,  sx: { pl: 10 } },

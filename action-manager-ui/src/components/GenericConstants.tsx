@@ -195,6 +195,8 @@ export interface PropertyMetadata {
     propLabel?: string
     isRequired?: boolean
     disabled?: boolean
+    dependOn?: Array<any>
+    disablePerpetualy?: boolean
     propDescription?: string
     layoutProperties?: any
     labelElementProperties?: any

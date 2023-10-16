@@ -18,7 +18,6 @@ export const JOB_SCHEDULE_TIME_SELECTION: Array<SelectionData>  = [
 ]
 export const ACTION_STATUS_SELECTION: Array<SelectionData> = [
   {label: "INITIAL", value: "INITIAL"},
-  {label: "READY", value:"READY"},
   {label: "ACTIVE", value:"ACTIVE"}
 ] 
 export const JOB_STATUS_SELECTION: Array<SelectionData> = [
@@ -47,6 +46,9 @@ let JSONObject = Java.type('net.minidev.json.JSONObject');
 let IntStream = Java.type('java.util.stream.IntStream');
 let AtomicInteger = Java.type('java.util.concurrent.atomic.AtomicInteger');
 
+
+let StringUtils = Java.type('org.apache.commons.lang3.StringUtils');
+
 let HttpClient = Java.type('java.net.http.HttpClient');
 let Pair = Java.type('com.hoatv.fwk.common.ultilities.Pair');
 let Triplet = Java.type('com.hoatv.fwk.common.ultilities.Triplet');
@@ -56,6 +58,8 @@ let CheckConsumer = Java.type('com.hoatv.fwk.common.services.CheckedConsumer');
 
 let DateTimeUtils = Java.type('com.hoatv.fwk.common.ultilities.DateTimeUtils');
 let ObjectUtils = Java.type('com.hoatv.fwk.common.ultilities.ObjectUtils');
+let MDCUtils = Java.type('com.hoatv.fwk.common.ultilities.MDCUtils');
+let StringCommonUtils = Java.type('com.hoatv.fwk.common.ultilities.StringCommonUtils');
 let JobResult = Java.type('com.hoatv.action.manager.services.JobResult');
 let JobResultFactory = Java.type('com.hoatv.action.manager.services.JobResultFactory');
 let RequestParams = Java.type('com.hoatv.fwk.common.services.HttpClientService.RequestParams');
@@ -83,68 +87,13 @@ function postExecute(result, preExecuteReturnValues) {
 }
 
 
-function getNewRelicReport(newRelicQuery, columnMapping, heading) {
-  let responseDocument = sendNewRelicQuery(newRelicQuery);
-  let dailyStatsContext = JsonPath.parse(responseDocument);
-  let dailyStats = dailyStatsContext.read('$.data.actor.account.nrql.results', List.class);
-
-  let dailyStatRecords = formatJsonResponseToJavaMap(dailyStats, columnMapping);
-  let daylyStatColumnLabels = columnMapping.keySet();
-  let dailyStatsHTMLCode = new TableInfor(daylyStatColumnLabels, dailyStatRecords, heading);
-  return dailyStatsHTMLCode.getHTMLCode;
-}
-
-function formatJsonResponseToJavaMap(jsonResponse, columnMapping) {
-  let counter = new AtomicInteger(0);
-  return StreamSupport.stream(jsonResponse.spliterator(), false).
-    map(p => {
-      let columnAsList = new ArrayList(columnMapping.entrySet());
-      return columnMapping.entrySet().stream().map(column => {
-        let columnName = column.getKey();
-        let rowColumnDataType = column.getValue();
-        let columnDataType = rowColumnDataType.getValue();
-
-        if (columnName === 'No') {
-          return Pair.of(columnName, counter.incrementAndGet());
-        }
-
-        if (columnDataType === 'date') {
-          return Pair.of(columnName, new Date(parseInt(p.get(rowColumnDataType.getKey()))).toISOString());
-        }
-
-        let columnValue = replaceSpecialCharacters(p.get(rowColumnDataType.getKey()).toString());
-        return Pair.of(columnName, columnValue);
-      }).collect(Collectors.toMap(column => column.getKey(), column => column.getValue(), (u, v) => u, ()=> new LinkedHashMap()));
-    }).collect(Collectors.toList());
-}
-
-function replaceSpecialCharacters(text) {
-  const specialCharacters = /[&<>'"]/g;
-  return text.replace(specialCharacters, function(match) {
-    switch (match) {
-      case "&":
-        return "&amp;";
-      case "<":
-        return "&lt;";
-      case ">":
-        return "&gt;";
-      case "\"":
-        return "&quot;";
-      case "'":
-        return "&apos;";
-    }
-  });
-}
-
 function createJiraConfluenceWikiPage(pageTitle, pageContent) {
   let pageContentData = {
   }
-
   return sendHttpPOSTRequest(JIRA_ENDPOINT, JIRA_REQUEST_HEADERS, JSON.stringify(pageContentData))
 }
 
 function sendNewRelicQuery(targetURL, newRelicQuery) {
-  
     let postDataAsJSONString = '{"query":"{ actor {account(id: 153518) {  nrql(timeout: 120, query: \\"' + newRelicQuery + '\\") { results  }} }}", "variables":""}'; 
     let postData = JSON.parse(postDataAsJSONString)
     return sendHttpPOSTRequest(NEWRELIC_ENDPOINT, NEWRELIC_REQUEST_HEADERS, JSON.stringify(postData));
@@ -252,8 +201,21 @@ export interface JobDetailMetadata {
     status?: string
 }
 
+export const isAllDependOnPropsValid = (dependOnArr: Array<any>, properties: Array<PropertyMetadata> | undefined) : boolean => {
+  
+  for(let index = 0; index < dependOnArr.length; index+=2) {
+    let dependOnPropName = dependOnArr[index]
+    let dependOnPropValue = dependOnArr[index + 1]
+    let dependOnProp = findPropertyByCondition(properties, p => p.propName === dependOnPropName && p.propValue === dependOnPropValue);
+    if (dependOnProp === undefined) {
+      return false;
+    }
+  }
+  return true
+}
 
-const findPropertyByCondition = (properties: Array<PropertyMetadata> | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
+
+export const findPropertyByCondition = (properties: Array<PropertyMetadata> | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
     return properties ? properties.find(filter) : undefined;
 }
 
