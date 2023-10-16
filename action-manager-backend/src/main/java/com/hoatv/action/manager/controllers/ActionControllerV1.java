@@ -63,7 +63,7 @@ public class ActionControllerV1 {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc(ACTION_CREATED_AT_PROP));
         List<ActionStatus> statuses = List.of(
-                ActionStatus.INITIAL, ActionStatus.READY, ActionStatus.PAUSED, ActionStatus.ACTIVE);
+                ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE);
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
