@@ -45,7 +45,7 @@ public class ActionControllerV1 {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> executeAction(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
-        String actionId = actionManagerService.createAction(actionDefinition);
+        String actionId = actionManagerService.create(actionDefinition);
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
@@ -92,10 +92,8 @@ public class ActionControllerV1 {
     @PatchMapping(value = "/{actionId}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> setFavoriteActionValue(@PathVariable("actionId") String hash,
                                                     @RequestParam("isFavorite") boolean isFavorite) {
-        Optional<ActionDefinitionDTO> actionResult = actionManagerService.setFavorite(hash, isFavorite);
-        ActionDefinitionDTO actionDefinitionDTO = actionResult
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
-        return ResponseEntity.ok(actionDefinitionDTO);
+        ActionDefinitionDTO actionResult = actionManagerService.setFavorite(hash, isFavorite);
+        return ResponseEntity.ok(actionResult);
     }
 
     @GetMapping(value = "/{actionId}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -133,6 +131,11 @@ public class ActionControllerV1 {
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
+    }
+    @PutMapping(path = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> update(@PathVariable("actionId") String actionId, @RequestBody ActionDefinitionDTO actionDefinitionDTO) {
+        actionManagerService.update(actionId, actionDefinitionDTO);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)

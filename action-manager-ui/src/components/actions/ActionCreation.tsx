@@ -20,6 +20,7 @@ import {
   JOB_STATUS_SELECTION,
   JobDefinition,
   ROOT_BREADCRUMB,
+  getActionDefinition,
   getJobDefinition
 } from '../AppConstants';
 import {
@@ -592,27 +593,10 @@ export default function ActionCreation() {
   }
 
   const getActionFromStepper = (currentStepMetadata: Array<StepMetadata>) => {
-    const actionStepIndex = 0;
-    let actionMetadata = currentStepMetadata.at(actionStepIndex);
+    let actionMetadata = currentStepMetadata.at(0);
+
     if (!actionMetadata) {
       throw new Error("Missing action definition");
-    }
-    const findStepPropertyByCondition = (stepMetadata: StepMetadata | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
-      return stepMetadata ? stepMetadata.properties.find(filter) : undefined;
-    }
-    const getAction = (): ActionDefinition => {
-      let actionDescription = findStepPropertyByCondition(actionMetadata, property => property.propName === "actionDescription");
-      let actionConfigurations = findStepPropertyByCondition(actionMetadata, property => property.propName === "actionConfigurations");
-      let actionStatus = findStepPropertyByCondition(actionMetadata, property => property.propName === "actionStatus");
-      let relatedJobs = findRelatedJobs(currentStepMetadata);
-      let actionDefinition: ActionDefinition = {
-        name: actionMetadata?.label,
-        description: actionDescription?.propValue,
-        configurations: actionConfigurations?.propValue,
-        jobs: relatedJobs,
-        status: actionStatus?.propValue
-      }
-      return actionDefinition;
     }
 
     const findRelatedJobs = (currentStepMetadata: Array<StepMetadata>): Array<JobDefinition> => {
@@ -622,7 +606,9 @@ export default function ActionCreation() {
         .map(p => getJobDefinition(p.properties))
     }
 
-    return getAction();
+    let actionDefinition = getActionDefinition(actionMetadata.properties);
+    actionDefinition.jobs = findRelatedJobs(currentStepMetadata);
+    return actionDefinition;
   }
 
 

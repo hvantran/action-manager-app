@@ -162,14 +162,9 @@ export interface ActionOverview {
 }
 
 export interface ActionDetails {
-    hash: string
-    name: string
-    numberOfJobs: number
-    numberOfSuccessJobs: number
-    numberOfFailureJobs: number
-    createdAt: number
-    description: string
-    configurations: string
+    actionName: string
+    actionStatus: string
+    actionConfigurations: string
 }
 
 export interface JobOverview {
@@ -216,6 +211,21 @@ export const isAllDependOnPropsValid = (dependOnArr: Array<any>, properties: Arr
 
 export const findPropertyByCondition = (properties: Array<PropertyMetadata> | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
     return properties ? properties.find(filter) : undefined;
+}
+
+export const getActionDefinition = (properties: Array<PropertyMetadata>): ActionDefinition => {
+  let actionDescription = findPropertyByCondition(properties, property => property.propName === "actionDescription");
+  let actionConfigurations = findPropertyByCondition(properties, property => property.propName === "actionConfigurations");
+  let actionStatus = findPropertyByCondition(properties, property => property.propName === "actionStatus");
+  let name = findPropertyByCondition(properties, property => property.propName === "actionName");
+  let actionDefinition: ActionDefinition = {
+    name: name?.propValue,
+    description: actionDescription?.propValue,
+    configurations: actionConfigurations?.propValue,
+    jobs: undefined,
+    status: actionStatus?.propValue
+  }
+  return actionDefinition;
 }
 
 export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
@@ -325,8 +335,14 @@ export class ActionAPI {
 
     const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(actionId)}`;
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-      let actionDetailResult = await response.json() as ActionDetails;
-      successCallback(actionDetailResult);
+      let actionDetailResult = await response.json();
+
+      const actionDetail: ActionDetails = {
+        actionName: actionDetailResult.name,
+        actionStatus: actionDetailResult.status,
+        actionConfigurations: actionDetailResult.configurations
+      }
+      successCallback(actionDetail);
       return undefined;
     }, async (response: Response) => {
       let responseJSON = await response.json();
@@ -349,6 +365,23 @@ export class ActionAPI {
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
+  static updateAction = async (actionId: string, restClient: RestClient, propertyMetadata: Array<PropertyMetadata>, successCallback: () => void) => {
+    const actionDefinition = getActionDefinition(propertyMetadata);
+    const requestOptions = {
+      method: "PUT",
+      headers: {
+        "Accept": "application/json",
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(actionDefinition)
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}`;
+    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
+      successCallback();
+      return { 'message': 'Action info has been updated successfully', key: new Date().getTime() } as SnackbarMessage;
     });
   }
   
@@ -459,9 +492,8 @@ export class JobAPI {
 
     const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
     await restClient.sendRequest(requestOptions, targetURL, async(response) => {
-      let responseJSON = await response.json();
       successCallback();
-      return { 'message': `${responseJSON['uuid']} is updated`, key: new Date().getTime() } as SnackbarMessage;
+      return { 'message': 'Job info has been updated successfully', key: new Date().getTime() } as SnackbarMessage;
     });
   }
 

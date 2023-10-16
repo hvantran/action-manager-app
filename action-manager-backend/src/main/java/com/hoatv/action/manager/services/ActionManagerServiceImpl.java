@@ -149,15 +149,14 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor(description = "Set favorite value: {argument1} for action {argument0}")
-    public Optional<ActionDefinitionDTO> setFavorite(String hash, boolean isFavorite) {
+    public ActionDefinitionDTO setFavorite(String hash, boolean isFavorite) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(hash);
-        if (actionDocumentOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        ActionDocument actionDocument = actionDocumentOptional.get();
+        ActionDocument actionDocument = actionDocumentOptional
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
+
         actionDocument.setFavorite(isFavorite);
         ActionDocument document = actionDocumentRepository.save(actionDocument);
-        return Optional.of(ActionTransformer.toActionDefinition(document));
+        return ActionTransformer.toActionDefinition(document);
     }
 
     @Override
@@ -168,7 +167,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @LoggingMonitor(description = "Process action: {argument0.getActionName()}")
-    public String createAction(ActionDefinitionDTO actionDefinition) {
+    public String create(ActionDefinitionDTO actionDefinition) {
         ActionDocument actionDocument = createActionDocument(actionDefinition);
         ActionExecutionContext actionExecutionContext = getActionExecutionContext(actionDefinition, actionDocument);
         if (VALID_ACTION_STATUS_TO_RUN.contains(actionDocument.getActionStatus())) {
@@ -176,6 +175,17 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         }
         actionStatistics.numberOfActions.incrementAndGet();
         return actionDefinition.getActionName();
+    }
+
+    @Override
+    @LoggingMonitor(description = "Update action: {argument1.getActionName()}")
+    public void update(String actionId, ActionDefinitionDTO actionDefinitionDTO) {
+        Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
+        ActionDocument actionDocument = actionDocumentOptional
+                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+        actionDocument.setConfigurations(actionDefinitionDTO.getConfigurations());
+        actionDocument.setActionStatus(ActionStatus.valueOf(actionDefinitionDTO.getActionStatus()));
+        actionDocumentRepository.save(actionDocument);
     }
 
     @Override
@@ -281,7 +291,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         CheckedFunction<Path, String> pathConsumer = actionFilePath -> {
             ActionDefinitionDTO actionDefinitionDTO =
                     objectMapper.readValue(actionFilePath.toFile(), ActionDefinitionDTO.class);
-            return createAction(actionDefinitionDTO);
+            return create(actionDefinitionDTO);
         };
         List<String> actionNames = actionFilePaths.stream().map(pathConsumer).toList();
         return actionNames.get(0);
