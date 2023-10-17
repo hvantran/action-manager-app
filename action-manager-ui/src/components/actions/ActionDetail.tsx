@@ -103,8 +103,8 @@ export default function ActionDetail() {
         propDescription: 'This is action name',
         propType: PropType.InputText,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 5 } },
-        valueElementProperties: { xs: 8 },
+        labelElementProperties: { xs: 2.5,  sx: { pl: 5} },
+        valueElementProperties: { xs: 9.5 },
         textFieldMeta: {
           onChangeEvent: function (event: any) {
             let propValue = event.target.value;
@@ -141,8 +141,8 @@ export default function ActionDetail() {
         propDefaultValue: '{}',
         disabled: true,
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2,  sx: { pl: 5 } },
-        valueElementProperties: { xs: 10 },
+        labelElementProperties: { xs: 1.2,  sx: { pl: 5 } },
+        valueElementProperties: { xs: 10.8 },
         isRequired: true,
         propType: PropType.CodeEditor,
         codeEditorMeta:
