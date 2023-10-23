@@ -39,6 +39,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
@@ -244,6 +245,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Pause job by hash: {argument0}")
     public void pause(String jobHash) {
         JobDocument jobDocument = getJobDocument(jobHash);
@@ -269,6 +271,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Delete job from hash: {argument0}")
     public void delete(String jobId) {
         Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(jobId);
@@ -290,6 +293,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Delete job by action: {argument0}")
     public void deleteJobsByActionId(String actionId) {
         LOGGER.info("Deleted the job result documents belong to action {}", actionId);
@@ -331,6 +335,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Process job: {argument0.getJobName()}")
     public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                            BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction) {
@@ -373,17 +378,20 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Call update on job: {argument0.getJobName()}")
     public void update(JobDocument jobDocument) {
         jobDocumentRepository.save(jobDocument);
     }
 
     @Override
+    @Transactional
     public void updateBulks(List<JobDocument> jobDocuments) {
         jobDocumentRepository.saveAll(jobDocuments);
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Initial job: {argument0.getJobName()} from job definition")
     public Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId) {
         JobDocument entity = JobTransformer.fromJobDefinition(jobDefinitionDTO, actionId);
@@ -411,6 +419,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Update job: {argument1.getJobName()}")
     public void update(String hash, JobDefinitionDTO jobDefinitionDTO) {
         JobDocument persistenceJobDocument = getJobDocument(hash);

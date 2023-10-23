@@ -18,7 +18,10 @@ import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.exceptions.InvalidArgumentException;
 import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedFunction;
-import com.hoatv.fwk.common.ultilities.*;
+import com.hoatv.fwk.common.ultilities.DateTimeUtils;
+import com.hoatv.fwk.common.ultilities.ObjectUtils;
+import com.hoatv.fwk.common.ultilities.Pair;
+import com.hoatv.fwk.common.ultilities.ZipFileUtils;
 import com.hoatv.metric.mgmt.annotations.Metric;
 import com.hoatv.metric.mgmt.annotations.MetricProvider;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
@@ -30,13 +33,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -59,36 +61,32 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private final JobManagerService jobManagerService;
 
-    private final ActionStatistics actionStatistics;
+    private final AtomicLong numberOfActions;
 
-    private final GenericKeyedLock<String> jobStatusUpdaterLocks;
-
+    private final AtomicLong numberOfReplayActions;
 
     @Autowired
     public ActionManagerServiceImpl(ActionDocumentRepository actionDocumentRepository,
                                     JobManagerService jobManagerService,
+                                    ActionStatsManager actionStatsManager,
                                     ActionStatisticsDocumentRepository actionStatisticsDocumentRepository) {
+
         this.actionDocumentRepository = actionDocumentRepository;
         this.jobManagerService = jobManagerService;
-        this.actionStatistics = new ActionStatistics();
+        this.numberOfActions = new AtomicLong(0);
+        this.numberOfReplayActions = new AtomicLong(0);
         this.actionStatisticsDocumentRepository = actionStatisticsDocumentRepository;
-        this.jobStatusUpdaterLocks = new GenericKeyedLock<>();
-    }
 
-    private static class ActionStatistics {
-        private final AtomicLong numberOfActions = new AtomicLong(0);
-
-        private final AtomicLong numberOfReplayActions = new AtomicLong(0);
     }
 
     @Metric(name = "action-manager-number-of-actions")
     public long getNumberOfActions() {
-        return actionStatistics.numberOfActions.get();
+        return numberOfActions.get();
     }
 
     @Metric(name = "action-manager-number-of-replay-actions")
     public long getNumberOfReplayActions() {
-        return actionStatistics.numberOfReplayActions.get();
+        return numberOfReplayActions.get();
     }
 
 
@@ -96,15 +94,15 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public void initScheduleJobOnStartup() {
         LOGGER.info("Init the scheduled jobs per actions on startup");
         long numberOfActions = actionDocumentRepository.count();
-        actionStatistics.numberOfActions.set(numberOfActions);
+        this.numberOfActions.set(numberOfActions);
         LOGGER.info("Number of persisted actions: {}", numberOfActions);
+
         LOGGER.info("Looking for the active actions");
         List<ActionDocument> actionDocumentList = actionDocumentRepository.findByActionStatus(ActionStatus.ACTIVE);
         Set<String> actionIdList = actionDocumentList.stream().map(ActionDocument::getHash).collect(Collectors.toSet());
         LOGGER.info("Number of active actions: {}", actionIdList.size());
 
         Map<String, Map<String, String>> actionJobMapping = jobManagerService.getEnabledScheduleJobsGroupByActionId(actionIdList);
-
         Set<String> activeScheduleActionIds = actionJobMapping.keySet();
         List<ActionDocument> activeScheduleActions = actionDocumentList.stream()
                 .filter(p -> activeScheduleActionIds.contains(p.getHash()))
@@ -148,6 +146,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Set favorite value: {argument1} for action {argument0}")
     public ActionDefinitionDTO setFavorite(String hash, boolean isFavorite) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(hash);
@@ -166,6 +165,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Process action: {argument0.getActionName()}")
     public String create(ActionDefinitionDTO actionDefinition) {
         ActionDocument actionDocument = createActionDocument(actionDefinition);
@@ -173,11 +173,12 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         if (VALID_ACTION_STATUS_TO_RUN.contains(actionDocument.getActionStatus())) {
             jobManagerService.processBulkJobs(actionExecutionContext);
         }
-        actionStatistics.numberOfActions.incrementAndGet();
+        numberOfActions.incrementAndGet();
         return actionDefinition.getActionName();
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Update action: {argument1.getActionName()}")
     public void update(String actionId, ActionDefinitionDTO actionDefinitionDTO) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
@@ -189,6 +190,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Create {argument0.getActionName()} action from action definition")
     public ActionDocument createActionDocument(ActionDefinitionDTO actionDefinition) {
         String actionName = actionDefinition.getActionName();
@@ -199,33 +201,37 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Add new job to action {argument0}")
     public String addJobsToAction(String actionId, List<JobDefinitionDTO> jobDefinitionDTOs) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContextForNewJobs(actionId, jobDefinitionDTOs);
         jobManagerService.processBulkJobs(actionExecutionContext);
-        actionStatistics.numberOfActions.incrementAndGet();
+        this.numberOfActions.incrementAndGet();
         return actionId;
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Replay action {argument0}")
     public boolean replay(String actionId) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContextForReplay(actionId);
         jobManagerService.processBulkJobs(actionExecutionContext);
-        actionStatistics.numberOfReplayActions.incrementAndGet();
+        this.numberOfReplayActions.incrementAndGet();
         return true;
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Delete action {argument0}")
     public void delete(String actionId) {
         actionDocumentRepository.deleteById(actionId);
         actionStatisticsDocumentRepository.deleteByActionId(actionId);
         jobManagerService.deleteJobsByActionId(actionId);
-        actionStatistics.numberOfActions.decrementAndGet();
+        this.numberOfActions.decrementAndGet();
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Archive action by id: {argument0}")
     public void archive(String actionId) {
         ActionDocument actionDocument = createActionDocument(actionId);
@@ -240,6 +246,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Restore action {argument0}")
     public void restore(String actionId) {
         ActionDocument actionDocument = createActionDocument(actionId);
@@ -251,6 +258,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Resume job {argument0}")
     public void resume(String jobHash) {
         JobDocument jobDocument = jobManagerService.getJobDocument(jobHash);
@@ -445,7 +453,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback(ActionStatisticsDocument actionStatisticsDocument) {
         return (prevJobStatus, currentJobStatus) -> {
-            LOGGER.info("Prev status: {} -> Next status: {}", prevJobStatus, currentJobStatus);
+            /*LOGGER.info("Prev status: {} -> Next status: {}", prevJobStatus, currentJobStatus);
             if (prevJobStatus == currentJobStatus) {
                 return;
             }
@@ -474,7 +482,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 }
             } else {
                 LOGGER.error("Cannot get lock on completed job callback function");
-            }
+            }*/
         };
     }
 
