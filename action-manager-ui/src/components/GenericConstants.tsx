@@ -130,7 +130,7 @@ export class RestClient {
                 }
             }
         } catch (error: any) {
-            let messageInfo = { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
+            let messageInfo = { 'message': "An internal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
             this.setMessageInfo(messageInfo);
             this.setOpenError(true);
         } finally {
