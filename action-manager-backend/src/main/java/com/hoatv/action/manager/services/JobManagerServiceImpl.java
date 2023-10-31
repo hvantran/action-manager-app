@@ -78,6 +78,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private static final List<JobStatus> VALID_JOB_STATUS_TO_RUN = List.of(JobStatus.ACTIVE);
 
+    public static final int NUMBER_OF_SCHEDULE_THREADS = 100;
+
     private final ScriptEngineService scriptEngineService;
 
     private final ObjectMapper objectMapper;
@@ -86,15 +88,19 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private final JobExecutionResultDocumentRepository jobResultDocumentRepository;
 
+    private final MetricService metricService;
+
     private final TaskMgmtServiceV1 ioTaskMgmtService;
 
     private final TaskMgmtServiceV1 cpuTaskMgmtService;
 
     private final ScheduleTaskMgmtService scheduleTaskMgmtService;
 
-    private final MetricService metricService;
+    private final AtomicLong totalNumberOfJobs = new AtomicLong(0);
 
-    private final JobManagementStatistics jobManagementStatistics;
+    private final AtomicLong numberOfActiveJobs = new AtomicLong(0);
+
+    private final AtomicLong numberOfFailureJobs = new AtomicLong(0);
 
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
 
@@ -110,33 +116,33 @@ public class JobManagerServiceImpl implements JobManagerService {
         this.jobDocumentRepository = jobDocumentRepository;
         this.jobResultDocumentRepository = jobResultDocumentRepository;
         this.metricService = new MetricService();
-        this.jobManagementStatistics = new JobManagementStatistics();
-        this.ioTaskMgmtService = TaskFactory.INSTANCE
-                .getTaskMgmtServiceV1(NUMBER_OF_JOB_THREADS, MAX_AWAIT_TERMINATION_MILLIS, IO_JOB_MANAGER_APPLICATION);
+        this.ioTaskMgmtService = TaskFactory.INSTANCE.getTaskMgmtServiceV1(
+                NUMBER_OF_JOB_THREADS,
+                MAX_AWAIT_TERMINATION_MILLIS,
+                IO_JOB_MANAGER_APPLICATION
+        );
         int cores = Runtime.getRuntime().availableProcessors();
-        this.cpuTaskMgmtService = TaskFactory.INSTANCE
-                .getTaskMgmtServiceV1(cores, MAX_AWAIT_TERMINATION_MILLIS, CPU_JOB_MANAGER_APPLICATION);
-        this.scheduleTaskMgmtService = TaskFactory.INSTANCE
-                .newScheduleTaskMgmtService(ACTION_MANAGER, 100, 5000);
+        this.cpuTaskMgmtService = TaskFactory.INSTANCE.getTaskMgmtServiceV1(
+                cores,
+                MAX_AWAIT_TERMINATION_MILLIS,
+                CPU_JOB_MANAGER_APPLICATION
+        );
+        this.scheduleTaskMgmtService = TaskFactory.INSTANCE.newScheduleTaskMgmtService(
+                ACTION_MANAGER,
+                NUMBER_OF_SCHEDULE_THREADS,
+                MAX_AWAIT_TERMINATION_MILLIS
+        );
         this.objectMapper = new ObjectMapper();
-    }
-
-    private static class JobManagementStatistics {
-        private final AtomicLong totalNumberOfJobs = new AtomicLong(0);
-
-        private final AtomicLong numberOfActiveJobs = new AtomicLong(0);
-
-        private final AtomicLong numberOfFailureJobs = new AtomicLong(0);
     }
 
     @PostConstruct
     public void init() {
         Example<JobDocument> jobEx = Example.of(JobDocument.builder().isScheduled(false).build());
         long numberOfJobs = jobDocumentRepository.count(jobEx);
-        jobManagementStatistics.totalNumberOfJobs.set(numberOfJobs);
+        totalNumberOfJobs.set(numberOfJobs);
         Example<JobResultDocument> failureJobEx = Example.of(JobResultDocument.builder().jobExecutionStatus(JobExecutionStatus.FAILURE).build());
         long numberOfFailureJobs = jobResultDocumentRepository.count(failureJobEx);
-        jobManagementStatistics.numberOfFailureJobs.set(numberOfFailureJobs);
+        this.numberOfFailureJobs.set(numberOfFailureJobs);
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX)
@@ -146,17 +152,17 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-jobs")
     public long getTotalNumberOfJobs() {
-        return jobManagementStatistics.totalNumberOfJobs.get();
+        return totalNumberOfJobs.get();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-failure-jobs")
     public long getTotalNumberOfFailureJobs() {
-        return jobManagementStatistics.numberOfFailureJobs.get();
+        return numberOfFailureJobs.get();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-activate-jobs")
     public long getTotalNumberOfActiveJobs() {
-        return jobManagementStatistics.numberOfActiveJobs.get();
+        return numberOfActiveJobs.get();
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-active-schedule-jobs")
@@ -339,7 +345,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor(description = "Process job: {argument0.getJobName()}")
     public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                            BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction) {
-        jobManagementStatistics.totalNumberOfJobs.incrementAndGet();
+        totalNumberOfJobs.incrementAndGet();
         if (jobDocument.isScheduled() && !isRelayAction) {
             ScheduledFuture<?> scheduledFuture = processScheduleJob(jobDocument, jobResultDocument, callback);
             scheduledJobRegistry.put(jobDocument.getHash(), scheduledFuture);
@@ -520,7 +526,7 @@ public class JobManagerServiceImpl implements JobManagerService {
             return;
         }
 
-        jobManagementStatistics.numberOfActiveJobs.incrementAndGet();
+        numberOfActiveJobs.incrementAndGet();
         long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
         JobExecutionStatus prevJobStatus = jobResultDocument.getJobExecutionStatus();
         JobExecutionStatus nextJobStatus = JobExecutionStatus.FAILURE;
@@ -588,9 +594,9 @@ public class JobManagerServiceImpl implements JobManagerService {
 
         onJobStatusChange.accept(prevJobStatus, nextJobStatus);
         if (nextJobStatus == JobExecutionStatus.FAILURE) {
-            jobManagementStatistics.numberOfFailureJobs.incrementAndGet();
+            numberOfFailureJobs.incrementAndGet();
         }
-        jobManagementStatistics.numberOfActiveJobs.decrementAndGet();
+        numberOfActiveJobs.decrementAndGet();
     }
 
     private void updateJobResultDocument(JobResultDocument jobResultDocument,
