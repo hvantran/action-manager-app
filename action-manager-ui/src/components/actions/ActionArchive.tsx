@@ -1,9 +1,13 @@
 
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import ErrorIcon from '@mui/icons-material/Error';
+import PendingIcon from '@mui/icons-material/Pending';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import RestoreIcon from '@mui/icons-material/Restore';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 
-import { Stack } from '@mui/material';
+import { Badge, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import { red } from '@mui/material/colors';
 import React from 'react';
@@ -71,31 +75,50 @@ export default function ActionArchive() {
     },
     {
       id: 'numberOfJobs',
-      label: 'Total jobs',
-      minWidth: 170,
+      label: 'No jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value.toLocaleString('en-US'),
+      format: (value: number) => value
+    },
+    {
+      id: 'numberOfPendingJobs',
+      label: 'No pending jobs',
+      minWidth: 100,
+      align: 'left',
+      format: (value: number) =>
+        <Badge badgeContent={value} color='warning' showZero>
+          <PendingIcon color='warning'/>
+        </Badge>
     },
     {
       id: 'numberOfFailureJobs',
-      label: 'Number of failure jobs',
-      minWidth: 170,
+      label: 'No failure jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value.toLocaleString('en-US'),
+      format: (value: number) =>
+        <Badge badgeContent={value} color="error" showZero>
+          <ErrorIcon color="error" />
+        </Badge>
     },
     {
       id: 'numberOfSuccessJobs',
-      label: 'Number of success jobs',
-      minWidth: 170,
+      label: 'No success jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value,
+      format: (value: number) =>
+        <Badge badgeContent={value} color="success" showZero>
+          <CheckCircleIcon color="success" />
+        </Badge>
     },
     {
       id: 'numberOfScheduleJobs',
-      label: 'Number of schedule jobs',
-      minWidth: 170,
+      label: 'No schedule jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value,
+      format: (value: number) =>
+        <Badge badgeContent={value} color="secondary" showZero>
+          <ScheduleIcon color="secondary" />
+        </Badge>
     },
     {
       id: 'createdAt',

@@ -7,8 +7,12 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import PendingIcon from '@mui/icons-material/Pending';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 
-import { Box, IconButton, Stack } from '@mui/material';
+import { Badge, Box, IconButton, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { green, yellow } from '@mui/material/colors';
@@ -30,9 +34,9 @@ import ProcessTracking from '../common/ProcessTracking';
 
 import { useNavigate } from 'react-router-dom';
 import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
+import ConfirmationDialog from '../common/ConfirmationDialog';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
-import ConfirmationDialog from '../common/ConfirmationDialog';
 
 
 
@@ -50,7 +54,7 @@ export default function ActionSummary() {
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
-  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => {});
+  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
 
   let confirmationDeleteDialogMeta: DialogMetadata = {
     open: deleteConfirmationDialogOpen,
@@ -79,37 +83,56 @@ export default function ActionSummary() {
     {
       id: 'status',
       label: 'Status',
-      minWidth: 170,
+      minWidth: 50,
       align: 'left',
       format: (value: string) => value,
     },
     {
       id: 'numberOfJobs',
-      label: 'Total jobs',
-      minWidth: 170,
+      label: 'No jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value.toLocaleString('en-US'),
+      format: (value: number) => value
+    },
+    {
+      id: 'numberOfPendingJobs',
+      label: 'No pending jobs',
+      minWidth: 100,
+      align: 'left',
+      format: (value: number) =>
+        <Badge badgeContent={value} color='warning' showZero>
+          <PendingIcon color='warning'/>
+        </Badge>
     },
     {
       id: 'numberOfFailureJobs',
-      label: 'Number of failure jobs',
-      minWidth: 170,
+      label: 'No failure jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value.toLocaleString('en-US'),
+      format: (value: number) =>
+        <Badge badgeContent={value} color="error" showZero>
+          <ErrorIcon color="error" />
+        </Badge>
     },
     {
       id: 'numberOfSuccessJobs',
-      label: 'Number of success jobs',
-      minWidth: 170,
+      label: 'No success jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value,
+      format: (value: number) =>
+        <Badge badgeContent={value} color="success" showZero>
+          <CheckCircleIcon color="success" />
+        </Badge>
     },
     {
       id: 'numberOfScheduleJobs',
-      label: 'Number of schedule jobs',
-      minWidth: 170,
+      label: 'No schedule jobs',
+      minWidth: 100,
       align: 'left',
-      format: (value: number) => value,
+      format: (value: number) =>
+        <Badge badgeContent={value} color="secondary" showZero>
+          <ScheduleIcon color="secondary" />
+        </Badge>
     },
     {
       id: 'createdAt',
