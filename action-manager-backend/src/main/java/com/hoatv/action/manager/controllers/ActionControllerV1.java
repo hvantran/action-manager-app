@@ -34,6 +34,8 @@ public class ActionControllerV1 {
 
     public static final String ACTION_CREATED_AT_PROP = "createdAt";
 
+    public static final String IS_FAVORITE = "isFavorite";
+
     private final ActionManagerService actionManagerService;
 
     private final JobManagerService jobManagerService;
@@ -61,7 +63,7 @@ public class ActionControllerV1 {
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc(ACTION_CREATED_AT_PROP));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(IS_FAVORITE), Sort.Order.desc(ACTION_CREATED_AT_PROP));
         List<ActionStatus> statuses = List.of(
                 ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE);
         Page<ActionOverviewDTO> actionResults =
@@ -74,7 +76,7 @@ public class ActionControllerV1 {
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(ACTION_CREATED_AT_PROP));
         List<ActionStatus> statuses = List.of(ActionStatus.ARCHIVED);
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
@@ -91,7 +93,7 @@ public class ActionControllerV1 {
 
     @PatchMapping(value = "/{actionId}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> setFavoriteActionValue(@PathVariable("actionId") String hash,
-                                                    @RequestParam("isFavorite") boolean isFavorite) {
+                                                    @RequestParam(IS_FAVORITE) boolean isFavorite) {
         ActionDefinitionDTO actionResult = actionManagerService.setFavorite(hash, isFavorite);
         return ResponseEntity.ok(actionResult);
     }
@@ -116,7 +118,7 @@ public class ActionControllerV1 {
                                         @RequestParam("pageIndex") @Min(0) int pageIndex,
                                         @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.desc("createdAt"));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(IS_FAVORITE), Sort.Order.desc(ACTION_CREATED_AT_PROP));
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.search(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
@@ -127,7 +129,7 @@ public class ActionControllerV1 {
                                                @RequestParam("pageIndex") @Min(0) int pageIndex,
                                                @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(ACTION_CREATED_AT_PROP));
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);

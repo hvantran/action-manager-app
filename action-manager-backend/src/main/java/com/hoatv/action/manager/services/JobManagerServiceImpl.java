@@ -10,7 +10,6 @@ import com.hoatv.action.manager.dtos.*;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
-import com.hoatv.fwk.common.constants.MetricProviders;
 import com.hoatv.fwk.common.exceptions.AppException;
 import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.TemplateEngineEnum;
@@ -18,8 +17,6 @@ import com.hoatv.fwk.common.ultilities.DateTimeUtils;
 import com.hoatv.fwk.common.ultilities.ObjectUtils;
 import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.fwk.common.ultilities.Triplet;
-import com.hoatv.metric.mgmt.annotations.Metric;
-import com.hoatv.metric.mgmt.annotations.MetricProvider;
 import com.hoatv.metric.mgmt.entities.ComplexValue;
 import com.hoatv.metric.mgmt.entities.MetricTag;
 import com.hoatv.metric.mgmt.services.MetricService;
@@ -47,26 +44,19 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.hoatv.action.manager.document.transformers.JobTransformer.updateFromJobDefinitionDTO;
+import static com.hoatv.action.manager.utils.JobManagerConstants.*;
 
 @Service
-@MetricProvider(application = JobManagerServiceImpl.ACTION_MANAGER, category = MetricProviders.MetricCategories.STATS_DATA_CATEGORY)
 public class JobManagerServiceImpl implements JobManagerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobManagerServiceImpl.class);
 
     public static final int NUMBER_OF_JOB_THREADS = 20;
-
-    private static final String JOB_MANAGER_METRIC_NAME_PREFIX = "job-manager";
-
-    public static final String IO_JOB_MANAGER_APPLICATION = "io-" + JOB_MANAGER_METRIC_NAME_PREFIX;
-
-    public static final String CPU_JOB_MANAGER_APPLICATION = "cpu-" + JOB_MANAGER_METRIC_NAME_PREFIX;
 
     public static final int MAX_AWAIT_TERMINATION_MILLIS = 5000;
 
@@ -75,8 +65,6 @@ public class JobManagerServiceImpl implements JobManagerService {
     private static final Map<String, String> DEFAULT_CONFIGURATIONS = new HashMap<>();
 
     private static final String TEMPLATE_ENGINE_NAME = "templateEngineName";
-
-    private static final List<JobStatus> VALID_JOB_STATUS_TO_RUN = List.of(JobStatus.ACTIVE);
 
     public static final int NUMBER_OF_SCHEDULE_THREADS = 100;
 
@@ -90,17 +78,13 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private final MetricService metricService;
 
+    private final JobManagerStatistics jobManagerStatistics;
+
     private final TaskMgmtServiceV1 ioTaskMgmtService;
 
     private final TaskMgmtServiceV1 cpuTaskMgmtService;
 
     private final ScheduleTaskMgmtService scheduleTaskMgmtService;
-
-    private final AtomicLong totalNumberOfJobs = new AtomicLong(0);
-
-    private final AtomicLong numberOfActiveJobs = new AtomicLong(0);
-
-    private final AtomicLong numberOfFailureJobs = new AtomicLong(0);
 
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
 
@@ -110,11 +94,14 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Autowired
-    public JobManagerServiceImpl(ScriptEngineService scriptEngineService, JobDocumentRepository jobDocumentRepository,
+    public JobManagerServiceImpl(ScriptEngineService scriptEngineService,
+                                 JobDocumentRepository jobDocumentRepository,
+                                 JobManagerStatistics jobManagerStatistics,
                                  JobExecutionResultDocumentRepository jobResultDocumentRepository) {
         this.scriptEngineService = scriptEngineService;
         this.jobDocumentRepository = jobDocumentRepository;
         this.jobResultDocumentRepository = jobResultDocumentRepository;
+        this.jobManagerStatistics = jobManagerStatistics;
         this.metricService = new MetricService();
         this.ioTaskMgmtService = TaskFactory.INSTANCE.getTaskMgmtServiceV1(
                 NUMBER_OF_JOB_THREADS,
@@ -133,57 +120,25 @@ public class JobManagerServiceImpl implements JobManagerService {
                 MAX_AWAIT_TERMINATION_MILLIS
         );
         this.objectMapper = new ObjectMapper();
+        this.jobManagerStatistics.setMetricService(metricService);
+        this.jobManagerStatistics.setIoTaskMgmtService(ioTaskMgmtService);
+        this.jobManagerStatistics.setCpuTaskMgmtService(cpuTaskMgmtService);
+        this.jobManagerStatistics.setScheduleTaskMgmtService(scheduleTaskMgmtService);
     }
 
     @PostConstruct
     public void init() {
         Example<JobDocument> jobEx = Example.of(JobDocument.builder().isScheduled(false).build());
         long numberOfJobs = jobDocumentRepository.count(jobEx);
-        totalNumberOfJobs.set(numberOfJobs);
-        Example<JobResultDocument> failureJobEx = Example.of(JobResultDocument.builder().jobExecutionStatus(JobExecutionStatus.FAILURE).build());
-        long numberOfFailureJobs = jobResultDocumentRepository.count(failureJobEx);
-        this.numberOfFailureJobs.set(numberOfFailureJobs);
+        jobManagerStatistics.setTotalNumberOfJobs(numberOfJobs);
+
+        JobResultDocument exampleJobDocument = JobResultDocument.builder()
+                .jobExecutionStatus(JobExecutionStatus.FAILURE)
+                .build();
+        Example<JobResultDocument> failureJobEx = Example.of(exampleJobDocument);
+        this.jobManagerStatistics.setNumberOfFailureJobs(jobResultDocumentRepository.count(failureJobEx));
     }
 
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX)
-    public Collection<ComplexValue> getMetricValues() {
-        return metricService.getMetrics().values();
-    }
-
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-jobs")
-    public long getTotalNumberOfJobs() {
-        return totalNumberOfJobs.get();
-    }
-
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-failure-jobs")
-    public long getTotalNumberOfFailureJobs() {
-        return numberOfFailureJobs.get();
-    }
-
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-activate-jobs")
-    public long getTotalNumberOfActiveJobs() {
-        return numberOfActiveJobs.get();
-    }
-
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-active-schedule-jobs")
-    public long getNumberOfScheduleJobs() {
-        return scheduleTaskMgmtService.getActiveTasks();
-    }
-
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-available-schedule-jobs")
-    public long getNumberOfAvailableScheduleJobs() {
-        return scheduleTaskMgmtService.getConcurrentAccountLocks().availablePermits();
-    }
-
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-available-cpu-jobs")
-    public long getNumberOfAvailableCPUJobs() {
-        return cpuTaskMgmtService.getConcurrentAccountLocks().availablePermits();
-    }
-
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-available-io-jobs")
-    public long getNumberOfAvailableIOJobs() {
-        return ioTaskMgmtService.getConcurrentAccountLocks().availablePermits();
-    }
 
     @Override
     @LoggingMonitor(description = "Get enabled schedule jobs from active actions: {argument0}")
@@ -245,12 +200,6 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor(description = "Get job execution result from job hash {argument0}")
-    public JobResultDocument getJobResultDocumentByJobId(String jobHash) {
-        return jobResultDocumentRepository.findByJobId(jobHash);
-    }
-
-    @Override
     @Transactional
     @LoggingMonitor(description = "Pause job by hash: {argument0}")
     public void pause(String jobHash) {
@@ -273,16 +222,15 @@ public class JobManagerServiceImpl implements JobManagerService {
                     .forEach(scheduleTaskMgmtService::cancel);
             metricService.removeMetric(jobHash);
         }
-        update(jobDocument);
+        jobDocumentRepository.save(jobDocument);
     }
 
     @Override
     @Transactional
     @LoggingMonitor(description = "Delete job from hash: {argument0}")
-    public void delete(String jobId) {
+    public Pair<JobDocument, JobResultDocument> delete(String jobId) {
         Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(jobId);
-        ObjectUtils.checkThenThrow(jobDocumentOptional.isEmpty(), "Cannot find job: " + jobId);
-        JobDocument jobDocument = jobDocumentOptional.get();
+        JobDocument jobDocument = jobDocumentOptional.orElseThrow(() -> new EntityNotFoundException("Cannot find job: " + jobId));
 
         String jobName = jobDocument.getJobName();
         if (jobDocument.isScheduled() && jobDocument.getJobStatus() == JobStatus.ACTIVE) {
@@ -296,6 +244,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobId);
         jobResultDocumentRepository.delete(jobResultDocument);
         LOGGER.info("Deleted the job results for {} job ", jobName);
+        return Pair.of(jobDocument, jobResultDocument);
     }
 
     @Override
@@ -325,6 +274,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Process bulk jobs {argument0.getJobDocumentPairs()}")
     public void processBulkJobs(ActionExecutionContext actionExecutionContext) {
         boolean isRelayAction = actionExecutionContext.isRelayAction();
@@ -345,7 +295,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor(description = "Process job: {argument0.getJobName()}")
     public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                            BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction) {
-        totalNumberOfJobs.incrementAndGet();
+        jobManagerStatistics.increaseNumberOfJobs();
         if (jobDocument.isScheduled() && !isRelayAction) {
             ScheduledFuture<?> scheduledFuture = processScheduleJob(jobDocument, jobResultDocument, callback);
             scheduledJobRegistry.put(jobDocument.getHash(), scheduledFuture);
@@ -375,25 +325,6 @@ public class JobManagerServiceImpl implements JobManagerService {
     public JobDocument getJobDocument(String hash) {
         Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(hash);
         return jobDocumentOptional.orElseThrow(() -> new EntityNotFoundException("Cannot find job ID: " + hash));
-    }
-
-    @Override
-    @LoggingMonitor(description = "Get job documents from action: {argument0}")
-    public List<JobDocument> getJobDocumentsByAction(String actionId) {
-        return jobDocumentRepository.findJobByActionId(actionId);
-    }
-
-    @Override
-    @Transactional
-    @LoggingMonitor(description = "Call update on job: {argument0.getJobName()}")
-    public void update(JobDocument jobDocument) {
-        jobDocumentRepository.save(jobDocument);
-    }
-
-    @Override
-    @Transactional
-    public void updateBulks(List<JobDocument> jobDocuments) {
-        jobDocumentRepository.saveAll(jobDocuments);
     }
 
     @Override
@@ -526,7 +457,7 @@ public class JobManagerServiceImpl implements JobManagerService {
             return;
         }
 
-        numberOfActiveJobs.incrementAndGet();
+        jobManagerStatistics.increaseNumberOfActiveJobs();
         long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
         JobExecutionStatus prevJobStatus = jobResultDocument.getJobExecutionStatus();
         JobExecutionStatus nextJobStatus = JobExecutionStatus.FAILURE;
@@ -594,9 +525,9 @@ public class JobManagerServiceImpl implements JobManagerService {
 
         onJobStatusChange.accept(prevJobStatus, nextJobStatus);
         if (nextJobStatus == JobExecutionStatus.FAILURE) {
-            numberOfFailureJobs.incrementAndGet();
+            jobManagerStatistics.increaseNumberOfFailureJobs();
         }
-        numberOfActiveJobs.decrementAndGet();
+        jobManagerStatistics.decreaseNumberOfActiveJobs();
     }
 
     private void updateJobResultDocument(JobResultDocument jobResultDocument,

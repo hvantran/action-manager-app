@@ -21,23 +21,16 @@ public interface JobManagerService {
 
     void pause(String jobHash);
 
-    void update(JobDocument jobDocument);
-
-    void updateBulks(List<JobDocument> jobDocuments);
-
-    void delete(String jobId);
+    Pair<JobDocument, JobResultDocument> delete(String jobId);
 
     void update(String hash, JobDefinitionDTO jobDefinitionDTO);
 
     JobDocument getJobDocument(String hash);
 
     JobDetailDTO getJobDetails(String hash);
-    List<JobDocument> getJobDocumentsByAction(String actionId);
     List<JobDocumentRepository.JobIdImmutable> getJobIdsByAction(String actionId);
 
     Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest);
-
-    JobResultDocument getJobResultDocumentByJobId(String jobHash);
 
     void deleteJobsByActionId(String actionId);
 

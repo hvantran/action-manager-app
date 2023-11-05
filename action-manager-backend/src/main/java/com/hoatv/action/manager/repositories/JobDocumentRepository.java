@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @Repository
 public interface JobDocumentRepository extends MongoRepository<JobDocument, String> {
@@ -21,14 +20,8 @@ public interface JobDocumentRepository extends MongoRepository<JobDocument, Stri
     List<JobDocument> findByIsScheduledFalseAndJobStatusAndActionId(JobStatus status, String actionId);
     Page<JobDocument> findJobByActionId(String actionId, Pageable pageable);
     List<JobIdImmutable> findJobsByActionId(String actionId);
-    Map<String, List<JobTypeImmutable>> groupByActionId();
 
     interface JobIdImmutable {
         String getHash();
-    }
-    interface JobTypeImmutable {
-        String getHash();
-
-        boolean isScheduled();
     }
 }

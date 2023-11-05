@@ -13,15 +13,13 @@ import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
-import com.hoatv.fwk.common.constants.MetricProviders;
+import com.hoatv.action.manager.services.ActionManagerStatistics.ActionStatistics;
 import com.hoatv.fwk.common.exceptions.InvalidArgumentException;
 import com.hoatv.fwk.common.services.BiCheckedConsumer;
 import com.hoatv.fwk.common.services.CheckedFunction;
 import com.hoatv.fwk.common.ultilities.ObjectUtils;
 import com.hoatv.fwk.common.ultilities.Pair;
 import com.hoatv.fwk.common.ultilities.ZipFileUtils;
-import com.hoatv.metric.mgmt.annotations.Metric;
-import com.hoatv.metric.mgmt.annotations.MetricProvider;
 import com.hoatv.monitor.mgmt.LoggingMonitor;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletOutputStream;
@@ -37,14 +35,17 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
 
+import static com.hoatv.action.manager.utils.ActionManagerConstants.JOB_STATUS_COUNTER_PROCESSOR;
+import static com.hoatv.action.manager.utils.JobManagerConstants.VALID_JOB_STATUS_TO_RUN;
+
 @Service
-@MetricProvider(application = MetricProviders.OTHER_APPLICATION, category = "action-manager-stats-data")
 public class ActionManagerServiceImpl implements ActionManagerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActionManagerServiceImpl.class);
@@ -53,42 +54,66 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private static final List<ActionStatus> VALID_ACTION_STATUS_TO_RUN = List.of(ActionStatus.ACTIVE);
 
+    public static final String ACTION_NOT_FOUND_MESSAGE = "Cannot find action ID: ";
+
     private final ActionDocumentRepository actionDocumentRepository;
 
     private final JobDocumentRepository jobDocumentRepository;
 
+    private final JobExecutionResultDocumentRepository jobResultDocumentRepository;
+
     private final JobManagerService jobManagerService;
 
-    private final AtomicLong numberOfReplayActions;
-
-    private final ActionStatsManager actionStatsManager;
+    private final ActionManagerStatistics actionManagerStatistics;
 
     @Autowired
-    public ActionManagerServiceImpl(ActionDocumentRepository actionDocumentRepository,
-                                    JobManagerService jobManagerService,
-                                    ActionStatsManager actionStatsManager) {
-
+    public ActionManagerServiceImpl(
+            ActionDocumentRepository actionDocumentRepository,
+            JobManagerService jobManagerService,
+            ActionManagerStatistics actionManagerStatistics,
+            JobDocumentRepository jobDocumentRepository,
+            JobExecutionResultDocumentRepository jobExecutionResultDocumentRepository
+    ) {
         this.actionDocumentRepository = actionDocumentRepository;
         this.jobManagerService = jobManagerService;
-        this.actionStatsManager = actionStatsManager;
-        this.numberOfReplayActions = new AtomicLong(0);
-    }
-
-    @Metric(name = "action-manager-number-of-actions")
-    public long getNumberOfActions() {
-        return actionStatsManager.getNumberOfActions();
-    }
-
-    @Metric(name = "action-manager-number-of-replay-actions")
-    public long getNumberOfReplayActions() {
-        return numberOfReplayActions.get();
+        this.actionManagerStatistics = actionManagerStatistics;
+        this.jobDocumentRepository = jobDocumentRepository;
+        this.jobResultDocumentRepository = jobExecutionResultDocumentRepository;
     }
 
 
     @PostConstruct
     public void initialize() {
-        Map<String, JobDocumentRepository.JobTypeImmutable> actionJobMapping = jobDocumentRepository.groupByActionId();
-        actionStatsManager.
+        LOGGER.info("Calculating action statistics at startup time");
+        List<JobDocument> jobDocuments = jobDocumentRepository.findAll();
+        Map<String, List<JobDocument>> actionJobMapping = jobDocuments.stream().collect(Collectors.groupingBy(JobDocument::getActionId));
+
+        Set<String> actionIds = jobDocuments.stream().map(JobDocument::getActionId).collect(Collectors.toSet());
+        actionManagerStatistics.initActionStatistics(actionIds);
+
+        List<String> allJobIds = jobDocuments.stream().map(JobDocument::getHash).toList();
+        List<JobResultDocument> jobResultDocuments = jobResultDocumentRepository.findByJobIdIn(allJobIds);
+
+        actionJobMapping.forEach((actionId, relatedJobs) -> {
+            long noScheduleJobs = relatedJobs.stream().filter(JobDocument::isScheduled).count();
+            List<String> currentActionJobs = relatedJobs.stream().map(JobDocument::getHash).toList();
+            Predicate<JobResultDocument> filterJobInActionPredicate = p -> currentActionJobs.contains(p.getJobId());
+            List<JobResultDocument> currentJobResults = jobResultDocuments.stream()
+                    .filter(filterJobInActionPredicate)
+                    .toList();
+
+            Map<JobExecutionStatus, Long> jobStatusCounter = currentJobResults.stream()
+                    .collect(Collectors.groupingBy(JobResultDocument::getJobExecutionStatus, Collectors.counting()));
+
+            ActionStatistics actionStatistics = ActionStatistics.builder()
+                    .numberOfJobs(new AtomicLong(relatedJobs.size()))
+                    .numberOfFailureJobs(new AtomicLong(jobStatusCounter.getOrDefault(JobExecutionStatus.FAILURE, 0L)))
+                    .numberOfSuccessJobs(new AtomicLong(jobStatusCounter.getOrDefault(JobExecutionStatus.SUCCESS, 0L)))
+                    .numberOfPendingJobs(new AtomicLong(jobStatusCounter.getOrDefault(JobExecutionStatus.PENDING, 0L)))
+                    .numberOfScheduleJobs(new AtomicLong(noScheduleJobs))
+                    .build();
+            actionManagerStatistics.initActionStatistics(actionId, actionStatistics);
+        });
     }
 
     @PostConstruct
@@ -143,7 +168,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public ActionDefinitionDTO setFavorite(String hash, boolean isFavorite) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(hash);
         ActionDocument actionDocument = actionDocumentOptional
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
+                .orElseThrow(() -> new EntityNotFoundException(ACTION_NOT_FOUND_MESSAGE + hash));
 
         actionDocument.setFavorite(isFavorite);
         ActionDocument document = actionDocumentRepository.save(actionDocument);
@@ -177,9 +202,9 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         List<JobDefinitionDTO> relatedJobs = actionDefinition.getJobs();
         long numberOfScheduleJobs = relatedJobs.stream().filter(JobDefinitionDTO::isScheduled).count();
         String actionDocumentHash = actionDocument.getHash();
-        actionStatsManager.initStats(actionDocumentHash);
-        actionStatsManager.increaseNumberOfScheduleJob(actionDocumentHash, numberOfScheduleJobs);
-        actionStatsManager.increaseNumberOfJobs(actionDocumentHash, relatedJobs.size());
+        actionManagerStatistics.initActionStatistics(Set.of(actionDocumentHash));
+        actionManagerStatistics.increaseNumberOfScheduleJob(actionDocumentHash, numberOfScheduleJobs);
+        actionManagerStatistics.increaseNumberOfJobs(actionDocumentHash, relatedJobs.size());
         return actionDefinition.getActionName();
     }
 
@@ -189,7 +214,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public void update(String actionId, ActionDefinitionDTO actionDefinitionDTO) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
         ActionDocument actionDocument = actionDocumentOptional
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+                .orElseThrow(() -> new EntityNotFoundException(ACTION_NOT_FOUND_MESSAGE + actionId));
         actionDocument.setConfigurations(actionDefinitionDTO.getConfigurations());
         actionDocument.setActionStatus(ActionStatus.valueOf(actionDefinitionDTO.getActionStatus()));
         actionDocumentRepository.save(actionDocument);
@@ -212,7 +237,14 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public String addJobsToAction(String actionId, List<JobDefinitionDTO> jobDefinitionDTOs) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContextForNewJobs(actionId, jobDefinitionDTOs);
         jobManagerService.processBulkJobs(actionExecutionContext);
-        this.numberOfActions.incrementAndGet();
+        actionManagerStatistics.increaseNumberOfJobs(actionId, jobDefinitionDTOs.size());
+        long numberOfPendingJobs = jobDefinitionDTOs.stream().filter(p -> {
+            JobStatus jobStatus = JobStatus.valueOf(p.getJobStatus());
+            return VALID_JOB_STATUS_TO_RUN.contains(jobStatus);
+        }).count();
+        actionManagerStatistics.increaseNumberOfPendingJob(actionId, numberOfPendingJobs);
+        long numberOfScheduleJobs = jobDefinitionDTOs.stream().filter(JobDefinitionDTO::isScheduled).count();
+        actionManagerStatistics.increaseNumberOfScheduleJob(actionId, numberOfScheduleJobs);
         return actionId;
     }
 
@@ -222,7 +254,6 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public boolean replay(String actionId) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContextForReplay(actionId);
         jobManagerService.processBulkJobs(actionExecutionContext);
-        this.numberOfReplayActions.incrementAndGet();
         return true;
     }
 
@@ -232,7 +263,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public void delete(String actionId) {
         actionDocumentRepository.deleteById(actionId);
         jobManagerService.deleteJobsByActionId(actionId);
-        this.numberOfActions.decrementAndGet();
+        actionManagerStatistics.removeActionStats(actionId);
     }
 
     @Override
@@ -240,9 +271,9 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @LoggingMonitor(description = "Archive action by id: {argument0}")
     public void archive(String actionId) {
         ActionDocument actionDocument = createActionDocument(actionId);
-        List<JobDocument> jobDocuments = jobManagerService.getJobDocumentsByAction(actionId);
+        List<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId);
         jobDocuments.forEach(jobDocument -> jobDocument.setJobStatus(JobStatus.ARCHIVED));
-        jobManagerService.updateBulks(jobDocuments);
+        jobDocumentRepository.saveAll(jobDocuments);
 
         jobDocuments.stream().map(JobDocument::getHash).forEach(jobManagerService::pause);
 
@@ -272,17 +303,18 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             return;
         }
         jobDocument.setJobStatus(JobStatus.ACTIVE);
-        JobResultDocument jobResultDocument = jobManagerService.getJobResultDocumentByJobId(jobHash);
-        jobManagerService.update(jobDocument);
-        jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(), false);
+        JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobHash);
+        jobDocumentRepository.save(jobDocument);
+        jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(jobDocument.getActionId()), false);
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Exporting action: {argument0} to zip file")
     public Pair<String, byte[]> export(String actionId, ServletOutputStream responseOutputStream) {
         ActionDocument actionDocument = createActionDocument(actionId);
         LOGGER.info("Looking for job documents from {} action", actionDocument.getActionName());
-        List<JobDocument> jobDocumentsByAction = jobManagerService.getJobDocumentsByAction(actionId);
+        List<JobDocument> jobDocumentsByAction = jobDocumentRepository.findJobByActionId(actionId);
         List<JobDefinitionDTO> jobDefinitionDTOs = jobDocumentsByAction.stream()
                 .map(JobTransformer::toJobDefinition)
                 .toList();
@@ -295,6 +327,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     @Override
+    @Transactional
     @LoggingMonitor(description = "Import new action from file")
     public String importAction(MultipartFile multipartFile) throws IOException {
         ZipInputStream zipInputStream = new ZipInputStream(multipartFile.getInputStream());
@@ -322,21 +355,22 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     private ActionDocument createActionDocument(String actionId) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
         return actionDocumentOptional
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + actionId));
+                .orElseThrow(() -> new EntityNotFoundException(ACTION_NOT_FOUND_MESSAGE + actionId));
     }
 
     private CheckedFunction<ActionDocument, ActionExecutionContext> getActionExecutionContext(
             Map<String, Map<String, String>> actionJobMapping) {
         return actionDocument -> {
+            String actionDocumentHash = actionDocument.getHash();
             try {
                 LOGGER.info("Initial execution context for action {}", actionDocument.getActionName());
                 return ActionExecutionContext.builder()
                         .actionDocument(actionDocument)
-                        .jobDocumentPairs(actionJobMapping.get(actionDocument.getHash()))
-                        .onCompletedJobCallback(onCompletedJobCallback())
+                        .jobDocumentPairs(actionJobMapping.get(actionDocumentHash))
+                        .onCompletedJobCallback(onCompletedJobCallback(actionDocumentHash))
                         .build();
             } catch (Exception exception) {
-                LOGGER.info("Cannot get action statistic from action id {}", actionDocument.getHash(), exception);
+                LOGGER.info("Cannot get action statistic from action id {}", actionDocumentHash, exception);
                 return null;
             }
         };
@@ -345,11 +379,12 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     private Page<ActionOverviewDTO> getActionOverviewDTOs(Page<ActionDocument> actionDocuments) {
         return actionDocuments.map(actionDocument -> {
             String actionId = actionDocument.getHash();
-            ActionStatsManager.ActionStats actionStats = actionStatsManager.getActionStats(actionId);
-            long numberOfJobs = actionStats.getNumberOfJobs().get();
-            long numberOfFailureJobs = actionStats.getNumberOfFailureJobs().get();
-            long numberOfSuccessJobs = actionStats.getNumberOfSuccessJobs().get();
-            long numberOfScheduleJobs = actionStats.getNumberOfScheduleJobs().get();
+            ActionStatistics actionStatistics = actionManagerStatistics.getActionStats(actionId);
+            long numberOfJobs = actionStatistics.getNumberOfJobs().get();
+            long numberOfFailureJobs = actionStatistics.getNumberOfFailureJobs().get();
+            long numberOfSuccessJobs = actionStatistics.getNumberOfSuccessJobs().get();
+            long numberOfScheduleJobs = actionStatistics.getNumberOfScheduleJobs().get();
+            long numberOfPendingJobs = actionStatistics.getNumberOfPendingJobs().get();
 
             return ActionOverviewDTO.builder()
                     .name(actionDocument.getActionName())
@@ -357,10 +392,11 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                     .actionStatus(actionDocument.getActionStatus().name())
                     .numberOfScheduleJobs(numberOfScheduleJobs)
                     .numberOfFailureJobs(numberOfFailureJobs)
+                    .numberOfSuccessJobs(numberOfSuccessJobs)
+                    .numberOfPendingJobs(numberOfPendingJobs)
                     .numberOfJobs(numberOfJobs)
                     .isFavorite(actionDocument.isFavorite())
                     .createdAt(actionDocument.getCreatedAt())
-                    .numberOfSuccessJobs(numberOfSuccessJobs)
                     .build();
         });
     }
@@ -372,10 +408,10 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         LOGGER.info("ActionExecutionContext: jobDocumentPairs - {}", jobDocumentPairs);
 
         long scheduledJobIncreases = jobDefinitionDTOs.stream().filter(JobDefinitionDTO::isScheduled).count();
-        actionStatsManager.increaseNumberOfScheduleJob(actionId, scheduledJobIncreases);
-        actionStatsManager.increaseNumberOfJobs(actionId, jobDefinitionDTOs.size());
+        actionManagerStatistics.increaseNumberOfScheduleJob(actionId, scheduledJobIncreases);
+        actionManagerStatistics.increaseNumberOfJobs(actionId, jobDefinitionDTOs.size());
 
-        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback();
+        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback(actionId);
         return ActionExecutionContext.builder()
                 .actionDocument(actionDocument)
                 .jobDocumentPairs(jobDocumentPairs)
@@ -397,7 +433,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         Map<String, String> jobDocumentPairs = jobManagerService.getEnabledOnetimeJobs(actionId);
         Map<String, String> scheduledJobDocumentPairs = jobManagerService.getEnabledScheduledJobs(actionId);
 
-        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback();
+        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback(actionId);
         Map<String, String> jobDocumentProcessPairs = new HashMap<>(jobDocumentPairs);
         jobDocumentProcessPairs.putAll(scheduledJobDocumentPairs);
         return ActionExecutionContext.builder()
@@ -413,7 +449,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         Map<String, String> jobDocumentPairs = getJobDocumentPairs(definitionJobs, actionDocument);
         LOGGER.info("ActionExecutionContext: jobDocumentPairs - {}", jobDocumentPairs);
 
-        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback();
+        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback =
+                onCompletedJobCallback(actionDocument.getHash());
 
         return ActionExecutionContext.builder()
                 .actionDocument(actionDocument)
@@ -423,74 +460,21 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
 
-    private BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback() {
+    private BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback(String actionId) {
         return (prevJobStatus, currentJobStatus) -> {
-            /*LOGGER.info("Prev status: {} -> Next status: {}", prevJobStatus, currentJobStatus);
-            if (prevJobStatus == currentJobStatus) {
+            LOGGER.info("Prev status: {} -> Next status: {}", prevJobStatus, currentJobStatus);
+            Optional<BiCheckedConsumer<ActionManagerStatistics, String>> jobStatusProcessorOptional = JOB_STATUS_COUNTER_PROCESSOR
+                    .entrySet()
+                    .stream()
+                    .filter(p -> p.getKey().test(prevJobStatus, currentJobStatus))
+                    .map(Entry::getValue)
+                    .findFirst();
+
+            if (jobStatusProcessorOptional.isEmpty()) {
+                LOGGER.error("Missing job status count processor for prev: {} - next: {} statuses", prevJobStatus, currentJobStatus);
                 return;
             }
-
-            String documentHash = actionStatisticsDocument.getHash();
-            jobStatusUpdaterLocks.putIfAbsent(documentHash, new Semaphore(1, true));
-
-            if (jobStatusUpdaterLocks.tryAcquire(documentHash, 5000, TimeUnit.MILLISECONDS)) {
-                try {
-                    long numberOfJobs = actionStatisticsDocument.getNumberOfJobs();
-                    long numberOfFailureJobs = actionStatisticsDocument.getNumberOfFailureJobs();
-                    long numberOfSuccessJobs = actionStatisticsDocument.getNumberOfSuccessJobs();
-
-                    JobStatusCounter result =
-                            getJobStatusCounter(prevJobStatus, currentJobStatus, numberOfFailureJobs, numberOfSuccessJobs);
-
-                    actionStatisticsDocument.setNumberOfSuccessJobs(result.nextNumberOfSuccessJobs());
-                    actionStatisticsDocument.setNumberOfFailureJobs(result.nextNumberOfFailureJobs());
-
-                    long currentProcessedJobs = numberOfFailureJobs + numberOfSuccessJobs;
-                    actionStatisticsDocument.setPercentCompleted((double) currentProcessedJobs * 100 / numberOfJobs);
-
-                    actionStatisticsDocumentRepository.save(actionStatisticsDocument);
-                } finally {
-                    jobStatusUpdaterLocks.release(documentHash);
-                }
-            } else {
-                LOGGER.error("Cannot get lock on completed job callback function");
-            }*/
+            jobStatusProcessorOptional.get().accept(actionManagerStatistics, actionId);
         };
-    }
-
-    private static JobStatusCounter getJobStatusCounter(JobExecutionStatus prevJobStatus, JobExecutionStatus currentJobStatus,
-                                                        long numberOfFailureJobs, long numberOfSuccessJobs) {
-        AtomicInteger numberOfSuccessCounter = new AtomicInteger(0);
-        AtomicInteger numberOfFailureCounter = new AtomicInteger(0);
-
-        if (Objects.isNull(prevJobStatus)) {
-            if (Objects.requireNonNull(currentJobStatus) == JobExecutionStatus.SUCCESS) {
-                numberOfSuccessCounter.incrementAndGet();
-            } else {
-                numberOfFailureCounter.incrementAndGet();
-            }
-        } else if (prevJobStatus == JobExecutionStatus.FAILURE && currentJobStatus == JobExecutionStatus.SUCCESS) {
-            numberOfSuccessCounter.incrementAndGet();
-            numberOfFailureCounter.decrementAndGet();
-        } else if (prevJobStatus == JobExecutionStatus.PENDING && currentJobStatus == JobExecutionStatus.SUCCESS) {
-            numberOfSuccessCounter.incrementAndGet();
-        } else {
-            numberOfSuccessCounter.decrementAndGet();
-            numberOfFailureCounter.incrementAndGet();
-        }
-
-        LOGGER.info("Number of increase success jobs: {}, number of increase failure jobs: {}",
-                numberOfSuccessCounter.get(),
-                numberOfFailureCounter.get());
-
-        long nextNumberOfSuccessJobs = numberOfSuccessJobs + numberOfSuccessCounter.get();
-        long nextNumberOfFailureJobs = numberOfFailureJobs + numberOfFailureCounter.get();
-        LOGGER.info("Number of success jobs: {}, number of failure jobs: {}",
-                nextNumberOfSuccessJobs,
-                nextNumberOfFailureJobs);
-        return new JobStatusCounter(nextNumberOfSuccessJobs, nextNumberOfFailureJobs);
-    }
-
-    private record JobStatusCounter(long nextNumberOfSuccessJobs, long nextNumberOfFailureJobs) {
     }
 }
