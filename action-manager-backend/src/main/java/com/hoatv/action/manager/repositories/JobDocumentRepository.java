@@ -19,7 +19,6 @@ public interface JobDocumentRepository extends MongoRepository<JobDocument, Stri
     List<JobDocument> findByIsScheduledTrueAndJobStatusAndActionId(JobStatus status, String actionId);
     List<JobDocument> findByIsScheduledFalseAndJobStatusAndActionId(JobStatus status, String actionId);
     Page<JobDocument> findJobByActionId(String actionId, Pageable pageable);
-
     List<JobIdImmutable> findJobsByActionId(String actionId);
 
     interface JobIdImmutable {

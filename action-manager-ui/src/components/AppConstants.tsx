@@ -155,6 +155,7 @@ export interface ActionOverview {
     numberOfJobs: number
     numberOfSuccessJobs: number
     numberOfFailureJobs: number
+    numberOfPendingJobs: number
     numberOfScheduleJobs: number
     createdAt: number
     status: string

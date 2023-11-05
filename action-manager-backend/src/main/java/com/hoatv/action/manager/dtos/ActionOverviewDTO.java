@@ -31,6 +31,9 @@ public class ActionOverviewDTO {
     @JsonProperty("numberOfFailureJobs")
     private long numberOfFailureJobs;
 
+    @JsonProperty("numberOfPendingJobs")
+    private long numberOfPendingJobs;
+
     @JsonProperty("numberOfScheduleJobs")
     private long numberOfScheduleJobs;
 
