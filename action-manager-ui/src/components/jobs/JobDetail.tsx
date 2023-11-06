@@ -1,11 +1,13 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import EngineeringIcon from '@mui/icons-material/Engineering';
+import EditIcon from '@mui/icons-material/Edit';
+import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
+import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
+
 import { Box, Stack, Switch } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
@@ -38,8 +40,6 @@ import {
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
-
-
 
 export default function JobDetail() {
   const navigate = useNavigate();
@@ -342,6 +342,8 @@ export default function JobDetail() {
     JobAPI.resume(actionId, jobId, jobName, restClient);
   }
 
+  let troubleshootURL = `${process.env.REACT_APP_TROUBLESHOOTING_BASE_URL}app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now%2Fd,to:now%2Fd))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',key:jobName.keyword,negate:!f,params:(query:${jobName}),type:phrase),query:(match_phrase:(jobName.keyword:${jobName})))),index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',interval:auto,query:(language:kuery,query:''),sort:!(!('@timestamp',desc)))`;
+
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'template-details',
     breadcumbsMeta: breadcrumbs,
@@ -349,7 +351,16 @@ export default function JobDetail() {
       editActionMeta,
       saveActionMeta,
       {
-        actionIcon: <EngineeringIcon />,
+        actionIcon: 
+        <Link underline="hover" key="1" color="black" target="_blank" href={troubleshootURL} rel="noopener noreferrer">
+          <TroubleshootIcon/>
+        </Link>,
+        actionLabel: "Troubleshoot",
+        actionName: "troubleshootAction"
+      },
+      {
+        actionIcon: <EngineeringOutlinedIcon />,
+        // properties: {color: 'success'},
         actionLabel: "Dry run",
         actionName: "dryRunAction",
         onClick: () => JobAPI.dryRun(restClient, propertyMetadata)

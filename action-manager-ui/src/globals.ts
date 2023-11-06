@@ -18,6 +18,7 @@ declare global {
             REACT_APP_ACTION_MANAGER_NAME: string
             REACT_APP_ECOMMERCE_MANAGER_NAME: string
             REACT_APP_ENDPOINT_MANAGER_NAME: string
+            REACT_APP_TROUBLESHOOTING_BASE_URL: string
 
 
             REACT_APP_PAGES: string

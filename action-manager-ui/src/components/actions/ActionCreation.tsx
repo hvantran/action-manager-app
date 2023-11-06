@@ -2,7 +2,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import AddTaskTwoToneIcon from '@mui/icons-material/AddTaskTwoTone';
 import ArrowBackTwoToneIcon from '@mui/icons-material/ArrowBackTwoTone';
-import EngineeringIcon from '@mui/icons-material/Engineering';
+import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import { Stack } from '@mui/material';
 import { blue, green } from '@mui/material/colors';
 
@@ -659,7 +659,7 @@ export default function ActionCreation() {
     stepMetadatas: stepMetadatas,
     pageEntityActions: [
       {
-        actionIcon: <EngineeringIcon />,
+        actionIcon: <EngineeringOutlinedIcon />,
         actionLabel: "Dry run",
         actionName: "dryRunAction",
         onClick: dryRunAction

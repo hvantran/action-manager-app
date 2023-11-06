@@ -1,7 +1,7 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import AddTaskTwoToneIcon from '@mui/icons-material/AddTaskTwoTone';
-import EngineeringIcon from '@mui/icons-material/Engineering';
+import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 
 import { Stack } from '@mui/material';
@@ -484,7 +484,7 @@ export default function JobCreation() {
     ],
     pageEntityActions: [
       {
-        actionIcon: <EngineeringIcon />,
+        actionIcon: <EngineeringOutlinedIcon />,
         actionLabel: "Dry run",
         actionName: "dryRunJobs",
         onClick: () => {
