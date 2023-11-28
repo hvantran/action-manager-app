@@ -1,7 +1,7 @@
 import { Box, FormControl, Grid, Input, MenuItem, Select, Switch, TextField } from '@mui/material';
 import * as React from 'react';
+import { PropType, PropertyMetadata } from '../GenericConstants';
 import CodeEditor from '../common/CodeEditor';
-import { PropertyMetadata, PropType } from '../GenericConstants';
 
 export default function PropertyRender(props: any) {
     let property: PropertyMetadata = props.property
@@ -69,7 +69,7 @@ export default function PropertyRender(props: any) {
             }
             let selectionMeta = property.selectionMeta;
             renderNode = (
-                <FormControl sx={{ m: 1, width: '100%', margin: 0}} size="small">
+                <FormControl sx={{ m: 1, width: '100%', margin: 0 }} size="small">
                     <Select
                         labelId={"demo-select-small".concat(property.propName)}
                         id={"demo-select-small".concat(property.propName)}
@@ -105,22 +105,23 @@ export default function PropertyRender(props: any) {
                     placeholder={textFieldMeta.placeholder}
                     disabled={property.disabled}
                     value={value}
-                    onChange={textFieldMeta.onChangeEvent} 
-                    {...property.propExtraProperties}/>
+                    onChange={textFieldMeta.onChangeEvent}
+                    {...property.propExtraProperties} />
             )
             break;
     }
 
     return (
-        <Grid container spacing={2} sx={{ py: 1 }} {...property.layoutProperties}>
-            <Grid item {...property.labelElementProperties}>
-                <Box {...property.labelElementProperties.sx}>
-                    <label>{property.propLabel} {property.isRequired ? (<span>*</span>) : (<span />)}</label>
-                </Box>
-            </Grid>
-            <Grid item {...property.valueElementProperties}>
-                {renderNode}
-            </Grid>
+        <Grid item {...property.layoutProperties}>
+            <Grid container spacing={2}>
+                <Grid item {...property.labelElementProperties}>
+                    <Box {...property.labelElementProperties.sx}>
+                        <label>{property.propLabel} {property.isRequired ? (<span>*</span>) : (<span />)}</label>
+                    </Box>
+                </Grid>
+                <Grid key={"index_" + property.propName + "_2"} item {...property.valueElementProperties}>
+                    {renderNode}
+                </Grid></Grid>
         </Grid>
     )
 }

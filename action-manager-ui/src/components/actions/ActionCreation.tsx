@@ -472,7 +472,7 @@ export default function ActionCreation() {
           propValue: '',
           layoutProperties: { xs: 6 },
           labelElementProperties: { xs: 4,  sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
+          valueElementProperties: { xs: 8},
           propType: PropType.Textarea,
           textareaFieldMeta: {
             onChangeEvent: function (event: any) {

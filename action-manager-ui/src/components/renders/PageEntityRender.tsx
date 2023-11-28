@@ -1,13 +1,13 @@
 import { Box, Divider, Grid, IconButton, Stack, Tooltip } from '@mui/material';
 import * as React from 'react';
 import { PageEntityMetadata } from '../GenericConstants';
+import BreadcrumbsComponent from '../common/Breadcrumbs';
 import FloatingSpeedDialButtons from '../common/FloatingActions';
+import PropertyRender from './PropertyRender';
 import StepperRender from './StepperRender';
 import TableRender from './TableRender';
-import BreadcrumbsComponent from '../common/Breadcrumbs';
-import PropertyRender from './PropertyRender';
 
-export default function PageRender(props: PageEntityMetadata) {
+export default function PageEntityRender(props: PageEntityMetadata) {
     let floatingActions = props.floatingActions
     let stepMetadatas = props.stepMetadatas
     let tableMetadata = props.tableMetadata
@@ -19,9 +19,9 @@ export default function PageRender(props: PageEntityMetadata) {
     let nodes: Array<React.ReactNode> = []
     let gridItems: Array<React.ReactNode> = [];
     if (breadcrumbsMetadata && pageEntityActions) {
-        gridItems.push((<Grid item xs={6}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
-        gridItems.push((<Grid item xs={6} >
-            <Box display="flex" justifyContent="flex-end" sx={{ px: 2 }}>{pageEntityActions.map(action => {
+        gridItems.push((<Grid item key="grid-breadcrumbs" xs={6}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
+        gridItems.push((<Grid item key="grid-actions" xs={6} >
+            <Box display="flex" key={pageName + "-box-actions" }justifyContent="flex-end" sx={{ px: 2 }}>{pageEntityActions.map(action => {
                 return (
                     <IconButton
                         key={action.actionName}
@@ -45,13 +45,13 @@ export default function PageRender(props: PageEntityMetadata) {
                 );
             })}</Box>
         </Grid>))
-        gridItems.push((<Grid item xs={12}><Divider/></Grid>))
+        gridItems.push((<Grid item key="grid-line" xs={12}><Divider/></Grid>))
     } else if (breadcrumbsMetadata) {
-        gridItems.push((<Grid item xs={12}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
-        gridItems.push((<Grid item xs={12}><Divider/></Grid>))
+        gridItems.push((<Grid item key="grid-breadcrumbs" xs={12}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
+        gridItems.push((<Grid item key="grid-line" xs={12}><Divider/></Grid>))
     } else if (pageEntityActions) {
-        gridItems.push((<Grid item xs={12} justifyContent="flex-end">
-            <Box display="flex" justifyContent="flex-end">{pageEntityActions.map(action => {
+        gridItems.push((<Grid item xs={12} key="grid-actions" justifyContent="flex-end">
+            <Box display="flex" key={pageName + "-box-actions" } justifyContent="flex-end">{pageEntityActions.map(action => {
                 return (
                     <IconButton
                         key={action.actionName}
@@ -68,12 +68,12 @@ export default function PageRender(props: PageEntityMetadata) {
                 );
             })}</Box>
         </Grid>))
-        gridItems.push((<Grid item xs={12}><Divider/></Grid>))
+        gridItems.push((<Grid key="line" item xs={12}><Divider/></Grid>))
     }
-    nodes.push((<Grid container spacing={2}>{gridItems}</Grid>));
+    nodes.push((<Grid container key={pageName} spacing={2}>{gridItems}</Grid>));
     if (propertiesMetadata) {
         nodes.push((
-            <Box>
+            <Box key={pageName + "-properties" }>
                 <Grid container spacing={2} sx={{ py: 1 }}>
                     {propertiesMetadata
                         .map((propertyMeta, index) => {

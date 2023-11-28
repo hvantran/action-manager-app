@@ -77,15 +77,17 @@ export default function StepperRender(props: any) {
                                 </IconButton>
                             </Box>
                         </Grid>
-                        <Grid container xs={10} sx={{ flexGrow: 1 }}>
-                            {initialStepMetadata
-                                .filter((_, index) => index === activeStep)
-                                .flatMap((stepDefinition) => stepDefinition.properties)
-                                .flatMap((propertyMeta, index) => {
-                                    return (
-                                        <PropertyRender key={propertyMeta.propName} property={propertyMeta} />
-                                    )
-                                })}
+                        <Grid item xs={10} >
+                            <Grid container spacing={2} sx={{ flexGrow: 1 }}>
+                                {initialStepMetadata
+                                    .filter((_, index) => index === activeStep)
+                                    .flatMap((stepDefinition) => stepDefinition.properties)
+                                    .flatMap((propertyMeta, index) => {
+                                        return (
+                                            <PropertyRender key={propertyMeta.propName} property={propertyMeta} />
+                                        )
+                                    })}
+                            </Grid>
                         </Grid>
                         <Grid item xs={1}>
                             <Box
