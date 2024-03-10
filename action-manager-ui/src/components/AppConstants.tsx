@@ -2,29 +2,29 @@ import { PagingResult, PropertyMetadata, RestClient, SelectionData, SnackbarMess
 import fileDownload from 'js-file-download';
 
 export const ROOT_BREADCRUMB = 'Actions'
-export const JOB_CATEGORY_VALUES: Array<SelectionData> = [{label: "IO", value: "IO"}, {label: "CPU", value: "CPU"}]
-export const JOB_OUTPUT_TARGET_VALUES: Array<SelectionData>  = [{label: "CONSOLE", value: "CONSOLE"}, {label: "METRIC", value: "METRIC"}]
-export const JOB_SCHEDULE_TIME_SELECTION: Array<SelectionData>  = [
-    {label: "0", value: 0},
-    {label: "5 minutes", value: 5},
-    {label: "10 minutes", value: 10},
-    {label: "30 minutes", value: 30},
-    {label: "1 hour", value: 1 * 60},
-    {label: "2 hours", value: 2 * 60},
-    {label: "3 hours", value: 3 * 60},
-    {label: "6 hours", value: 6 * 60},
-    {label: "12 hours", value: 12 * 60},
-    {label: "24 hours", value: 24 * 60},
+export const JOB_CATEGORY_VALUES: Array<SelectionData> = [{ label: "IO", value: "IO" }, { label: "CPU", value: "CPU" }]
+export const JOB_OUTPUT_TARGET_VALUES: Array<SelectionData> = [{ label: "CONSOLE", value: "CONSOLE" }, { label: "METRIC", value: "METRIC" }]
+export const JOB_SCHEDULE_TIME_SELECTION: Array<SelectionData> = [
+  { label: "0", value: 0 },
+  { label: "5 minutes", value: 5 },
+  { label: "10 minutes", value: 10 },
+  { label: "30 minutes", value: 30 },
+  { label: "1 hour", value: 1 * 60 },
+  { label: "2 hours", value: 2 * 60 },
+  { label: "3 hours", value: 3 * 60 },
+  { label: "6 hours", value: 6 * 60 },
+  { label: "12 hours", value: 12 * 60 },
+  { label: "24 hours", value: 24 * 60 },
 ]
 export const ACTION_STATUS_SELECTION: Array<SelectionData> = [
-  {label: "INITIAL", value: "INITIAL"},
-  {label: "ACTIVE", value:"ACTIVE"}
-] 
+  { label: "INITIAL", value: "INITIAL" },
+  { label: "ACTIVE", value: "ACTIVE" }
+]
 export const JOB_STATUS_SELECTION: Array<SelectionData> = [
-  {label: "INITIAL", value: "INITIAL"},
-  {label: "PAUSED", value:"PAUSED"},
-  {label: "ACTIVE", value:"ACTIVE"}
-] 
+  { label: "INITIAL", value: "INITIAL" },
+  { label: "PAUSED", value: "PAUSED" },
+  { label: "ACTIVE", value: "ACTIVE" }
+]
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
@@ -127,78 +127,78 @@ function sendHttpPOSTRequest(targetURL, headers, queryData) {
 `
 
 export interface JobDefinition {
-    name: string | undefined
-    category: 'NORMAL' | 'SYSTEM' | undefined
-    description: string | undefined
-    configurations: string | undefined
-    content: string | undefined
-    isAsync: boolean | undefined
-    isScheduled: boolean | undefined
-    outputTargets: Array<String> | undefined
-    scheduleInterval: number | undefined
-    status: string | undefined
-    createdAt?: number | undefined
+  name: string | undefined
+  category: 'NORMAL' | 'SYSTEM' | undefined
+  description: string | undefined
+  configurations: string | undefined
+  content: string | undefined
+  isAsync: boolean | undefined
+  isScheduled: boolean | undefined
+  outputTargets: Array<String> | undefined
+  scheduleInterval: number | undefined
+  status: string | undefined
+  createdAt?: number | undefined
 }
 
 export interface ActionDefinition {
-    name: string | undefined
-    description: string | undefined
-    configurations: string | undefined
-    createdAt?: number | undefined
-    status: string | undefined
-    jobs: Array<JobDefinition> | undefined
+  name: string | undefined
+  description: string | undefined
+  configurations: string | undefined
+  createdAt?: number | undefined
+  status: string | undefined
+  jobs: Array<JobDefinition> | undefined
 }
 
 export interface ActionOverview {
-    hash: string
-    name: string
-    numberOfJobs: number
-    numberOfSuccessJobs: number
-    numberOfFailureJobs: number
-    numberOfPendingJobs: number
-    numberOfScheduleJobs: number
-    createdAt: number
-    status: string
-    isFavorite: boolean
+  hash: string
+  name: string
+  numberOfJobs: number
+  numberOfSuccessJobs: number
+  numberOfFailureJobs: number
+  numberOfPendingJobs: number
+  numberOfScheduleJobs: number
+  createdAt: number
+  status: string
+  isFavorite: boolean
 }
 
 export interface ActionDetails {
-    actionName: string
-    actionStatus: string
-    actionConfigurations: string
+  actionName: string
+  actionStatus: string
+  actionConfigurations: string
 }
 
 export interface JobOverview {
-    hash: string
-    actionHash: string
-    name: string
-    state: string
-    executionStatus: string
-    status: string
-    failureNotes?: string
-    startedAt: number
-    elapsedTime: number
-    updatedAt: number
-    schedule: boolean
+  hash: string
+  actionHash: string
+  name: string
+  state: string
+  executionStatus: string
+  status: string
+  failureNotes?: string
+  startedAt: number
+  elapsedTime: number
+  updatedAt: number
+  schedule: boolean
 }
 
 export interface JobDetailMetadata {
-    name?: string
-    category: 'NORMAL' | 'SYSTEM' | undefined
-    description?: string
-    configurations?: string
-    content?: string
-    isAsync?: boolean
-    isScheduled: boolean
-    outputTargets?: Array<String>
-    scheduleInterval?: number
-    createdAt?: number
-    status?: string
+  name?: string
+  category: 'NORMAL' | 'SYSTEM' | undefined
+  description?: string
+  configurations?: string
+  content?: string
+  isAsync?: boolean
+  isScheduled: boolean
+  outputTargets?: Array<String>
+  scheduleInterval?: number
+  createdAt?: number
+  status?: string
 }
 
-export const isAllDependOnPropsValid = (dependOnArr: Array<any>, properties: Array<PropertyMetadata> | undefined) : boolean => {
-  
-  for(let index = 0; index < dependOnArr.length; index+=2) {
+export const isAllDependOnPropsValid = (dependOnArr: Array<any>, properties: Array<PropertyMetadata> | undefined): boolean => {
+
+  for (let index = 0; index < dependOnArr.length; index += 2) {
     let dependOnPropName = dependOnArr[index]
     let dependOnPropValue = dependOnArr[index + 1]
     let dependOnProp = findPropertyByCondition(properties, p => p.propName === dependOnPropName && p.propValue === dependOnPropValue);
@@ -211,7 +211,7 @@ export const isAllDependOnPropsValid = (dependOnArr: Array<any>, properties: Arr
 
 
 export const findPropertyByCondition = (properties: Array<PropertyMetadata> | undefined, filter: (property: PropertyMetadata) => boolean): PropertyMetadata | undefined => {
-    return properties ? properties.find(filter) : undefined;
+  return properties ? properties.find(filter) : undefined;
 }
 
 export const getActionDefinition = (properties: Array<PropertyMetadata>): ActionDefinition => {
@@ -231,45 +231,45 @@ export const getActionDefinition = (properties: Array<PropertyMetadata>): Action
 
 export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
 
-    let name = findPropertyByCondition(properties, property => property.propName.startsWith("name"))?.propValue;
-    let description = findPropertyByCondition(properties, property => property.propName.startsWith("description"))?.propValue;
-    let configurations = findPropertyByCondition(properties, property => property.propName.startsWith("configurations"))?.propValue;
-    let content = findPropertyByCondition(properties, property => property.propName.startsWith("content"))?.propValue;
-    let isAsync = findPropertyByCondition(properties, property => property.propName.startsWith("isAsync"))?.propValue;
-    let category = findPropertyByCondition(properties, property => property.propName.startsWith("category"))?.propValue;
-    let outputTargets = findPropertyByCondition(properties, property => property.propName.startsWith("outputTargets"))?.propValue;
-    let isScheduled = findPropertyByCondition(properties, property => property.propName.startsWith("isScheduled"))?.propValue;
-    let scheduleInterval = findPropertyByCondition(properties, property => property.propName.startsWith("scheduleInterval"))?.propValue;
-    let status = findPropertyByCondition(properties, property => property.propName.startsWith("status"))?.propValue;
+  let name = findPropertyByCondition(properties, property => property.propName.startsWith("name"))?.propValue;
+  let description = findPropertyByCondition(properties, property => property.propName.startsWith("description"))?.propValue;
+  let configurations = findPropertyByCondition(properties, property => property.propName.startsWith("configurations"))?.propValue;
+  let content = findPropertyByCondition(properties, property => property.propName.startsWith("content"))?.propValue;
+  let isAsync = findPropertyByCondition(properties, property => property.propName.startsWith("isAsync"))?.propValue;
+  let category = findPropertyByCondition(properties, property => property.propName.startsWith("category"))?.propValue;
+  let outputTargets = findPropertyByCondition(properties, property => property.propName.startsWith("outputTargets"))?.propValue;
+  let isScheduled = findPropertyByCondition(properties, property => property.propName.startsWith("isScheduled"))?.propValue;
+  let scheduleInterval = findPropertyByCondition(properties, property => property.propName.startsWith("scheduleInterval"))?.propValue;
+  let status = findPropertyByCondition(properties, property => property.propName.startsWith("status"))?.propValue;
 
-    return {
-        name,
-        category,
-        description,
-        configurations,
-        content,
-        outputTargets,
-        isAsync,
-        status,
-        isScheduled,
-        scheduleInterval: isScheduled ? scheduleInterval : 0
-    } as JobDefinition
+  return {
+    name,
+    category,
+    description,
+    configurations,
+    content,
+    outputTargets,
+    isAsync,
+    status,
+    isScheduled,
+    scheduleInterval: isScheduled ? scheduleInterval : 0
+  } as JobDefinition
 
 }
 
 export const getJobDetails = (currentStepMetadata: Array<StepMetadata>) => {
 
-    const findRelatedJobs = (currentStepMetadata: Array<StepMetadata>): Array<JobDefinition> => {
-        return currentStepMetadata
-            .map(stepMetadata => getJobDefinition(stepMetadata.properties))
-    }
+  const findRelatedJobs = (currentStepMetadata: Array<StepMetadata>): Array<JobDefinition> => {
+    return currentStepMetadata
+      .map(stepMetadata => getJobDefinition(stepMetadata.properties))
+  }
 
-    return findRelatedJobs(currentStepMetadata);
+  return findRelatedJobs(currentStepMetadata);
 }
 
 export class ActionAPI {
 
-  static setFavoriteAction =async (actionId: string, isFavorite: boolean, restClient: RestClient, successCallback: () => void) => {
+  static setFavoriteAction = async (actionId: string, isFavorite: boolean, restClient: RestClient, successCallback: () => void) => {
 
     const requestOptions = {
       method: "PATCH",
@@ -287,7 +287,7 @@ export class ActionAPI {
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
-  static loadTrashSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult : PagingResult) => void) => {
+  static loadTrashSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult: PagingResult) => void) => {
     const requestOptions = {
       method: "GET",
       headers: {
@@ -306,7 +306,7 @@ export class ActionAPI {
     });
   }
 
-  static loadActionSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult : PagingResult) => void) => {
+  static loadActionSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult: PagingResult) => void) => {
     const requestOptions = {
       method: "GET",
       headers: {
@@ -351,6 +351,24 @@ export class ActionAPI {
     });
   }
 
+  static loadRelatedJobsAsync = async (pageIndex: number, pageSize: number, targetAction: string, restClient: RestClient, successCallback: (data: PagingResult) => void) => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+
+    const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(targetAction)}/jobs?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let responseJSON = await response.json() as PagingResult;
+      successCallback(responseJSON);
+      return undefined;
+    }, async (response: Response) => {
+      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+
   static deleteAction = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
 
     const requestOptions = {
@@ -380,14 +398,14 @@ export class ActionAPI {
       body: JSON.stringify(actionDefinition)
     }
     const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}`;
-    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       successCallback();
       return { 'message': 'Action info has been updated successfully', key: new Date().getTime() } as SnackbarMessage;
     });
   }
-  
+
   static async importFromFile(uploadFormData: FormData, restClient: RestClient, successCallback: (actionName: string) => void) {
-    
+
     const requestOptions = {
       method: "POST",
       body: uploadFormData
@@ -395,8 +413,8 @@ export class ActionAPI {
     const targetURL = `${ACTION_MANAGER_API_URL}/import`;
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let responseJSON = await response.json();
-       successCallback(responseJSON.name)
-       return undefined
+      successCallback(responseJSON.name)
+      return undefined
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
@@ -492,7 +510,7 @@ export class JobAPI {
     }
 
     const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
-    await restClient.sendRequest(requestOptions, targetURL, async(response) => {
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       successCallback();
       return { 'message': 'Job info has been updated successfully', key: new Date().getTime() } as SnackbarMessage;
     });
@@ -504,7 +522,7 @@ export class JobAPI {
       headers: {}
     }
     const targetURL = `${JOB_MANAGER_API_URL}/${jobId}/pause`;
-    await restClient.sendRequest(requestOptions, targetURL, async() => {
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
       return { 'message': `Job ${jobName} has been paused`, key: new Date().getTime() } as SnackbarMessage;
     });
   }
@@ -532,7 +550,7 @@ export class JobAPI {
       headers: {}
     }
     const targetURL = `${JOB_MANAGER_API_URL}/${jobId}`;
-    await restClient.sendRequest(requestOptions, targetURL, async() => {
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
       successCallback();
       return { 'message': `Job ${jobName} has been deleted`, key: new Date().getTime() } as SnackbarMessage;
     });
@@ -544,7 +562,7 @@ export class JobAPI {
       headers: {}
     }
     const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/resume`;
-    await restClient.sendRequest(requestOptions, targetURL, async() => {
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
       return { 'message': `Job ${jobName} has been resumed`, key: new Date().getTime() } as SnackbarMessage;
     });
   }
@@ -597,7 +615,7 @@ export class JobAPI {
     }
 
     const targetURL = `${JOB_MANAGER_API_URL}/dryRun`;
-    await restClient.sendRequest(requestOptions, targetURL, async() => {
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
       return { 'message': "Dry run action successfully", key: new Date().getTime() } as SnackbarMessage;
     });
   }

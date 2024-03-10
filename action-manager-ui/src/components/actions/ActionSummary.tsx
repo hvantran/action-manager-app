@@ -1,16 +1,16 @@
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
-import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import PendingIcon from '@mui/icons-material/Pending';
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 import { Badge, Box, IconButton, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
@@ -24,8 +24,6 @@ import {
   PagingOptionMetadata,
   PagingResult,
   RestClient,
-  SnackbarAlertMetadata,
-  SnackbarMessage,
   SpeedDialActionMetadata,
   TableMetadata,
   WithLink
@@ -35,7 +33,6 @@ import ProcessTracking from '../common/ProcessTracking';
 import { useNavigate } from 'react-router-dom';
 import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
-import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
@@ -45,12 +42,9 @@ export default function ActionSummary() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
-  const [openError, setOpenError] = React.useState(false);
-  const [openSuccess, setOpenSuccess] = React.useState(false);
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
-  const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
-  const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
+  const restClient = new RestClient(setCircleProcessOpen);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
@@ -101,7 +95,7 @@ export default function ActionSummary() {
       align: 'left',
       format: (value: number) =>
         <Badge badgeContent={value} color='warning' showZero>
-          <PendingIcon color='warning'/>
+          <PendingIcon color='warning' />
         </Badge>
     },
     {
@@ -254,7 +248,6 @@ export default function ActionSummary() {
   }
   const importActionFunc = function (target: any) {
     let importAction = (document.getElementById("raised-button-file") as HTMLInputElement);
-    setMessageInfo(previous => { return { 'message': "File is empty", key: new Date().getTime() } as SnackbarMessage });
     if (importAction === null || importAction.files === null || importAction.files.length === 0) {
       return
     }
@@ -298,19 +291,10 @@ export default function ActionSummary() {
     ]
   }
 
-  let snackbarAlertMetadata: SnackbarAlertMetadata = {
-    openError,
-    openSuccess,
-    setOpenError,
-    setOpenSuccess,
-    messageInfo
-  }
-
   return (
     <Stack spacing={2}>
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
-      <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
   );

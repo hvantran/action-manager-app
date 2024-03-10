@@ -3,7 +3,8 @@ import { Stack } from '@mui/material';
 import React from 'react';
 import {
     ColumnMetadata, PageEntityMetadata, PagingOptionMetadata,
-    PagingResult, RestClient, SnackbarMessage, TableMetadata
+    PagingResult, RestClient,
+    TableMetadata
 } from '../GenericConstants';
 
 
@@ -11,7 +12,7 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
 import { useNavigate } from 'react-router-dom';
-import { ACTION_MANAGER_API_URL, JobOverview } from '../AppConstants';
+import { ActionAPI, JobOverview } from '../AppConstants';
 import JobStatus from '../common/JobStatus';
 import TextTruncate from '../common/TextTruncate';
 import PageEntityRender from '../renders/PageEntityRender';
@@ -23,14 +24,11 @@ export default function ActionJobTable(props: any) {
     const targetAction = props.actionId
     const setCircleProcessOpen = props.setCircleProcessOpen;
     const replayFlag = props.replayFlag;
-    const setMessageInfo = props.setMessageInfo;
-    const setOpenError = props.setOpenError;
-    const setOpenSuccess = props.setOpenSuccess;
     let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
     const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
     const [pageIndex, setPageIndex] = React.useState(0);
     const [pageSize, setPageSize] = React.useState(10);
-    const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
+    const restClient = new RestClient(setCircleProcessOpen);
 
     const columns: ColumnMetadata[] = [
         { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
@@ -120,26 +118,11 @@ export default function ActionJobTable(props: any) {
         }
     ];
 
-    const loadRelatedJobsAsync = async (pageIndex: number, pageSize: number) => {
-        const requestOptions = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        }
-
-        const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(targetAction)}/jobs?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}`;
-        await restClient.sendRequest(requestOptions, targetURL, async (response) => {
-            let responseJSON = await response.json() as PagingResult;
-            setPagingResult(responseJSON);
-            return { 'message': 'Loading jobs sucessfully!!!', key: new Date().getTime() } as SnackbarMessage;
-        }, async (response: Response) => {
-            return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
-        });
-    }
 
     React.useEffect(() => {
-        loadRelatedJobsAsync(pageIndex, pageSize);
+        ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, targetAction, restClient, (data) => {
+            setPagingResult(data)
+        });
     }, [replayFlag])
 
     let pagingOptions: PagingOptionMetadata = {
@@ -150,7 +133,9 @@ export default function ActionJobTable(props: any) {
         onPageChange: (pageIndex: number, pageSize: number) => {
             setPageIndex(pageIndex);
             setPageSize(pageSize);
-            loadRelatedJobsAsync(pageIndex, pageSize);
+            ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, targetAction, restClient, (data) => {
+                setPagingResult(data)
+            });
         }
     }
 

@@ -19,8 +19,6 @@ import {
   PropType,
   PropertyMetadata,
   RestClient,
-  SnackbarAlertMetadata,
-  SnackbarMessage,
   onChangeProperty
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';
@@ -38,7 +36,6 @@ import {
   isAllDependOnPropsValid
 } from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
-import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 export default function JobDetail() {
@@ -69,10 +66,10 @@ export default function JobDetail() {
 
       return [...previous].map(p => {
 
-        if ( p.dependOn && !isAllDependOnPropsValid(p.dependOn, previous)) {
+        if (p.dependOn && !isAllDependOnPropsValid(p.dependOn, previous)) {
           return p;
         }
-        
+
         if (!p.disablePerpetualy) {
           p.disabled = !isEnabled;
         }
@@ -94,7 +91,7 @@ export default function JobDetail() {
   const [editActionMeta, setEditActionMeta] = React.useState<GenericActionMetadata>(
     {
       actionIcon: <EditIcon />,
-      properties: {sx:{color: yellow[800]}},
+      properties: { sx: { color: yellow[800] } },
       actionLabel: "Edit",
       actionName: "editAction",
       onClick: () => enableEditFunction(true)
@@ -112,7 +109,7 @@ export default function JobDetail() {
         propDescription: 'This is name of job',
         propType: PropType.InputText,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         textFieldMeta: {
           onChangeEvent: function (event: any) {
@@ -128,7 +125,7 @@ export default function JobDetail() {
         propValue: false,
         disabled: true,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Switcher,
         switcherFieldMeta: {
@@ -149,7 +146,7 @@ export default function JobDetail() {
         propValue: [],
         propDefaultValue: [],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -169,7 +166,7 @@ export default function JobDetail() {
         propDefaultValue: "",
         dependOn: ["isAsync", true],
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -186,7 +183,7 @@ export default function JobDetail() {
         propValue: false,
         disabled: true,
         layoutProperties: { xs: 6 },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propDefaultValue: false,
         propType: PropType.Switcher,
@@ -209,7 +206,7 @@ export default function JobDetail() {
         dependOn: ["isScheduled", true],
         propValue: 0,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -227,7 +224,7 @@ export default function JobDetail() {
         propValue: '',
         disabled: true,
         layoutProperties: { xs: 6 },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Textarea,
         textareaFieldMeta: {
@@ -244,7 +241,7 @@ export default function JobDetail() {
         disabled: true,
         propValue: '',
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -265,7 +262,7 @@ export default function JobDetail() {
         disabled: true,
         propDefaultValue: '{}',
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         propType: PropType.CodeEditor,
         codeEditorMeta:
@@ -284,7 +281,7 @@ export default function JobDetail() {
         propName: 'content',
         propLabel: 'Job Content',
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 2,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         isRequired: true,
 
@@ -306,11 +303,8 @@ export default function JobDetail() {
     ]
   );
   const [processTracking, setCircleProcessOpen] = React.useState(false);
-  const [openError, setOpenError] = React.useState(false);
-  const [openSuccess, setOpenSuccess] = React.useState(false);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
-  const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
-  const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess), []);
+  const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen), []);
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href="/actions">
@@ -332,7 +326,7 @@ export default function JobDetail() {
       })
     })
   }, [jobId, restClient])
-  
+
   const onPauseResumeSwicherOnChange = (event: any) => {
     setIsPausedJob(event.target.checked);
     if (event.target.checked) {
@@ -351,10 +345,10 @@ export default function JobDetail() {
       editActionMeta,
       saveActionMeta,
       {
-        actionIcon: 
-        <Link underline="hover" key="1" color="black" target="_blank" href={troubleshootURL} rel="noopener noreferrer">
-          <TroubleshootIcon/>
-        </Link>,
+        actionIcon:
+          <Link underline="hover" key="1" color="black" target="_blank" href={troubleshootURL} rel="noopener noreferrer">
+            <TroubleshootIcon />
+          </Link>,
         actionLabel: "Troubleshoot",
         actionName: "troubleshootAction"
       },
@@ -369,7 +363,7 @@ export default function JobDetail() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh",
         actionName: "refreshAction",
-        onClick: () => 
+        onClick: () =>
           JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
             setIsPausedJob(jobDetail.status === "PAUSED")
             Object.keys(jobDetail).forEach((propertyName: string) => {
@@ -385,9 +379,9 @@ export default function JobDetail() {
         onClick: () => setDeleteConfirmationDialogOpen(true)
       },
       {
-        actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange}/>,
+        actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange} />,
         actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
-         <InfoIcon />
+          <InfoIcon />
           <p>Paused function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
         </Box>,
         actionLabel: "Pause/Resume",
@@ -395,14 +389,6 @@ export default function JobDetail() {
       }
     ],
     properties: propertyMetadata
-  }
-
-  let snackbarAlertMetadata: SnackbarAlertMetadata = {
-    openError,
-    openSuccess,
-    setOpenError,
-    setOpenSuccess,
-    messageInfo
   }
 
   let confirmationDeleteDialogMeta: DialogMetadata = {
@@ -415,7 +401,7 @@ export default function JobDetail() {
       setDeleteConfirmationDialogOpen(false);
     },
     positiveAction() {
-      JobAPI.delete(jobId, jobName, restClient, () =>  navigate("/actions/" + actionId));
+      JobAPI.delete(jobId, jobName, restClient, () => navigate("/actions/" + actionId));
     },
   }
 
@@ -423,7 +409,6 @@ export default function JobDetail() {
     <Stack spacing={2}>
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
-      <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
   );

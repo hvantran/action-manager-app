@@ -16,10 +16,9 @@ import { json } from '@codemirror/lang-json';
 import { green, yellow } from '@mui/material/colors';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ACTION_STATUS_SELECTION, ActionAPI, ActionDetails, ROOT_BREADCRUMB, isAllDependOnPropsValid } from '../AppConstants';
-import { DialogMetadata, GenericActionMetadata, PageEntityMetadata, PropType, PropertyMetadata, RestClient, SnackbarAlertMetadata, SnackbarMessage, onChangeProperty } from '../GenericConstants';
+import { DialogMetadata, GenericActionMetadata, PageEntityMetadata, PropType, PropertyMetadata, RestClient, SnackbarMessage, onChangeProperty } from '../GenericConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import ProcessTracking from '../common/ProcessTracking';
-import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 import ActionJobTable from './ActionJobTable';
 
@@ -38,11 +37,11 @@ export default function ActionDetail() {
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
-  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => {});
+  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
   const [openSuccess, setOpenSuccess] = React.useState(false);
   const [replayFlag, setReplayActionFlag] = React.useState(false);
   const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
-  const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
+  const restClient = new RestClient(setCircleProcessOpen);
 
 
   const enableEditFunction = function (isEnabled: boolean) {
@@ -59,10 +58,10 @@ export default function ActionDetail() {
 
       return [...previous].map(p => {
 
-        if ( p.dependOn && !isAllDependOnPropsValid(p.dependOn, previous)) {
+        if (p.dependOn && !isAllDependOnPropsValid(p.dependOn, previous)) {
           return p;
         }
-        
+
         if (!p.disablePerpetualy) {
           p.disabled = !isEnabled;
         }
@@ -71,7 +70,7 @@ export default function ActionDetail() {
       })
     })
   }
-  
+
   const [saveActionMeta, setSaveActionMeta] = React.useState<GenericActionMetadata>(
     {
       actionIcon: <SaveIcon />,
@@ -84,13 +83,13 @@ export default function ActionDetail() {
   const [editActionMeta, setEditActionMeta] = React.useState<GenericActionMetadata>(
     {
       actionIcon: <EditIcon />,
-      properties: {sx:{color: yellow[800]}},
+      properties: { sx: { color: yellow[800] } },
       actionLabel: "Edit",
       actionName: "editAction",
       onClick: () => enableEditFunction(true)
     });
 
-    
+
   const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>(
     [
       {
@@ -103,7 +102,7 @@ export default function ActionDetail() {
         propDescription: 'This is action name',
         propType: PropType.InputText,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 2.5,  sx: { pl: 5} },
+        labelElementProperties: { xs: 2.5, sx: { pl: 5 } },
         valueElementProperties: { xs: 9.5 },
         textFieldMeta: {
           onChangeEvent: function (event: any) {
@@ -141,7 +140,7 @@ export default function ActionDetail() {
         propDefaultValue: '{}',
         disabled: true,
         layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 1.2,  sx: { pl: 5 } },
+        labelElementProperties: { xs: 1.2, sx: { pl: 5 } },
         valueElementProperties: { xs: 10.8 },
         isRequired: true,
         propType: PropType.CodeEditor,
@@ -158,7 +157,7 @@ export default function ActionDetail() {
         }
       }
     ])
-    
+
   React.useEffect(() => {
     ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
       Object.keys(actionDetail).forEach((propertyName: string) => {
@@ -236,15 +235,6 @@ export default function ActionDetail() {
     properties: propertyMetadata
   }
 
-
-  let snackbarAlertMetadata: SnackbarAlertMetadata = {
-    openError,
-    openSuccess,
-    setOpenError,
-    setOpenSuccess,
-    messageInfo
-  }
-
   let actionJobTableParams = {
     setCircleProcessOpen,
     setMessageInfo,
@@ -259,7 +249,6 @@ export default function ActionDetail() {
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ActionJobTable {...actionJobTableParams} actionId={actionId}></ActionJobTable>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
-      <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack >
   );

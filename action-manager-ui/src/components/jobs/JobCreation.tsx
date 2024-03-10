@@ -25,13 +25,10 @@ import {
   PageEntityMetadata,
   PropType,
   RestClient,
-  SnackbarAlertMetadata,
-  SnackbarMessage,
   StepMetadata,
   onchangeStepDefault
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';
-import SnackbarAlert from '../common/SnackbarAlert';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
@@ -45,12 +42,9 @@ export default function JobCreation() {
   }
 
   let initialStepsV3: Array<StepMetadata> = []
-  const [openError, setOpenError] = React.useState(false);
-  const [openSuccess, setOpenSuccess] = React.useState(false);
-  const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [stepMetadatas, setStepMetadatas] = React.useState(initialStepsV3);
-  const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
+  const restClient = new RestClient(setCircleProcessOpen);
 
   let initialTemplateStep: StepMetadata = {
     name: "job",
@@ -200,7 +194,7 @@ export default function JobCreation() {
         propValue: JOB_STATUS_SELECTION[0].value,
         propDefaultValue: JOB_STATUS_SELECTION[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
         valueElementProperties: { xs: 8 },
         propType: PropType.Selection,
         selectionMeta: {
@@ -404,7 +398,7 @@ export default function JobCreation() {
           propValue: JOB_STATUS_SELECTION[0].value,
           propDefaultValue: JOB_STATUS_SELECTION[0].value,
           layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4,  sx: { pl: 10 } },
+          labelElementProperties: { xs: 4, sx: { pl: 10 } },
           valueElementProperties: { xs: 8 },
           propType: PropType.Selection,
           selectionMeta: {
@@ -523,19 +517,10 @@ export default function JobCreation() {
   }
 
 
-  let snackbarAlertMetadata: SnackbarAlertMetadata = {
-    openError,
-    openSuccess,
-    setOpenError,
-    setOpenSuccess,
-    messageInfo
-  }
-
   return (
     <Stack spacing={4}>
       <PageEntityRender {...initialPageEntityMetdata} />
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
-      <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
     </Stack>
   );
 }

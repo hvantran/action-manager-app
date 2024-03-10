@@ -1,25 +1,26 @@
+import { LanguageSupport } from '@codemirror/language';
+import { ViewUpdate } from "@codemirror/view";
+import { SelectChangeEvent, createTheme } from '@mui/material';
 import * as React from 'react';
 import { Link } from "react-router-dom";
-import { ViewUpdate } from "@codemirror/view";
-import { LanguageSupport } from '@codemirror/language';
-import { SelectChangeEvent, createTheme } from '@mui/material';
+import { Slide, toast } from 'react-toastify';
 
 export const DEFAULT_THEME = createTheme({
-  typography: {
-    fontSize: 13,
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
-  },
+    typography: {
+        fontSize: 13,
+        fontFamily: [
+            '-apple-system',
+            'BlinkMacSystemFont',
+            '"Segoe UI"',
+            'Roboto',
+            '"Helvetica Neue"',
+            'Arial',
+            'sans-serif',
+            '"Apple Color Emoji"',
+            '"Segoe UI Emoji"',
+            '"Segoe UI Symbol"',
+        ].join(','),
+    },
 });
 
 export function WithLink(to: any, children: any) {
@@ -50,17 +51,17 @@ export function onchangeStepDefault(propName: string, propValue: any, stepMetada
 }
 
 export function onChangeProperty(propName: string, propValue: any, propertyCallback?: (property: PropertyMetadata) => void): React.SetStateAction<PropertyMetadata[]> {
-  return previous => {
-    return [...previous].map((prop) => {
-      if (prop.propName === propName) {
-        prop.propValue = propValue;
-      }
-      if (propertyCallback) {
-          propertyCallback(prop);
-      }
-      return prop;
-    });
-  };
+    return previous => {
+        return [...previous].map((prop) => {
+            if (prop.propName === propName) {
+                prop.propValue = propValue;
+            }
+            if (propertyCallback) {
+                propertyCallback(prop);
+            }
+            return prop;
+        });
+    };
 }
 
 export class DataTypeDisplayer {
@@ -68,7 +69,7 @@ export class DataTypeDisplayer {
     static formatDate(value: number) {
 
         if (!value) {
-          return "";
+            return "";
         }
 
         let createdAtDate = new Date(value);
@@ -79,31 +80,79 @@ export class DataTypeDisplayer {
 
 export class RestClient {
     setCircleProcessOpen: (value: boolean) => void
-    setMessageInfo: (message: SnackbarMessage) => void
-    setOpenError: (value: boolean) => void
-    setOpenSuccess: (value: boolean) => void
 
-    constructor(setCircleProcessOpen: (value: boolean) => void,
-        setMessageInfo: (message: SnackbarMessage) => void,
-        setOpenError: (value: boolean) => void,
-        setOpenSuccess: (value: boolean) => void
+    constructor(setCircleProcessOpen: (value: boolean) => void
     ) {
         this.setCircleProcessOpen = setCircleProcessOpen;
-        this.setMessageInfo = setMessageInfo;
-        this.setOpenError = setOpenError;
-        this.setOpenSuccess = setOpenSuccess;
     }
 
-    async defaultErrorCallback(response: Response) : Promise<SnackbarMessage> {
+    async defaultErrorCallback(response: Response): Promise<SnackbarMessage> {
         let responseJSON = await response.json();
         return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
-
     }
 
     async sendRequest(requestOptions: any, targetURL: string,
         successCallback: (response: Response) => Promise<SnackbarMessage | undefined> | undefined,
         errorCallback?: (response: Response) => Promise<SnackbarMessage> | undefined) {
 
+        let responsePromise = this.sendRequest2(requestOptions, targetURL, successCallback, errorCallback);
+        try {
+            let response = await responsePromise
+            if (!response) {
+                return;
+
+            }
+            toast.promise(responsePromise, {
+                success: {
+                    render({ data }) {
+                        return `${data}`
+                    }
+                }
+                , error: {
+                    render({ data }) {
+                        return `${data}`
+                    }
+                }
+            }, {
+                position: "bottom-center",
+                autoClose: 2000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+                transition: Slide,
+            });
+        } catch (error: any) {
+            toast.promise(responsePromise, {
+                success: {
+                    render({ data }) {
+                        return `${data}`
+                    }
+                }
+                , error: {
+                    render({ data }) {
+                        return `${data}`
+                    }
+                }
+            }, {
+                position: "bottom-center",
+                autoClose: 2000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+                transition: Slide,
+            });
+        }
+    }
+
+    async sendRequest2(requestOptions: any, targetURL: string,
+        successCallback: (response: Response) => Promise<SnackbarMessage | undefined> | undefined,
+        errorCallback?: (response: Response) => Promise<SnackbarMessage> | undefined): Promise<string | undefined> {
         try {
             this.setCircleProcessOpen(true);
             let response = await fetch(targetURL, requestOptions);
@@ -115,36 +164,28 @@ export class RestClient {
 
                 let errorSnackbarMessage = errorCallback(response);
                 if (errorSnackbarMessage) {
-                    this.setMessageInfo(await errorSnackbarMessage);
-                    this.setOpenError(true);
+                    let snackbarMessage = await errorSnackbarMessage
+                    if (snackbarMessage) {
+                        return Promise.reject(snackbarMessage.message)
+                    }
                 }
-                return;
+                return Promise.reject(await response.json());
             }
 
             let successSnackbarMessage = successCallback(response);
             if (successSnackbarMessage) {
                 let snackbarMessage = await successSnackbarMessage;
                 if (snackbarMessage) {
-                    this.setMessageInfo(snackbarMessage);
-                    this.setOpenSuccess(true);
+                    return Promise.resolve(snackbarMessage.message)
                 }
             }
+            return Promise.resolve(undefined)
         } catch (error: any) {
-            let messageInfo = { 'message': "An internal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
-            this.setMessageInfo(messageInfo);
-            this.setOpenError(true);
+            return Promise.reject("An internal error occurred during your request!");
         } finally {
             this.setCircleProcessOpen(false);
         }
     }
-}
-
-export interface SnackbarAlertMetadata {
-    openError: boolean
-    openSuccess: boolean
-    setOpenError: (previous: any) => void
-    setOpenSuccess: (previous: any) => void
-    messageInfo: SnackbarMessage | undefined
 }
 
 export interface SnackbarMessage {
@@ -162,7 +203,7 @@ export enum PropType {
 
 export interface TextFieldMetadata {
     placeholder?: string
-    onChangeEvent: React.ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement > | undefined | any
+    onChangeEvent: React.ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement> | undefined | any
 }
 
 export interface CodeEditorMetadata {

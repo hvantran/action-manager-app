@@ -8,8 +8,6 @@ import {
   PagingOptionMetadata,
   PagingResult,
   RestClient,
-  SnackbarAlertMetadata,
-  SnackbarMessage,
   TableMetadata
 } from '../GenericConstants';
 
@@ -24,21 +22,17 @@ import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
 import { useNavigate } from 'react-router-dom';
 import { JobAPI, JobOverview } from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
-import SnackbarAlert from '../common/SnackbarAlert';
 import TextTruncate from '../common/TextTruncate';
 
 
 export default function JobSummary() {
   const navigate = useNavigate();
-  const [processTracking, setCircleProcessOpen] = React.useState(false);
-  const [openError, setOpenError] = React.useState(false);
-  const [openSuccess, setOpenSuccess] = React.useState(false);
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
+  const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
-  const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
-  const restClient = new RestClient(setCircleProcessOpen, setMessageInfo, setOpenError, setOpenSuccess);
+  const restClient = new RestClient(setCircleProcessOpen);
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href='#'>
@@ -131,7 +125,7 @@ export default function JobSummary() {
         actionLabel: "Job details",
         actionName: "gotoJobDetail",
         onClick: (row: JobOverview) => {
-          return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, {state: {name: row.name}})
+          return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
         }
       }]
     }
@@ -156,7 +150,7 @@ export default function JobSummary() {
   let tableMetadata: TableMetadata = {
     columns,
     onRowClickCallback(row) {
-      navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, {state: {name: row.name}})
+      navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
     },
     pagingOptions: pagingOptions,
     pagingResult: pagingResult
@@ -176,19 +170,10 @@ export default function JobSummary() {
     ]
   }
 
-  let snackbarAlertMetadata: SnackbarAlertMetadata = {
-    openError,
-    openSuccess,
-    setOpenError,
-    setOpenSuccess,
-    messageInfo
-  }
-
   return (
     <Stack spacing={2}>
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
-      <SnackbarAlert {...snackbarAlertMetadata}></SnackbarAlert>
     </Stack>
   );
 }
