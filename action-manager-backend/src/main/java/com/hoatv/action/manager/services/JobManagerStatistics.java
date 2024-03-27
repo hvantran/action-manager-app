@@ -44,7 +44,7 @@ public class JobManagerStatistics {
         this.totalNumberOfJobs.incrementAndGet();
     }
 
-    public void increaseNumberOfActiveJobs() {
+    public void increaseNumberOfProcessingJobs() {
         this.numberOfActiveJobs.incrementAndGet();
     }
 
@@ -52,7 +52,7 @@ public class JobManagerStatistics {
         this.numberOfFailureJobs.incrementAndGet();
     }
 
-    public void decreaseNumberOfActiveJobs() {
+    public void decreaseNumberOfProcessingJobs() {
         this.numberOfActiveJobs.decrementAndGet();
     }
 
@@ -87,7 +87,7 @@ public class JobManagerStatistics {
         return numberOfFailureJobs.get();
     }
 
-    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-activate-jobs")
+    @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX + "-number-of-processing-jobs")
     public long getTotalNumberOfActiveJobs() {
         return numberOfActiveJobs.get();
     }

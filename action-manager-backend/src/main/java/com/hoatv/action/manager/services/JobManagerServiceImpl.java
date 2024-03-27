@@ -13,10 +13,7 @@ import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepositor
 import com.hoatv.fwk.common.exceptions.AppException;
 import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.services.TemplateEngineEnum;
-import com.hoatv.fwk.common.ultilities.DateTimeUtils;
-import com.hoatv.fwk.common.ultilities.ObjectUtils;
-import com.hoatv.fwk.common.ultilities.Pair;
-import com.hoatv.fwk.common.ultilities.Triplet;
+import com.hoatv.fwk.common.ultilities.*;
 import com.hoatv.metric.mgmt.entities.ComplexValue;
 import com.hoatv.metric.mgmt.entities.MetricTag;
 import com.hoatv.metric.mgmt.services.MetricService;
@@ -26,6 +23,7 @@ import com.hoatv.task.mgmt.services.ScheduleTaskMgmtService;
 import com.hoatv.task.mgmt.services.TaskFactory;
 import com.hoatv.task.mgmt.services.TaskMgmtServiceV1;
 import jakarta.annotation.PostConstruct;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.slf4j.Logger;
@@ -40,10 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -87,6 +82,8 @@ public class JobManagerServiceImpl implements JobManagerService {
     private final ScheduleTaskMgmtService scheduleTaskMgmtService;
 
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
+
+    private final GenericKeyedLock<String> jobExecutionLock = new GenericKeyedLock<>();
 
 
     static {
@@ -447,42 +444,53 @@ public class JobManagerServiceImpl implements JobManagerService {
         }
     }
 
+    @SneakyThrows
     private void processPersistenceJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
                                        BiConsumer<JobExecutionStatus, JobExecutionStatus> onJobStatusChange) {
         String jobName = jobDocument.getJobName();
-        JobStatus jobStatus = jobDocument.getJobStatus();
+        jobExecutionLock.putIfAbsent(jobName, new Semaphore(1));
+        if (jobExecutionLock.tryAcquire(jobName, 5000, TimeUnit.MILLISECONDS)) {
+            try {
+                JobStatus jobStatus = jobDocument.getJobStatus();
+                if (!VALID_JOB_STATUS_TO_RUN.contains(jobStatus)) {
+                    String messageTemplate = "Job status {} for {} is not supported to process, only support {}";
+                    LOGGER.error(messageTemplate, jobStatus, jobName, VALID_JOB_STATUS_TO_RUN);
+                    return;
+                }
 
-        if (!VALID_JOB_STATUS_TO_RUN.contains(jobStatus)) {
-            LOGGER.error("Job status {} for {} is not supported to process, only support {}", jobStatus, jobName, VALID_JOB_STATUS_TO_RUN);
-            return;
-        }
+                jobManagerStatistics.increaseNumberOfProcessingJobs();
+                long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
+                JobExecutionStatus prevJobStatus = jobResultDocument.getJobExecutionStatus();
+                JobExecutionStatus nextJobStatus = JobExecutionStatus.FAILURE;
+                String jobException = null;
 
-        jobManagerStatistics.increaseNumberOfActiveJobs();
-        long currentEpochTimeInMillisecond = DateTimeUtils.getCurrentEpochTimeInMillisecond();
-        JobExecutionStatus prevJobStatus = jobResultDocument.getJobExecutionStatus();
-        JobExecutionStatus nextJobStatus = JobExecutionStatus.FAILURE;
-        String jobException = null;
+                try {
+                    if (jobResultDocument.getStartedAt() == 0) {
+                        jobResultDocument.setStartedAt(currentEpochTimeInMillisecond);
+                    }
+                    jobResultDocument.setUpdatedAt(currentEpochTimeInMillisecond);
+                    jobResultDocument.setJobExecutionStatus(JobExecutionStatus.PROCESSING);
+                    jobResultDocumentRepository.save(jobResultDocument);
 
-        try {
-            if (jobResultDocument.getStartedAt() == 0) {
-                jobResultDocument.setStartedAt(currentEpochTimeInMillisecond);
+                    JobResultImmutable jobResult = process(jobDocument);
+                    processOutputTargets(jobDocument, jobName, jobResult);
+
+                    nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ?
+                            JobExecutionStatus.FAILURE : JobExecutionStatus.SUCCESS;
+                    jobException = jobResult.getException();
+
+                } catch (Exception exception) {
+                    LOGGER.error("An exception occurred while processing {} job", jobName, exception);
+                    jobException = exception.getMessage();
+                } finally {
+                    updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobException);
+                    processJobResultCallback(onJobStatusChange, prevJobStatus, nextJobStatus);
+                }
+            } finally {
+                jobExecutionLock.release(jobName);
             }
-            jobResultDocument.setUpdatedAt(currentEpochTimeInMillisecond);
-            jobResultDocument.setJobExecutionStatus(JobExecutionStatus.PROCESSING);
-            jobResultDocumentRepository.save(jobResultDocument);
-
-            JobResultImmutable jobResult = process(jobDocument);
-            processOutputTargets(jobDocument, jobName, jobResult);
-
-            nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ? JobExecutionStatus.FAILURE : JobExecutionStatus.SUCCESS;
-            jobException = jobResult.getException();
-
-        } catch (Exception exception) {
-            LOGGER.error("An exception occurred while processing {} job", jobName, exception);
-            jobException = exception.getMessage();
-        } finally {
-            updateJobResultDocument(jobResultDocument, nextJobStatus, currentEpochTimeInMillisecond, jobException);
-            processJobResultCallback(onJobStatusChange, prevJobStatus, nextJobStatus);
+        } else {
+            LOGGER.info("Skip process job {} because it is running...", jobName);
         }
     }
 
@@ -527,7 +535,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         if (nextJobStatus == JobExecutionStatus.FAILURE) {
             jobManagerStatistics.increaseNumberOfFailureJobs();
         }
-        jobManagerStatistics.decreaseNumberOfActiveJobs();
+        jobManagerStatistics.decreaseNumberOfProcessingJobs();
     }
 
     private void updateJobResultDocument(JobResultDocument jobResultDocument,

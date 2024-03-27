@@ -471,7 +471,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                     .findFirst();
 
             if (jobStatusProcessorOptional.isEmpty()) {
-                LOGGER.error("Missing job status count processor for prev: {} - next: {} statuses", prevJobStatus, currentJobStatus);
+                LOGGER.warn("Missing job status count processor for prev: {} - next: {} statuses", prevJobStatus, currentJobStatus);
                 return;
             }
             jobStatusProcessorOptional.get().accept(actionManagerStatistics, actionId);
