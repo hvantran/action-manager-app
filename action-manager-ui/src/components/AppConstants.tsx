@@ -299,7 +299,7 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let actionPagingResult = await response.json() as PagingResult;
       successCallback(actionPagingResult);
-      return { 'message': 'Load actions successfully!!', key: new Date().getTime() } as SnackbarMessage;
+      return undefined;
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
@@ -318,7 +318,7 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let actionPagingResult = await response.json() as PagingResult;
       successCallback(actionPagingResult);
-      return { 'message': 'Load actions successfully!!', key: new Date().getTime() } as SnackbarMessage;
+      return undefined;
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
@@ -579,7 +579,7 @@ export class JobAPI {
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let jobDetail: JobDetailMetadata = await response.json() as JobDetailMetadata;
       successCallback(jobDetail);
-      return { 'message': 'Load job detail successfully!!', key: new Date().getTime() } as SnackbarMessage;
+      return undefined;
     }, async (response: Response) => {
       let responseJSON = await response.json();
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
@@ -598,7 +598,7 @@ export class JobAPI {
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let responseJSON = await response.json() as PagingResult;
       successCallback(responseJSON);
-      return { 'message': 'Loading jobs sucessfully!!!', key: new Date().getTime() } as SnackbarMessage;
+      return undefined;
     }, async (response: Response) => {
       return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
     });
