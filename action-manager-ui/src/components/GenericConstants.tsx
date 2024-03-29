@@ -3,7 +3,7 @@ import { ViewUpdate } from "@codemirror/view";
 import { SelectChangeEvent, createTheme } from '@mui/material';
 import * as React from 'react';
 import { Link } from "react-router-dom";
-import { Slide, toast } from 'react-toastify';
+import { Slide, ToastOptions, toast } from 'react-toastify';
 
 export const DEFAULT_THEME = createTheme({
     typography: {
@@ -94,8 +94,19 @@ export class RestClient {
     async sendRequest(requestOptions: any, targetURL: string,
         successCallback: (response: Response) => Promise<SnackbarMessage | undefined> | undefined,
         errorCallback?: (response: Response) => Promise<SnackbarMessage> | undefined) {
+        const toastOptions: ToastOptions = {
+            position: "bottom-center",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+            transition: Slide,
+        }
 
-        let responsePromise = this.sendRequest2(requestOptions, targetURL, successCallback, errorCallback);
+        let responsePromise = this.getFetchRequest(requestOptions, targetURL, successCallback, errorCallback);
         try {
             let response = await responsePromise
             if (!response) {
@@ -108,49 +119,19 @@ export class RestClient {
                         return `${data}`
                     }
                 }
-                , error: {
-                    render({ data }) {
-                        return `${data}`
-                    }
-                }
-            }, {
-                position: "bottom-center",
-                autoClose: 2000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "colored",
-                transition: Slide,
-            });
+            }, toastOptions);
         } catch (error: any) {
             toast.promise(responsePromise, {
-                success: {
+                error: {
                     render({ data }) {
                         return `${data}`
                     }
                 }
-                , error: {
-                    render({ data }) {
-                        return `${data}`
-                    }
-                }
-            }, {
-                position: "bottom-center",
-                autoClose: 2000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "colored",
-                transition: Slide,
-            });
+            }, toastOptions);
         }
     }
 
-    async sendRequest2(requestOptions: any, targetURL: string,
+    async getFetchRequest(requestOptions: any, targetURL: string,
         successCallback: (response: Response) => Promise<SnackbarMessage | undefined> | undefined,
         errorCallback?: (response: Response) => Promise<SnackbarMessage> | undefined): Promise<string | undefined> {
         try {
