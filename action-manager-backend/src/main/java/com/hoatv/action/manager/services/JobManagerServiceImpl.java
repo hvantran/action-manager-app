@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.util.Predicates;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,7 @@ import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -140,10 +142,12 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @LoggingMonitor(description = "Get enabled schedule jobs from active actions: {argument0}")
     public Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId(Set<String> actionIds) {
-        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionIdIn(JobStatus.ACTIVE, actionIds);
+        List<JobDocument> scheduledJobDocuments = jobDocumentRepository.
+                findByIsScheduledTrueAndJobStatusAndActionIdIn(JobStatus.ACTIVE, actionIds);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(scheduledJobDocuments);
 
-        List<Triplet<String, String, String>> jobDocumentMapping = getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments);
+        List<Triplet<String, String, String>> jobDocumentMapping = 
+                getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments, Predicates.isTrue());
 
         Map<String, List<Triplet<String, String, String>>> scheduleJobMapping = jobDocumentMapping.stream()
                 .collect(Collectors.groupingBy(Triplet::getFirst));
@@ -171,10 +175,10 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor(description = "Get jobs from action hash {argument0}")
-    public Map<String, String> getJobsFromAction(String actionId) {
+    public Map<String, String> getJobsFromAction(String actionId, Predicate<JobResultDocument> filter) {
         List<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
-        return getJobDocumentPairs(jobDocuments, jobResultDocuments)
+        return getJobDocumentPairs(jobDocuments, jobResultDocuments, filter)
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
     }
 
@@ -183,7 +187,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     public Map<String, String> getEnabledOnetimeJobs(String actionId) {
         List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledFalseAndJobStatusAndActionId(JobStatus.ACTIVE, actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
-        return getJobDocumentPairs(jobDocuments, jobResultDocuments)
+        return getJobDocumentPairs(jobDocuments, jobResultDocuments, Predicates.isTrue())
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
     }
 
@@ -192,7 +196,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     public Map<String, String> getEnabledScheduledJobs(String actionId) {
         List<JobDocument> jobDocuments = jobDocumentRepository.findByIsScheduledTrueAndJobStatusAndActionId(JobStatus.ACTIVE, actionId);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
-        return getJobDocumentPairs(jobDocuments, jobResultDocuments)
+        return getJobDocumentPairs(jobDocuments, jobResultDocuments, Predicates.isTrue())
                 .stream().collect(Collectors.toMap(Triplet::getSecond, Triplet::getThird));
     }
 
@@ -406,16 +410,22 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     private List<Triplet<String, String, String>> getJobDocumentPairs(List<JobDocument> jobDocuments,
-                                                                      List<JobResultDocument> jobResultDocuments) {
+                                                                      List<JobResultDocument> jobResultDocuments,
+                                                                      Predicate<JobResultDocument> filter) {
         Map<String, JobResultDocument> jobResultMapping = jobResultDocuments.stream()
+                .filter(filter)
                 .map(p -> new SimpleEntry<>(p.getJobId(), p))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
 
         return jobDocuments.stream()
-                .map(documentHash -> {
-                    String jobDocumentHash = documentHash.getHash();
+                .filter(jobDocument -> {
+                    String jobDocumentHash = jobDocument.getHash();
+                    return filter.test(jobResultMapping.get(jobDocumentHash));
+                })
+                .map(jobDocument -> {
+                    String jobDocumentHash = jobDocument.getHash();
                     JobResultDocument jobResultDocument = jobResultMapping.get(jobDocumentHash);
-                    return Triplet.of(documentHash.getActionId(), jobDocumentHash, jobResultDocument.getHash());
+                    return Triplet.of(jobDocument.getActionId(), jobDocumentHash, jobResultDocument.getHash());
                 })
                 .toList();
     }

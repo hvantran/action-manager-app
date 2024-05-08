@@ -104,6 +104,19 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
 
+    @GetMapping(value = "/{actionId}/replay-failures", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> replayFailures(@PathVariable("actionId") String hash) {
+        boolean isReplaySuccess = actionManagerService.replayFailure(hash);
+        return ResponseEntity.ok(Map.of("status", isReplaySuccess));
+    }
+
+    @GetMapping(value = "/{actionId}/jobs/{jobId}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> replayJob(@PathVariable("actionId") String actionId, 
+                                            @PathVariable("jobId") String jobId) {
+        boolean isReplaySuccess = actionManagerService.replayJob(actionId, jobId);
+        return ResponseEntity.ok(Map.of("status", isReplaySuccess));
+    }
+
     @DeleteMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> deleteAction(@PathVariable("actionId") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);

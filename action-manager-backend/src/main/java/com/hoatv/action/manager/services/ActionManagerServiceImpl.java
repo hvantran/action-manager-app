@@ -86,9 +86,11 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     public void initialize() {
         LOGGER.info("Calculating action statistics at startup time");
         List<JobDocument> jobDocuments = jobDocumentRepository.findAll();
-        Map<String, List<JobDocument>> actionJobMapping = jobDocuments.stream().collect(Collectors.groupingBy(JobDocument::getActionId));
+        Map<String, List<JobDocument>> actionJobMapping = jobDocuments.stream()
+                .collect(Collectors.groupingBy(JobDocument::getActionId));
 
-        Set<String> actionIds = jobDocuments.stream().map(JobDocument::getActionId).collect(Collectors.toSet());
+        Set<String> actionIds = jobDocuments.stream().map(JobDocument::getActionId)
+                .collect(Collectors.toSet());
         actionManagerStatistics.initActionStatistics(actionIds);
 
         List<String> allJobIds = jobDocuments.stream().map(JobDocument::getHash).toList();
@@ -116,7 +118,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         });
     }
 
-    @PostConstruct
+//    @PostConstruct
     public void initScheduleJobsOnStartup() {
         LOGGER.info("Init the scheduled jobs per actions on startup");
         List<ActionDocument> actionDocumentList = actionDocumentRepository.findByActionStatus(ActionStatus.ACTIVE);
@@ -253,6 +255,27 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @LoggingMonitor(description = "Replay action {argument0}")
     public boolean replay(String actionId) {
         ActionExecutionContext actionExecutionContext = getActionExecutionContextForReplay(actionId);
+        jobManagerService.processBulkJobs(actionExecutionContext);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    @LoggingMonitor(description = "Replay failure jobs in action {argument0}")
+    public boolean replayFailure(String actionId) {
+        Predicate<JobResultDocument> predicate = p -> p.getJobExecutionStatus() == JobExecutionStatus.FAILURE;
+        ActionExecutionContext actionExecutionContext = getActionExecutionContextForReplay(actionId, predicate);
+        jobManagerService.processBulkJobs(actionExecutionContext);
+        return true;
+    }
+
+
+    @Override
+    @Transactional
+    @LoggingMonitor(description = "Replay job: {argument1} in action {argument0}")
+    public boolean replayJob(String actionId, String jobId) {
+        Predicate<JobResultDocument> predicate = p -> jobId.equals(p.getJobId());
+        ActionExecutionContext actionExecutionContext = getActionExecutionContextForReplay(actionId, predicate);
         jobManagerService.processBulkJobs(actionExecutionContext);
         return true;
     }
@@ -426,6 +449,18 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
+
+    private ActionExecutionContext getActionExecutionContextForReplay(String actionId, Predicate<JobResultDocument> predicate) {
+        ActionDocument actionDocument = createActionDocument(actionId);
+        Map<String, String> failureJobs = jobManagerService.getJobsFromAction(actionId, predicate);
+        BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback(actionId);
+        return ActionExecutionContext.builder()
+                .actionDocument(actionDocument)
+                .jobDocumentPairs(failureJobs)
+                .onCompletedJobCallback(onCompletedJobCallback)
+                .isRelayAction(true)
+                .build();
+    }
 
     private ActionExecutionContext getActionExecutionContextForReplay(String actionId) {
         ActionDocument actionDocument = createActionDocument(actionId);

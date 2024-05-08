@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 public interface JobManagerService {
 
@@ -47,10 +48,15 @@ public interface JobManagerService {
 
     Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId);
 
-    Map<String, String> getJobsFromAction(String actionId);
+    Map<String, String> getJobsFromAction(String actionId, Predicate<JobResultDocument> filter);
 
     Map<String, String> getEnabledScheduledJobs(String actionId);
 
+    /***
+     * Get enable one time execution job
+     * @param actionId
+     * @return a map of job id and job result id
+     */
     Map<String, String> getEnabledOnetimeJobs(String actionId);
 
     Map<String, Map<String, String>> getEnabledScheduleJobsGroupByActionId(Set<String> actionIds);
