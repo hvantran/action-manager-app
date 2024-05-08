@@ -413,7 +413,6 @@ public class JobManagerServiceImpl implements JobManagerService {
                                                                       List<JobResultDocument> jobResultDocuments,
                                                                       Predicate<JobResultDocument> filter) {
         Map<String, JobResultDocument> jobResultMapping = jobResultDocuments.stream()
-                .filter(filter)
                 .map(p -> new SimpleEntry<>(p.getJobId(), p))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
 
