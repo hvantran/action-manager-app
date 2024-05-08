@@ -494,6 +494,40 @@ export class ActionAPI {
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
+
+  static replayFailures = async (actionId: string, restClient: RestClient, successCallback: () => void) => {
+
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/replay-failures`;
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
+      successCallback();
+      return undefined
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
+  static replayJob = async (actionId: string, jobId: string, restClient: RestClient) => {
+
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/replay`;
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
+      return undefined
+    }, async (response: Response) => {
+      let responseJSON = await response.json();
+      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
+    });
+  }
 }
 
 

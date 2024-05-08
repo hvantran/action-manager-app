@@ -243,6 +243,7 @@ export interface ActionMetadata {
     actionIcon: any
     visible?: (row: any) => boolean | boolean
     disable?: boolean
+    isSecondary?: boolean
     properties?: any
 }
 
