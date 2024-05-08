@@ -40,7 +40,6 @@ import PageEntityRender from '../renders/PageEntityRender';
 export default function ActionCreation() {
 
   let initialStepsV3: Array<StepMetadata> = []
-  const [openError, setOpenError] = React.useState(false);
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [stepMetadatas, setStepMetadatas] = React.useState(initialStepsV3);
   const restClient = new RestClient(setCircleProcessOpen);

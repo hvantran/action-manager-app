@@ -6,21 +6,30 @@ import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SaveIcon from '@mui/icons-material/Save';
+import ErrorIcon from '@mui/icons-material/Error';
 import { Box, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-
 import { json } from '@codemirror/lang-json';
-
 import { green, yellow } from '@mui/material/colors';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ACTION_STATUS_SELECTION, ActionAPI, ActionDetails, ROOT_BREADCRUMB, isAllDependOnPropsValid } from '../AppConstants';
-import { DialogMetadata, GenericActionMetadata, PageEntityMetadata, PropType, PropertyMetadata, RestClient, SnackbarMessage, onChangeProperty } from '../GenericConstants';
+import { DialogMetadata, GenericActionMetadata, PageEntityMetadata, PropType, PropertyMetadata, RestClient, onChangeProperty } from '../GenericConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import ProcessTracking from '../common/ProcessTracking';
 import PageEntityRender from '../renders/PageEntityRender';
 import ActionJobTable from './ActionJobTable';
+
+import Badge, { BadgeProps } from '@mui/material/Badge';
+import { styled } from '@mui/material/styles';
+
+const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    border: `2px solid ${theme.palette.background.paper}`,
+    padding: '0 4px',
+  },
+}));
 
 
 export default function ActionDetail() {
@@ -33,14 +42,11 @@ export default function ActionDetail() {
   }
 
   const [processTracking, setCircleProcessOpen] = React.useState(false);
-  const [openError, setOpenError] = React.useState(false);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
   const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
-  const [openSuccess, setOpenSuccess] = React.useState(false);
   const [replayFlag, setReplayActionFlag] = React.useState(false);
-  const [messageInfo, setMessageInfo] = React.useState<SnackbarMessage | undefined>(undefined);
   const restClient = new RestClient(setCircleProcessOpen);
 
 
@@ -203,26 +209,39 @@ export default function ActionDetail() {
         }
       },
       {
-        actionIcon: <ReplayIcon />,
-        actionLabel: "Replay action",
-        actionLabelContent:
-          <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
-            <InfoIcon />
-            <p>Replay function only support for one time jobs, <b>doesn't support for schedule jobs</b></p>
-          </Box>,
-        actionName: "replayAction",
-        onClick: () => ActionAPI.replayAction(actionId, restClient, () => setReplayActionFlag(previous => !previous))
-      },
-      {
         actionIcon: <ArchiveOutlinedIcon />,
         actionLabel: "Archive",
         actionName: "archiveAction",
+        isSecondary: true,
         onClick: () => {
           setConfirmationDialogTitle("Archive")
           setConfirmationDialogContent(previous => "Are you sure you want to archive this action?")
           setConfirmationDialogPositiveAction(previous => () => ActionAPI.archive(actionId, restClient, () => navigate("/actions")));
           setDeleteConfirmationDialogOpen(true)
         }
+      },
+      {
+        actionIcon: <ReplayIcon />,
+        actionLabel: "Replay all",
+        isSecondary: true,
+        actionLabelContent:
+          <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+            <InfoIcon />
+            <p>Replay function only support for <b>one time</b> and <b>schedule jobs</b></p>
+          </Box>,
+        actionName: "replayAction",
+        onClick: () => ActionAPI.replayAction(actionId, restClient, () => setReplayActionFlag(previous => !previous))
+      },
+      {
+        actionIcon: <>
+          <StyledBadge color="error" badgeContent={<ErrorIcon sx={{ fontSize: 10 }} />}>
+            <ReplayIcon />
+          </StyledBadge>
+        </>,
+        isSecondary: true,
+        actionLabel: "Replay failures",
+        actionName: "replayOnlyFailureAction",
+        onClick: () => ActionAPI.replayFailures(actionId, restClient, () => setReplayActionFlag(previous => !previous))
       },
       {
         actionIcon: <AddCircleOutlineIcon />,
@@ -237,9 +256,6 @@ export default function ActionDetail() {
 
   let actionJobTableParams = {
     setCircleProcessOpen,
-    setMessageInfo,
-    setOpenError,
-    setOpenSuccess,
     replayFlag
   }
 

@@ -1,6 +1,7 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import ReplayIcon from '@mui/icons-material/Replay';
 import EditIcon from '@mui/icons-material/Edit';
 import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import InfoIcon from '@mui/icons-material/Info';
@@ -31,6 +32,7 @@ import {
   JOB_SCHEDULE_TIME_SELECTION,
   JOB_STATUS_SELECTION,
   JobAPI,
+  ActionAPI,
   JobDetailMetadata,
   ROOT_BREADCRUMB,
   isAllDependOnPropsValid
@@ -350,14 +352,48 @@ export default function JobDetail() {
             <TroubleshootIcon />
           </Link>,
         actionLabel: "Troubleshoot",
-        actionName: "troubleshootAction"
+        actionName: "troubleshootAction",
+        isSecondary: true
       },
       {
         actionIcon: <EngineeringOutlinedIcon />,
         // properties: {color: 'success'},
         actionLabel: "Dry run",
         actionName: "dryRunAction",
+        isSecondary: true,
         onClick: () => JobAPI.dryRun(restClient, propertyMetadata)
+      },
+      {
+        actionIcon: <ReplayIcon />,
+        actionLabel: "Replay",
+        isSecondary: true,
+        actionLabelContent:
+          <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+            <InfoIcon />
+            <p>Replay function only support for <b>one time</b> and <b>schedule jobs</b></p>
+          </Box>,
+        actionName: "replayJob",
+        onClick: () => ActionAPI.replayJob(actionId, jobId, restClient)
+      },
+      {
+        actionIcon: <DeleteForeverIcon />,
+        properties: { sx: { color: red[800] } },
+        actionLabel: "Delete",
+        actionName: "deleteAction",
+        actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+          <InfoIcon />
+          <p>The job will be <b>deleted forever</b></p>
+        </Box>,
+        onClick: () => setDeleteConfirmationDialogOpen(true)
+      },
+      {
+        actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange} />,
+        actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+          <InfoIcon />
+          <p>Paused function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
+        </Box>,
+        actionLabel: "Pause/Resume",
+        actionName: "pauseResumeAction",
       },
       {
         actionIcon: <RefreshIcon />,
@@ -370,22 +406,6 @@ export default function JobDetail() {
               setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
             })
           })
-      },
-      {
-        actionIcon: <DeleteForeverIcon />,
-        properties: { sx: { color: red[800] } },
-        actionLabel: "Delete",
-        actionName: "deleteAction",
-        onClick: () => setDeleteConfirmationDialogOpen(true)
-      },
-      {
-        actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange} />,
-        actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
-          <InfoIcon />
-          <p>Paused function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
-        </Box>,
-        actionLabel: "Pause/Resume",
-        actionName: "pauseResumeAction"
       }
     ],
     properties: propertyMetadata
