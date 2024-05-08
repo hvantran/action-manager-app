@@ -16,19 +16,21 @@ import { ActionAPI, JobOverview } from '../AppConstants';
 import JobStatus from '../common/JobStatus';
 import TextTruncate from '../common/TextTruncate';
 import PageEntityRender from '../renders/PageEntityRender';
+import { ActionContext } from './ActionProvider';
 
 
 export default function ActionJobTable(props: any) {
 
-    const navigate = useNavigate();
+    const { setNumberOfFailureJobs } = React.useContext(ActionContext)
+    const navigate = useNavigate()
     const targetAction = props.actionId
-    const setCircleProcessOpen = props.setCircleProcessOpen;
+    const setCircleProcessOpen = props.setCircleProcessOpen
     const replayFlag = props.replayFlag;
-    let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
-    const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
-    const [pageIndex, setPageIndex] = React.useState(0);
-    const [pageSize, setPageSize] = React.useState(10);
-    const restClient = new RestClient(setCircleProcessOpen);
+    let initialPagingResult: PagingResult = { totalElements: 0, content: [] }
+    const [pagingResult, setPagingResult] = React.useState(initialPagingResult)
+    const [pageIndex, setPageIndex] = React.useState(0)
+    const [pageSize, setPageSize] = React.useState(10)
+    const restClient = new RestClient(setCircleProcessOpen)
 
     const columns: ColumnMetadata[] = [
         { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
@@ -122,6 +124,8 @@ export default function ActionJobTable(props: any) {
     React.useEffect(() => {
         ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, targetAction, restClient, (data) => {
             setPagingResult(data)
+            const numberOfFailureJobs = data.content.filter(p => p.executionStatus === 'FAILURE').length
+            setNumberOfFailureJobs(numberOfFailureJobs)
         });
     }, [replayFlag])
 

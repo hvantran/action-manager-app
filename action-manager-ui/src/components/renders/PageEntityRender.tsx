@@ -78,7 +78,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
 
                             {
                                 secondaryActions.map((action) => (
-                                    <MenuItem key={action.actionName} onClick={() => {
+                                    <MenuItem key={action.actionName} disabled={action.disable} onClick={() => {
                                         action.onClick && action.onClick()
                                         setAnchorEl(null)
                                     }}>

@@ -1,4 +1,5 @@
 
+import { json } from '@codemirror/lang-json';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import EditIcon from '@mui/icons-material/Edit';
@@ -6,13 +7,11 @@ import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SaveIcon from '@mui/icons-material/Save';
-import ErrorIcon from '@mui/icons-material/Error';
 import { Box, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import React from 'react';
-import { json } from '@codemirror/lang-json';
 import { green, yellow } from '@mui/material/colors';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ACTION_STATUS_SELECTION, ActionAPI, ActionDetails, ROOT_BREADCRUMB, isAllDependOnPropsValid } from '../AppConstants';
 import { DialogMetadata, GenericActionMetadata, PageEntityMetadata, PropType, PropertyMetadata, RestClient, onChangeProperty } from '../GenericConstants';
@@ -23,6 +22,7 @@ import ActionJobTable from './ActionJobTable';
 
 import Badge, { BadgeProps } from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
+import { ActionProvider } from './ActionProvider';
 
 const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
   '& .MuiBadge-badge': {
@@ -48,6 +48,7 @@ export default function ActionDetail() {
   const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
   const [replayFlag, setReplayActionFlag] = React.useState(false);
   const restClient = new RestClient(setCircleProcessOpen);
+  const [numberOfFailureJobs, setNumberOfFailureJobs] = React.useState(0);
 
 
   const enableEditFunction = function (isEnabled: boolean) {
@@ -234,14 +235,15 @@ export default function ActionDetail() {
       },
       {
         actionIcon: <>
-          <StyledBadge color="error" badgeContent={<ErrorIcon sx={{ fontSize: 10 }} />}>
+          <StyledBadge color="error" badgeContent={numberOfFailureJobs} showZero>
             <ReplayIcon />
           </StyledBadge>
         </>,
+        disable: numberOfFailureJobs === 0,
         isSecondary: true,
         actionLabel: "Replay failures",
         actionName: "replayOnlyFailureAction",
-        onClick: () => ActionAPI.replayFailures(actionId, restClient, () => setReplayActionFlag(previous => !previous))
+        onClick: () => numberOfFailureJobs && ActionAPI.replayFailures(actionId, restClient, () => setReplayActionFlag(previous => !previous))
       },
       {
         actionIcon: <AddCircleOutlineIcon />,
@@ -261,11 +263,13 @@ export default function ActionDetail() {
 
 
   return (
-    <Stack spacing={4}>
-      <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
-      <ActionJobTable {...actionJobTableParams} actionId={actionId}></ActionJobTable>
-      <ProcessTracking isLoading={processTracking}></ProcessTracking>
-      <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
-    </Stack >
+    <ActionProvider setNumberOfFailureJobs={setNumberOfFailureJobs}>
+      <Stack spacing={4}>
+        <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
+        <ActionJobTable {...actionJobTableParams} actionId={actionId}></ActionJobTable>
+        <ProcessTracking isLoading={processTracking}></ProcessTracking>
+        <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
+      </Stack >
+    </ActionProvider>
   );
 }
