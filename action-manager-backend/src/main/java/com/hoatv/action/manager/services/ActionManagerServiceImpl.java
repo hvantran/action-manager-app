@@ -118,7 +118,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         });
     }
 
-//    @PostConstruct
+    @PostConstruct
     public void initScheduleJobsOnStartup() {
         LOGGER.info("Init the scheduled jobs per actions on startup");
         List<ActionDocument> actionDocumentList = actionDocumentRepository.findByActionStatus(ActionStatus.ACTIVE);
