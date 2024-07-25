@@ -189,7 +189,7 @@ public class ActionControllerV1 {
     }
 
     @PostMapping(path = "/import", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> importAction(@RequestParam(value = "file", required = true) Object multipartFile) throws IOException {
+    public ResponseEntity<Object> importAction(@RequestParam(value = "file") Object multipartFile) throws IOException {
         String actionName = actionManagerService.importAction((MultipartFile) multipartFile);
         return ResponseEntity.ok(Map.of("name", actionName));
     }

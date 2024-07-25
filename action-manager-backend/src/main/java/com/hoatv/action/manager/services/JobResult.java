@@ -1,6 +1,6 @@
 package com.hoatv.action.manager.services;
 
-import com.hoatv.action.manager.api.JobResultImmutable;
+import com.hoatv.action.manager.api.ImmutableJobResult;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -8,7 +8,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @Builder
-public class JobResult implements JobResultImmutable {
+public class JobResult implements ImmutableJobResult {
 
     private String data;
 

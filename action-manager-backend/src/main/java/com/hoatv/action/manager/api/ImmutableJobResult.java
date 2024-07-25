@@ -1,6 +1,6 @@
 package com.hoatv.action.manager.api;
 
-public interface JobResultImmutable {
+public interface ImmutableJobResult {
 
     Object getData();
 

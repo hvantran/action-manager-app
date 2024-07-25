@@ -1,6 +1,6 @@
 package com.hoatv.action.manager.services;
 
-import com.hoatv.action.manager.api.JobResultImmutable;
+import com.hoatv.action.manager.api.ImmutableJobResult;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -10,7 +10,7 @@ import java.util.Map;
 @ToString
 @Getter
 @Builder
-public class JobResultDict implements JobResultImmutable {
+public class JobResultDict implements ImmutableJobResult {
 
     private Map<String, String> data;
     private String exception;

@@ -2,7 +2,7 @@ package com.hoatv.action.manager.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hoatv.action.manager.api.JobImmutable;
+import com.hoatv.action.manager.api.ImmutableJob;
 import com.hoatv.action.manager.collections.JobStatus;
 import com.hoatv.springboot.common.validation.JsonValue;
 import jakarta.validation.constraints.Min;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
-public class JobDefinitionDTO implements JobImmutable {
+public class JobDefinitionDTO implements ImmutableJob {
 
     @JsonProperty("hash")
     private String hash;
@@ -76,6 +76,6 @@ public class JobDefinitionDTO implements JobImmutable {
     private long createdAt;
 
     @JsonProperty("status")
-    private String jobStatus = JobStatus.INITIAL.name();
+    private JobStatus jobStatus = JobStatus.INITIAL;
 
 }

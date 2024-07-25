@@ -2,6 +2,7 @@ package com.hoatv.action.manager.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hoatv.action.manager.api.ImmutableAction;
 import com.hoatv.springboot.common.validation.JsonValue;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -17,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
-public class ActionDefinitionDTO {
+public class ActionDefinitionDTO implements ImmutableAction {
 
     @JsonProperty("hash")
     private String hash;

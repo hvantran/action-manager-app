@@ -638,7 +638,7 @@ export class JobAPI {
     });
   }
 
-  static async dryRun(restClient: RestClient, propertyMetadata: Array<PropertyMetadata>) {
+  static async dryRun(restClient: RestClient, propertyMetadata: Array<PropertyMetadata>, actionId: string) {
     let jobDefinition = getJobDefinition(propertyMetadata);
     const requestOptions = {
       method: "POST",
@@ -648,7 +648,7 @@ export class JobAPI {
       body: JSON.stringify(jobDefinition)
     }
 
-    const targetURL = `${JOB_MANAGER_API_URL}/dryRun`;
+    const targetURL = `${JOB_MANAGER_API_URL}/dryRun?actionId=${actionId}`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       return { 'message': "Dry run action successfully", key: new Date().getTime() } as SnackbarMessage;
     });

@@ -1,7 +1,9 @@
 package com.hoatv.action.manager.controllers;
 
 
+import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
+import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
@@ -16,16 +18,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/v1/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
 public class JobControllerV1 {
 
     private final JobManagerService jobManagerService;
+    private final ActionManagerService actionManagerService;
 
     @Autowired
-    public JobControllerV1(JobManagerService jobManagerService) {
+    public JobControllerV1(JobManagerService jobManagerService, ActionManagerService actionManagerService) {
         this.jobManagerService = jobManagerService;
+        this.actionManagerService = actionManagerService;
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -51,8 +56,10 @@ public class JobControllerV1 {
     }
 
     @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> dryRun(@RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
-        jobManagerService.processNonePersistenceJob(jobDefinitionDTO);
+    public ResponseEntity<Object> dryRun(@RequestBody @Valid JobDefinitionDTO jobDefinitionDTO,
+                                         @RequestParam("actionId") String actionId) {
+        Optional<ActionDefinitionDTO> actionOptional = actionManagerService.getActionById(actionId);
+        jobManagerService.processNonePersistenceJob(jobDefinitionDTO, actionOptional.orElseThrow());
         return ResponseEntity.noContent().build();
     }
 

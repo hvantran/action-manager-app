@@ -361,7 +361,7 @@ export default function JobDetail() {
         actionLabel: "Dry run",
         actionName: "dryRunAction",
         isSecondary: true,
-        onClick: () => JobAPI.dryRun(restClient, propertyMetadata)
+        onClick: () => JobAPI.dryRun(restClient, propertyMetadata, actionId)
       },
       {
         actionIcon: <ReplayIcon />,

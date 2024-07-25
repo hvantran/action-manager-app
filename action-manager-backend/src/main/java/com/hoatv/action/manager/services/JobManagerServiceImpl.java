@@ -1,9 +1,10 @@
 package com.hoatv.action.manager.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hoatv.action.manager.api.JobImmutable;
+import com.hoatv.action.manager.api.ImmutableAction;
+import com.hoatv.action.manager.api.ImmutableJob;
+import com.hoatv.action.manager.api.ImmutableJobResult;
 import com.hoatv.action.manager.api.JobManagerService;
-import com.hoatv.action.manager.api.JobResultImmutable;
 import com.hoatv.action.manager.collections.*;
 import com.hoatv.action.manager.document.transformers.JobTransformer;
 import com.hoatv.action.manager.dtos.*;
@@ -59,8 +60,6 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     public static final String ACTION_MANAGER = "action-manager";
 
-    private static final Map<String, String> DEFAULT_CONFIGURATIONS = new HashMap<>();
-
     private static final String TEMPLATE_ENGINE_NAME = "templateEngineName";
 
     public static final int NUMBER_OF_SCHEDULE_THREADS = 100;
@@ -86,11 +85,6 @@ public class JobManagerServiceImpl implements JobManagerService {
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
 
     private final GenericKeyedLock<String> jobExecutionLock = new GenericKeyedLock<>();
-
-
-    static {
-        DEFAULT_CONFIGURATIONS.put(TEMPLATE_ENGINE_NAME, "freemarker");
-    }
 
     @Autowired
     public JobManagerServiceImpl(ScriptEngineService scriptEngineService,
@@ -146,7 +140,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                 findByIsScheduledTrueAndJobStatusAndActionIdIn(JobStatus.ACTIVE, actionIds);
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(scheduledJobDocuments);
 
-        List<Triplet<String, String, String>> jobDocumentMapping = 
+        List<Triplet<String, String, String>> jobDocumentMapping =
                 getJobDocumentPairs(scheduledJobDocuments, jobResultDocuments, Predicates.isTrue());
 
         Map<String, List<Triplet<String, String, String>>> scheduleJobMapping = jobDocumentMapping.stream()
@@ -229,7 +223,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     @Override
     @Transactional
     @LoggingMonitor(description = "Delete job from hash: {argument0}")
-    public Pair<JobDocument, JobResultDocument> delete(String jobId) {
+    public void delete(String jobId) {
         Optional<JobDocument> jobDocumentOptional = jobDocumentRepository.findById(jobId);
         JobDocument jobDocument = jobDocumentOptional.orElseThrow(() -> new EntityNotFoundException("Cannot find job: " + jobId));
 
@@ -245,7 +239,6 @@ public class JobManagerServiceImpl implements JobManagerService {
         JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobId);
         jobResultDocumentRepository.delete(jobResultDocument);
         LOGGER.info("Deleted the job results for {} job ", jobName);
-        return Pair.of(jobDocument, jobResultDocument);
     }
 
     @Override
@@ -287,26 +280,29 @@ public class JobManagerServiceImpl implements JobManagerService {
             Optional<JobResultDocument> jobResultDocumentOp = jobResultDocumentRepository.findById(jobResultHash);
             ObjectUtils.checkThenThrow(jobResultDocumentOp.isEmpty(), "Cannot find job result with hash" + jobResultHash);
             JobResultDocument jobResultDocument = jobResultDocumentOp.get();
-            processJob(jobDocument, jobResultDocument, actionExecutionContext.getOnCompletedJobCallback(), isRelayAction);
+            ImmutableAction immutableAction = actionExecutionContext.getActionDocument();
+            processJob(jobDocument, jobResultDocument, immutableAction, actionExecutionContext.getOnCompletedJobCallback(), isRelayAction);
         });
     }
 
     @Override
     @Transactional
     @LoggingMonitor(description = "Process job: {argument0.getJobName()}")
-    public void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
+    public void processJob(ImmutableJob immutableJob,
+                           JobResultDocument jobResultDocument,
+                           ImmutableAction immutableAction,
                            BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction) {
         jobManagerStatistics.increaseNumberOfJobs();
-        if (jobDocument.isScheduled() && !isRelayAction) {
-            ScheduledFuture<?> scheduledFuture = processScheduleJob(jobDocument, jobResultDocument, callback);
-            scheduledJobRegistry.put(jobDocument.getHash(), scheduledFuture);
+        if (immutableJob.isScheduled() && !isRelayAction) {
+            ScheduledFuture<?> scheduledFuture = processScheduleJob(immutableJob, jobResultDocument, immutableAction, callback);
+            scheduledJobRegistry.put(immutableJob.getHash(), scheduledFuture);
             return;
         }
-        if (jobDocument.isAsync() || isRelayAction) {
-            processAsync(jobDocument, jobResultDocument, callback);
+        if (immutableJob.isAsync() || isRelayAction) {
+            processAsync(immutableJob, jobResultDocument, immutableAction, callback);
             return;
         }
-        processPersistenceJob(jobDocument, jobResultDocument, callback);
+        processPersistenceJob(immutableJob, jobResultDocument, immutableAction, callback);
     }
 
     @Override
@@ -346,10 +342,10 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor(description = "Dry run job: {argument0.getJobName()}")
-    public void processNonePersistenceJob(JobDefinitionDTO jobDocument) {
-        String jobName = jobDocument.getJobName();
+    public void processNonePersistenceJob(ImmutableJob immutableJob, ImmutableAction immutableAction) {
+        String jobName = immutableJob.getJobName();
         try {
-            JobResultImmutable jobResultImmutable = process(jobDocument);
+            ImmutableJobResult jobResultImmutable = process(immutableJob, immutableAction);
             LOGGER.info("Job result: {}", jobResultImmutable);
         } catch (Exception exception) {
             LOGGER.error("An exception occurred while processing {} job", jobName, exception);
@@ -429,24 +425,31 @@ public class JobManagerServiceImpl implements JobManagerService {
                 .toList();
     }
 
-    private JobResultImmutable process(JobImmutable jobImmutable) {
-        String jobName = jobImmutable.getJobName();
-        String templateName = String.format("%s-%s", jobName, jobImmutable.getJobCategory());
-        String configurations = jobImmutable.getConfigurations();
-        @SuppressWarnings("unchecked")
-        CheckedSupplier<Map<String, Object>> configurationToMapSupplier =
-                () -> objectMapper.readValue(configurations, Map.class);
-        Map<String, Object> configurationMap = configurationToMapSupplier.get();
+    private ImmutableJobResult process(ImmutableJob immutableJob, ImmutableAction immutableAction) {
 
-        String defaultTemplateEngine = DEFAULT_CONFIGURATIONS.get(TEMPLATE_ENGINE_NAME);
-        String templateEngineName = (String) configurationMap.getOrDefault(TEMPLATE_ENGINE_NAME, defaultTemplateEngine);
-        TemplateEngineEnum templateEngine = TemplateEngineEnum.getTemplateEngineFromName(templateEngineName);
-        String jobContent = templateEngine.process(templateName, jobImmutable.getJobContent(), configurationMap);
-
-        Map<String, Object> jobExecutionContext = new HashMap<>(configurationMap);
-        jobExecutionContext.put("templateEngine", templateEngine);
         try {
+            @SuppressWarnings("unchecked")
+            CheckedSupplier<Map<String, Object>> jobConfigurationSupplier =
+                    () -> objectMapper.readValue(immutableJob.getConfigurations(), Map.class);
+            @SuppressWarnings("unchecked")
+            CheckedSupplier<Map<String, Object>> actionConfigurationSupplier =
+                    () -> objectMapper.readValue(immutableAction.getConfigurations(), Map.class);
+            HashMap<String, Object> configurationMap = new HashMap<>();
+            configurationMap.put(TEMPLATE_ENGINE_NAME, "freemarker");
+            configurationMap.putAll(actionConfigurationSupplier.get());
+            configurationMap.putAll(jobConfigurationSupplier.get());
+
+            String jobName = immutableJob.getJobName();
+            String templateName = String.format("%s-%s", jobName, immutableJob.getJobCategory());
+            String templateEngineName = (String) configurationMap.get(TEMPLATE_ENGINE_NAME);
+            TemplateEngineEnum templateEngine = TemplateEngineEnum.getTemplateEngineFromName(templateEngineName);
+            String jobContent = templateEngine.process(templateName, immutableJob.getJobContent(), configurationMap);
+
+            Map<String, Object> jobExecutionContext = new HashMap<>(configurationMap);
+            jobExecutionContext.put("templateEngine", templateEngine);
+
             MDC.put("jobName", jobName);
+            LOGGER.info("Run job {} with configurations: {}", jobName, configurationMap);
             return scriptEngineService.execute(jobContent, jobExecutionContext);
         } finally {
             MDC.clear();
@@ -454,13 +457,15 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @SneakyThrows
-    private void processPersistenceJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
+    private void processPersistenceJob(ImmutableJob immutableJob,
+                                       JobResultDocument jobResultDocument,
+                                       ImmutableAction immutableAction,
                                        BiConsumer<JobExecutionStatus, JobExecutionStatus> onJobStatusChange) {
-        String jobName = jobDocument.getJobName();
+        String jobName = immutableJob.getJobName();
         jobExecutionLock.putIfAbsent(jobName, new Semaphore(1));
         if (jobExecutionLock.tryAcquire(jobName, 5000, TimeUnit.MILLISECONDS)) {
             try {
-                JobStatus jobStatus = jobDocument.getJobStatus();
+                JobStatus jobStatus = immutableJob.getJobStatus();
                 if (!VALID_JOB_STATUS_TO_RUN.contains(jobStatus)) {
                     String messageTemplate = "Job status {} for {} is not supported to process, only support {}";
                     LOGGER.error(messageTemplate, jobStatus, jobName, VALID_JOB_STATUS_TO_RUN);
@@ -481,8 +486,8 @@ public class JobManagerServiceImpl implements JobManagerService {
                     jobResultDocument.setJobExecutionStatus(JobExecutionStatus.PROCESSING);
                     jobResultDocumentRepository.save(jobResultDocument);
 
-                    JobResultImmutable jobResult = process(jobDocument);
-                    processOutputTargets(jobDocument, jobName, jobResult);
+                    ImmutableJobResult jobResult = process(immutableJob, immutableAction);
+                    processOutputTargets(immutableJob, jobName, jobResult);
 
                     nextJobStatus = StringUtils.isNotEmpty(jobResult.getException()) ?
                             JobExecutionStatus.FAILURE : JobExecutionStatus.SUCCESS;
@@ -503,14 +508,17 @@ public class JobManagerServiceImpl implements JobManagerService {
         }
     }
 
-    private ScheduledFuture<?> processScheduleJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
+    private ScheduledFuture<?> processScheduleJob(ImmutableJob jobDocument,
+                                                  JobResultDocument jobResultDocument,
+                                                  ImmutableAction immutableAction,
                                                   BiConsumer<JobExecutionStatus, JobExecutionStatus> callback) {
         String jobName = jobDocument.getJobName();
         TimeUnit timeUnit = TimeUnit.valueOf(jobDocument.getScheduleUnit());
         Callable<Void> jobProcessRunnable = () -> {
+            // Make sure the job data is up-to-date for each running time
             Optional<JobDocument> jobDocument1 = jobDocumentRepository.findById(jobDocument.getHash());
             ObjectUtils.checkThenThrow(jobDocument1.isEmpty(), "Cannot find job: " + jobName);
-            processPersistenceJob(jobDocument1.get(), jobResultDocument, callback);
+            processPersistenceJob(jobDocument1.get(), jobResultDocument, immutableAction, callback);
             return null;
         };
 
@@ -524,15 +532,17 @@ public class JobManagerServiceImpl implements JobManagerService {
         return scheduledFuture;
     }
 
-    private void processAsync(JobDocument jobDocument, JobResultDocument jobResultDocument,
+    private void processAsync(ImmutableJob immutableJob,
+                              JobResultDocument jobResultDocument,
+                              ImmutableAction immutableAction,
                               BiConsumer<JobExecutionStatus, JobExecutionStatus> callback) {
-        Runnable jobProcessRunnable = () -> processPersistenceJob(jobDocument, jobResultDocument, callback);
-        if (jobDocument.getJobCategory() == JobCategory.CPU) {
-            LOGGER.info("Using CPU threads to execute {} job", jobDocument.getJobName());
+        Runnable jobProcessRunnable = () -> processPersistenceJob(immutableJob, jobResultDocument, immutableAction, callback);
+        if (immutableJob.getJobCategory() == JobCategory.CPU) {
+            LOGGER.info("Using CPU threads to execute {} job", immutableJob.getJobName());
             cpuTaskMgmtService.execute(jobProcessRunnable);
             return;
         }
-        LOGGER.info("Using IO threads to execute {} job", jobDocument.getJobName());
+        LOGGER.info("Using IO threads to execute {} job", immutableJob.getJobName());
         ioTaskMgmtService.execute(jobProcessRunnable);
     }
 
@@ -559,8 +569,8 @@ public class JobManagerServiceImpl implements JobManagerService {
         jobResultDocumentRepository.save(jobResultDocument);
     }
 
-    private void processOutputTargets(JobDocument jobDocument, String jobName, JobResultImmutable jobResult) {
-        List<String> jobOutputTargets = jobDocument.getOutputTargets();
+    private void processOutputTargets(ImmutableJob immutableJob, String jobName, ImmutableJobResult jobResult) {
+        List<String> jobOutputTargets = immutableJob.getOutputTargets();
         jobOutputTargets.forEach(target -> {
             JobOutputTarget jobOutputTarget = JobOutputTarget.valueOf(target);
             switch (jobOutputTarget) {
@@ -571,7 +581,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         });
     }
 
-    private void processOutputData(JobResultImmutable jobResult, String jobName) {
+    private void processOutputData(ImmutableJobResult jobResult, String jobName) {
         String metricNamePrefix = JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName;
         if (jobResult instanceof JobResult singleJobResult) {
             ArrayList<MetricTag> metricTags = new ArrayList<>();

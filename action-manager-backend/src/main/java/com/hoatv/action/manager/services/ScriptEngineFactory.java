@@ -31,5 +31,5 @@ public enum ScriptEngineFactory implements ScriptingEngine {
             ObjectUtils.checkThenThrow(Objects::isNull, scriptEngine, "Cannot init Script Engine");
             return scriptEngine;
         }
-    };
+    }
 }

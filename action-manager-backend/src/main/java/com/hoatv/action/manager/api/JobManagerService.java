@@ -22,7 +22,7 @@ public interface JobManagerService {
 
     void pause(String jobHash);
 
-    Pair<JobDocument, JobResultDocument> delete(String jobId);
+    void delete(String jobId);
 
     void update(String hash, JobDefinitionDTO jobDefinitionDTO);
 
@@ -35,20 +35,26 @@ public interface JobManagerService {
 
     void deleteJobsByActionId(String actionId);
 
-    void processJob(JobDocument jobDocument, JobResultDocument jobResultDocument,
-                    BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction);
+    void processJob(ImmutableJob immutableJob, 
+                    JobResultDocument jobResultDocument,
+                    ImmutableAction immutableAction,
+                    BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, 
+                    boolean isRelayAction);
 
     void processBulkJobs(ActionExecutionContext actionExecutionContext);
 
     void processBulkJobs(List<ActionExecutionContext> actionExecutionContexts);
 
-    Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest);
+    Page<JobOverviewDTO> getJobsFromAction(String actionId, 
+                                           PageRequest pageRequest);
 
-    void processNonePersistenceJob(JobDefinitionDTO jobDocument);
+    void processNonePersistenceJob(ImmutableJob immutableJob, ImmutableAction immutableAction);
 
-    Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, String actionId);
+    Pair<String, String> initialJobs(JobDefinitionDTO jobDefinitionDTO, 
+                                     String actionId);
 
-    Map<String, String> getJobsFromAction(String actionId, Predicate<JobResultDocument> filter);
+    Map<String, String> getJobsFromAction(String actionId, 
+                                          Predicate<JobResultDocument> filter);
 
     Map<String, String> getEnabledScheduledJobs(String actionId);
 

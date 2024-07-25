@@ -1,6 +1,6 @@
 package com.hoatv.action.manager.collections;
 
-import com.hoatv.action.manager.api.JobImmutable;
+import com.hoatv.action.manager.api.ImmutableJob;
 import com.hoatv.action.manager.dtos.JobCategory;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -16,7 +16,7 @@ import java.util.UUID;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class JobDocument implements JobImmutable {
+public class JobDocument implements ImmutableJob {
 
     @Id
     @Builder.Default

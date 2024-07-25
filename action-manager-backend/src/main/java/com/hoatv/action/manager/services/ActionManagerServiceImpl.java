@@ -2,6 +2,7 @@ package com.hoatv.action.manager.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoatv.action.manager.api.ActionManagerService;
+import com.hoatv.action.manager.api.ImmutableAction;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.collections.*;
 import com.hoatv.action.manager.document.transformers.ActionTransformer;
@@ -37,6 +38,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -180,7 +182,9 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @Override
     @LoggingMonitor(description = "Dry dun action: {argument0.getActionName()}")
     public void dryRun(ActionDefinitionDTO actionDefinition) {
-        actionDefinition.getJobs().forEach(jobManagerService::processNonePersistenceJob);
+        Consumer<JobDefinitionDTO> dryRunJob = jobDefinitionDTO -> 
+                jobManagerService.processNonePersistenceJob(jobDefinitionDTO, actionDefinition);
+        actionDefinition.getJobs().forEach(dryRunJob);
     }
 
     @Override
@@ -188,7 +192,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @LoggingMonitor(description = "Process action: {argument0.getActionName()}")
     public String create(ActionDefinitionDTO actionDefinition) {
         ActionDocument actionDocument = createActionDocument(actionDefinition);
-        ActionExecutionContext actionExecutionContext = getActionExecutionContext(actionDefinition, actionDocument);
+        ActionExecutionContext actionExecutionContext = getActionExecutionContextForCreate(
+                actionDefinition, actionDocument);
 
         if (VALID_ACTION_STATUS_TO_RUN.contains(actionDocument.getActionStatus())) {
             jobManagerService.processBulkJobs(actionExecutionContext);
@@ -241,7 +246,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         jobManagerService.processBulkJobs(actionExecutionContext);
         actionManagerStatistics.increaseNumberOfJobs(actionId, jobDefinitionDTOs.size());
         long numberOfPendingJobs = jobDefinitionDTOs.stream().filter(p -> {
-            JobStatus jobStatus = JobStatus.valueOf(p.getJobStatus());
+            JobStatus jobStatus = p.getJobStatus();
             return VALID_JOB_STATUS_TO_RUN.contains(jobStatus);
         }).count();
         actionManagerStatistics.increaseNumberOfPendingJob(actionId, numberOfPendingJobs);
@@ -293,7 +298,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @Transactional
     @LoggingMonitor(description = "Archive action by id: {argument0}")
     public void archive(String actionId) {
-        ActionDocument actionDocument = createActionDocument(actionId);
+        ActionDocument actionDocument = findActionDocument(actionId);
         List<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId);
         jobDocuments.forEach(jobDocument -> jobDocument.setJobStatus(JobStatus.ARCHIVED));
         jobDocumentRepository.saveAll(jobDocuments);
@@ -308,7 +313,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @Transactional
     @LoggingMonitor(description = "Restore action {argument0}")
     public void restore(String actionId) {
-        ActionDocument actionDocument = createActionDocument(actionId);
+        ActionDocument actionDocument = findActionDocument(actionId);
         List<JobDocumentRepository.JobIdImmutable> immutableJobIds = jobManagerService.getJobIdsByAction(actionId);
         immutableJobIds.stream().map(JobDocumentRepository.JobIdImmutable::getHash).forEach(this::resume);
 
@@ -326,16 +331,22 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             return;
         }
         jobDocument.setJobStatus(JobStatus.ACTIVE);
-        JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobHash);
         jobDocumentRepository.save(jobDocument);
-        jobManagerService.processJob(jobDocument, jobResultDocument, onCompletedJobCallback(jobDocument.getActionId()), false);
+        JobResultDocument jobResultDocument = jobResultDocumentRepository.findByJobId(jobHash);
+        Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(jobDocument.getActionId());
+        ImmutableAction actionDocument = actionDocumentOptional.orElseThrow();
+        jobManagerService.processJob(jobDocument, 
+                jobResultDocument, 
+                actionDocument, 
+                onCompletedJobCallback(jobDocument.getActionId()), 
+                false);
     }
 
     @Override
     @Transactional
     @LoggingMonitor(description = "Exporting action: {argument0} to zip file")
     public Pair<String, byte[]> export(String actionId, ServletOutputStream responseOutputStream) {
-        ActionDocument actionDocument = createActionDocument(actionId);
+        ActionDocument actionDocument = findActionDocument(actionId);
         LOGGER.info("Looking for job documents from {} action", actionDocument.getActionName());
         List<JobDocument> jobDocumentsByAction = jobDocumentRepository.findJobByActionId(actionId);
         List<JobDefinitionDTO> jobDefinitionDTOs = jobDocumentsByAction.stream()
@@ -362,7 +373,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             return create(actionDefinitionDTO);
         };
         List<String> actionNames = actionFilePaths.stream().map(pathConsumer).toList();
-        return actionNames.get(0);
+        return actionNames.getFirst();
     }
 
     private static CheckedFunction<ActionDefinitionDTO, byte[]> zipActionDefinition() {
@@ -375,7 +386,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
         };
     }
 
-    private ActionDocument createActionDocument(String actionId) {
+    private ActionDocument findActionDocument(String actionId) {
         Optional<ActionDocument> actionDocumentOptional = actionDocumentRepository.findById(actionId);
         return actionDocumentOptional
                 .orElseThrow(() -> new EntityNotFoundException(ACTION_NOT_FOUND_MESSAGE + actionId));
@@ -426,9 +437,9 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     private ActionExecutionContext getActionExecutionContextForNewJobs(String actionId,
                                                                        List<JobDefinitionDTO> jobDefinitionDTOs) {
-        ActionDocument actionDocument = createActionDocument(actionId);
+        ActionDocument actionDocument = findActionDocument(actionId);
         Map<String, String> jobDocumentPairs = getJobDocumentPairs(jobDefinitionDTOs, actionDocument);
-        LOGGER.info("ActionExecutionContext: jobDocumentPairs - {}", jobDocumentPairs);
+        LOGGER.info("getActionExecutionContextForNewJobs: jobDocumentPairs - {}", jobDocumentPairs);
 
         long scheduledJobIncreases = jobDefinitionDTOs.stream().filter(JobDefinitionDTO::isScheduled).count();
         actionManagerStatistics.increaseNumberOfScheduleJob(actionId, scheduledJobIncreases);
@@ -451,7 +462,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
 
     private ActionExecutionContext getActionExecutionContextForReplay(String actionId, Predicate<JobResultDocument> predicate) {
-        ActionDocument actionDocument = createActionDocument(actionId);
+        ActionDocument actionDocument = findActionDocument(actionId);
         Map<String, String> failureJobs = jobManagerService.getJobsFromAction(actionId, predicate);
         BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback = onCompletedJobCallback(actionId);
         return ActionExecutionContext.builder()
@@ -463,7 +474,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     }
 
     private ActionExecutionContext getActionExecutionContextForReplay(String actionId) {
-        ActionDocument actionDocument = createActionDocument(actionId);
+        ActionDocument actionDocument = findActionDocument(actionId);
 
         Map<String, String> jobDocumentPairs = jobManagerService.getEnabledOnetimeJobs(actionId);
         Map<String, String> scheduledJobDocumentPairs = jobManagerService.getEnabledScheduledJobs(actionId);
@@ -479,10 +490,13 @@ public class ActionManagerServiceImpl implements ActionManagerService {
                 .build();
     }
 
-    private ActionExecutionContext getActionExecutionContext(ActionDefinitionDTO actionDefinition, ActionDocument actionDocument) {
+    private ActionExecutionContext getActionExecutionContextForCreate(
+            ActionDefinitionDTO actionDefinition,
+            ActionDocument actionDocument) {
+
         List<JobDefinitionDTO> definitionJobs = actionDefinition.getJobs();
         Map<String, String> jobDocumentPairs = getJobDocumentPairs(definitionJobs, actionDocument);
-        LOGGER.info("ActionExecutionContext: jobDocumentPairs - {}", jobDocumentPairs);
+        LOGGER.info("getActionExecutionContextForCreate: jobDocumentPairs - {}", jobDocumentPairs);
 
         BiCheckedConsumer<JobExecutionStatus, JobExecutionStatus> onCompletedJobCallback =
                 onCompletedJobCallback(actionDocument.getHash());

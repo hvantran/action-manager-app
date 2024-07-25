@@ -1,5 +1,6 @@
 package com.hoatv.action.manager.collections;
 
+import com.hoatv.action.manager.api.ImmutableAction;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -13,7 +14,7 @@ import java.util.UUID;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ActionDocument {
+public class ActionDocument implements ImmutableAction {
     @Id
     @Builder.Default
     private String hash = UUID.randomUUID().toString();

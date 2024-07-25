@@ -483,7 +483,7 @@ export default function JobCreation() {
         actionName: "dryRunJobs",
         onClick: () => {
           stepMetadatas.forEach(stepMetadata => {
-            JobAPI.dryRun(restClient, stepMetadata.properties)
+            JobAPI.dryRun(restClient, stepMetadata.properties, actionId)
           })
         }
       },
