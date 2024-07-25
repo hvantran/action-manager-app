@@ -133,7 +133,7 @@ export default function ActionCreation() {
       },
       {
         propName: 'isScheduled',
-        propLabel: 'Supported schedule',
+        propLabel: 'Schedule',
         propValue: false,
         layoutProperties: { xs: 6 },
         labelElementProperties: { xs: 4, sx: { pl: 10 } },
@@ -154,7 +154,8 @@ export default function ActionCreation() {
       },
       {
         propName: 'scheduleInterval',
-        propLabel: 'Interval minutes',
+        propLabel: 'Period',
+        info: 'The period between successive executions',
         propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
         propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
@@ -423,7 +424,7 @@ export default function ActionCreation() {
         },
         {
           propName: 'isScheduled',
-          propLabel: 'Supported schedule',
+          propLabel: 'Schedule',
           propValue: false,
           layoutProperties: { xs: 6 },
           labelElementProperties: { xs: 4, sx: { pl: 10 } },
@@ -443,7 +444,8 @@ export default function ActionCreation() {
         },
         {
           propName: 'scheduleInterval',
-          propLabel: 'Interval minutes',
+          propLabel: 'Period',
+          info: 'The period between successive executions',
           disabled: true,
           propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
           propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,

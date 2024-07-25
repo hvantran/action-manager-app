@@ -6,6 +6,8 @@ export const JOB_CATEGORY_VALUES: Array<SelectionData> = [{ label: "IO", value: 
 export const JOB_OUTPUT_TARGET_VALUES: Array<SelectionData> = [{ label: "CONSOLE", value: "CONSOLE" }, { label: "METRIC", value: "METRIC" }]
 export const JOB_SCHEDULE_TIME_SELECTION: Array<SelectionData> = [
   { label: "0", value: 0 },
+  { label: "1 minutes", value: 1 },
+  { label: "2 minutes", value: 2 },
   { label: "5 minutes", value: 5 },
   { label: "10 minutes", value: 10 },
   { label: "30 minutes", value: 30 },

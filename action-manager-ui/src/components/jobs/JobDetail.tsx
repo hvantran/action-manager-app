@@ -1,10 +1,10 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ReplayIcon from '@mui/icons-material/Replay';
 import EditIcon from '@mui/icons-material/Edit';
 import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import InfoIcon from '@mui/icons-material/Info';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveIcon from '@mui/icons-material/Save';
 import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
@@ -181,7 +181,7 @@ export default function JobDetail() {
       },
       {
         propName: 'isScheduled',
-        propLabel: 'Supported schedule',
+        propLabel: 'Schedule',
         propValue: false,
         disabled: true,
         layoutProperties: { xs: 6 },
@@ -203,7 +203,8 @@ export default function JobDetail() {
       },
       {
         propName: 'scheduleInterval',
-        propLabel: 'Interval minutes',
+        propLabel: 'Period',
+        info: 'The period between successive executions',
         disabled: true,
         dependOn: ["isScheduled", true],
         propValue: 0,

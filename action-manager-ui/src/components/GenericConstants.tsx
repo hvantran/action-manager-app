@@ -216,6 +216,7 @@ export interface PropertyMetadata {
     propType: PropType
     propLabel?: string
     isRequired?: boolean
+    info?: string
     disabled?: boolean
     dependOn?: Array<any>
     disablePerpetualy?: boolean
@@ -315,7 +316,7 @@ export interface StepMetadata extends EntityMetadata {
 export interface DialogMetadata {
     open: boolean
     title?: string,
-    content?: string,
+    content?: React.ReactNode,
     negativeText: string
     positiveText: string
     negativeAction?: () => void

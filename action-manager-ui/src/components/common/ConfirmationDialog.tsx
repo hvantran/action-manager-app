@@ -26,7 +26,7 @@ export default function ConfirmationDialog(props: DialogMetadata) {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={props.negativeAction} variant="outlined" aria-label="outlined button group" autoFocus>{props.negativeText}</Button>
+          <Button onClick={props.negativeAction} variant="contained" aria-label="button group" autoFocus>{props.negativeText}</Button>
           <Button onClick={props.positiveAction}>{props.positiveText}</Button>
         </DialogActions>
       </Dialog>

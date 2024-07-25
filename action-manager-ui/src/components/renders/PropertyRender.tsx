@@ -1,5 +1,6 @@
-import { Box, FormControl, Grid, Input, MenuItem, Select, Switch, TextField } from '@mui/material';
+import { Box, FormControl, Grid, IconButton, Input, MenuItem, Select, Switch, TextField, Tooltip } from '@mui/material';
 import * as React from 'react';
+import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import { PropType, PropertyMetadata } from '../GenericConstants';
 import CodeEditor from '../common/CodeEditor';
 
@@ -117,6 +118,12 @@ export default function PropertyRender(props: any) {
                 <Grid item {...property.labelElementProperties}>
                     <Box {...property.labelElementProperties.sx}>
                         <label>{property.propLabel} {property.isRequired ? (<span>*</span>) : (<span />)}</label>
+                        {
+                            property.info && 
+                            <Tooltip title={property.info}>
+                                <HelpRoundedIcon sx={{fontSize: 12}}  style={{position:"relative", top: '-5px', left: '-2px'}}/>
+                            </Tooltip>
+                        }
                     </Box>
                 </Grid>
                 <Grid key={"index_" + property.propName + "_2"} item {...property.valueElementProperties}>

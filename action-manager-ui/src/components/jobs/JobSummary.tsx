@@ -4,6 +4,7 @@ import { Link, Stack, Typography } from '@mui/material';
 import React from 'react';
 import {
   ColumnMetadata,
+  DialogMetadata,
   PageEntityMetadata,
   PagingOptionMetadata,
   PagingResult,
@@ -15,6 +16,7 @@ import JobStatus from '../common/JobStatus';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ScheduleIcon from '@mui/icons-material/Schedule';
@@ -23,16 +25,20 @@ import { useNavigate } from 'react-router-dom';
 import { JobAPI, JobOverview } from '../AppConstants';
 import ProcessTracking from '../common/ProcessTracking';
 import TextTruncate from '../common/TextTruncate';
+import ConfirmationDialog from '../common/ConfirmationDialog';
+import { red } from '@mui/material/colors';
 
 
 export default function JobSummary() {
   const navigate = useNavigate();
+  const selectedJob = React.useRef({ jobName: '', jobId: '' })
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
   const restClient = new RestClient(setCircleProcessOpen);
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href='#'>
@@ -120,14 +126,26 @@ export default function JobSummary() {
       id: 'actions',
       label: '',
       align: 'left',
-      actions: [{
+      actions: [
+        {
+            actionIcon: <DeleteForeverIcon />,
+            properties: { sx: { color: red[800] } },
+            actionLabel: "Delete",
+            actionName: "deleteAction",
+            onClick: (row: JobOverview) => () => {
+                selectedJob.current = { jobName: row.name, jobId: row.hash }
+                setDeleteConfirmationDialogOpen(true)
+            }
+        },
+        {
         actionIcon: <ReadMoreIcon />,
         actionLabel: "Job details",
         actionName: "gotoJobDetail",
         onClick: (row: JobOverview) => {
           return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
         }
-      }]
+      }
+    ]
     }
   ];
 
@@ -169,11 +187,28 @@ export default function JobSummary() {
       }
     ]
   }
+  let confirmationDeleteDialogMeta: DialogMetadata = {
+      open: deleteConfirmationDialogOpen,
+      title: "Delete Job",
+      content: <p>Are you sure you want to delete <b>{selectedJob.current.jobName}</b> job?</p>,
+      positiveText: "Yes",
+      negativeText: "No",
+      negativeAction() {
+          setDeleteConfirmationDialogOpen(false);
+      },
+      positiveAction() {
+          JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
+            JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult);
+          });
+          setDeleteConfirmationDialogOpen(false);
+      }
+  }
 
   return (
     <Stack spacing={2}>
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
+      <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
   );
 }

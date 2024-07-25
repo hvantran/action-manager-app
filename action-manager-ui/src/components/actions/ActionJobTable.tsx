@@ -1,8 +1,8 @@
 
-import { Stack } from '@mui/material';
-import React from 'react';
+import { Stack, Box } from '@mui/material';
+import React, { useRef } from 'react';
 import {
-    ColumnMetadata, PageEntityMetadata, PagingOptionMetadata,
+    ColumnMetadata, DialogMetadata, PageEntityMetadata, PagingOptionMetadata,
     PagingResult, RestClient,
     TableMetadata
 } from '../GenericConstants';
@@ -10,20 +10,26 @@ import {
 
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
 import { useNavigate } from 'react-router-dom';
-import { ActionAPI, JobOverview } from '../AppConstants';
+import {
+    ActionAPI, JobOverview, JobAPI
+} from '../AppConstants';
 import JobStatus from '../common/JobStatus';
 import TextTruncate from '../common/TextTruncate';
 import PageEntityRender from '../renders/PageEntityRender';
 import { ActionContext } from './ActionProvider';
+import { red } from '@mui/material/colors';
+import ConfirmationDialog from '../common/ConfirmationDialog';
 
 
 export default function ActionJobTable(props: any) {
 
+    const selectedJob = useRef({ jobName: '', jobId: '' })
     const { setNumberOfFailureJobs } = React.useContext(ActionContext)
     const navigate = useNavigate()
-    const targetAction = props.actionId
+    const actionId = props.actionId
     const setCircleProcessOpen = props.setCircleProcessOpen
     const replayFlag = props.replayFlag;
     let initialPagingResult: PagingResult = { totalElements: 0, content: [] }
@@ -31,6 +37,7 @@ export default function ActionJobTable(props: any) {
     const [pageIndex, setPageIndex] = React.useState(0)
     const [pageSize, setPageSize] = React.useState(10)
     const restClient = new RestClient(setCircleProcessOpen)
+    const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
     const columns: ColumnMetadata[] = [
         { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
@@ -111,10 +118,20 @@ export default function ActionJobTable(props: any) {
             align: 'right',
             actions: [
                 {
+                    actionIcon: <DeleteForeverIcon />,
+                    properties: { sx: { color: red[800] } },
+                    actionLabel: "Delete",
+                    actionName: "deleteAction",
+                    onClick: (row: JobOverview) => () => {
+                        selectedJob.current = { jobName: row.name, jobId: row.hash }
+                        setDeleteConfirmationDialogOpen(true)
+                    }
+                },
+                {
                     actionIcon: <ReadMoreIcon />,
                     actionLabel: "Action details",
                     actionName: "gotoActionDetail",
-                    onClick: (row: JobOverview) => () => navigate(`/actions/${targetAction}/jobs/${row.hash}`, { state: { name: row.name } })
+                    onClick: (row: JobOverview) => () => navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
                 }
             ]
         }
@@ -122,7 +139,7 @@ export default function ActionJobTable(props: any) {
 
 
     React.useEffect(() => {
-        ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, targetAction, restClient, (data) => {
+        ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, actionId, restClient, (data) => {
             setPagingResult(data)
             const numberOfFailureJobs = data.content.filter(p => p.executionStatus === 'FAILURE').length
             setNumberOfFailureJobs(numberOfFailureJobs)
@@ -137,7 +154,7 @@ export default function ActionJobTable(props: any) {
         onPageChange: (pageIndex: number, pageSize: number) => {
             setPageIndex(pageIndex);
             setPageSize(pageSize);
-            ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, targetAction, restClient, (data) => {
+            ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, actionId, restClient, (data) => {
                 setPagingResult(data)
             });
         }
@@ -146,7 +163,7 @@ export default function ActionJobTable(props: any) {
     let tableMetadata: TableMetadata = {
         columns,
         onRowClickCallback(row) {
-            navigate(`/actions/${targetAction}/jobs/${row.hash}`, { state: { name: row.name } })
+            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
         },
         pagingOptions: pagingOptions,
         pagingResult: pagingResult
@@ -156,10 +173,32 @@ export default function ActionJobTable(props: any) {
         pageName: 'action-job-summary',
         tableMetadata: tableMetadata
     }
+    let confirmationDeleteDialogMeta: DialogMetadata = {
+        open: deleteConfirmationDialogOpen,
+        title: "Delete Job",
+        content: <p>Are you sure you want to delete <b>{selectedJob.current.jobName}</b> job?</p>,
+        positiveText: "Yes",
+        negativeText: "No",
+        negativeAction() {
+            setDeleteConfirmationDialogOpen(false);
+        },
+        positiveAction() {
+            JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
+                ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, actionId, restClient, (data) => {
+                    setPagingResult(data)
+                    const numberOfFailureJobs = data.content.filter(p => p.executionStatus === 'FAILURE').length
+                    setNumberOfFailureJobs(numberOfFailureJobs)
+                });
+            });
+            setDeleteConfirmationDialogOpen(false);
+
+        },
+    }
 
     return (
         <Stack spacing={2}>
             <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
+            <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
         </Stack>
     );
 }
