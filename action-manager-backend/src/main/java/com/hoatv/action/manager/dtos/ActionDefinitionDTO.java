@@ -2,6 +2,7 @@ package com.hoatv.action.manager.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hoatv.springboot.common.validation.JsonValue;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
@@ -37,6 +38,7 @@ public class ActionDefinitionDTO {
     @Setter
     @JsonProperty("configurations")
     @NotEmpty(message = "Action configurations cannot be NULL/empty")
+    @JsonValue(message = "Action configurations must be an JSON object")
     private String configurations;
 
     @JsonProperty("createdAt")

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hoatv.action.manager.api.JobImmutable;
 import com.hoatv.action.manager.collections.JobStatus;
+import com.hoatv.springboot.common.validation.JsonValue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
@@ -65,6 +66,7 @@ public class JobDefinitionDTO implements JobImmutable {
     @Setter
     @JsonProperty("configurations")
     @NotEmpty(message = "Job configurations cannot be NULL/empty")
+    @JsonValue(message = "Job configurations must be an JSON object")
     private String configurations;
 
     @JsonProperty("actionId")
