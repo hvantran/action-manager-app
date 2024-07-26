@@ -9,7 +9,7 @@ import { Stack } from '@mui/material';
 import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   DEFAULT_JOB_CONTENT,
   JOB_CATEGORY_VALUES,
@@ -18,14 +18,17 @@ import {
   JOB_STATUS_SELECTION,
   JobAPI,
   JobDefinition,
+  JobDetailMetadata,
   ROOT_BREADCRUMB,
   getJobDetails
 } from '../AppConstants';
 import {
   PageEntityMetadata,
   PropType,
+  PropertyMetadata,
   RestClient,
   StepMetadata,
+  onChangeProperty,
   onchangeStepDefault
 } from '../GenericConstants';
 import ProcessTracking from '../common/ProcessTracking';
@@ -36,7 +39,9 @@ export default function JobCreation() {
 
   const navigate = useNavigate();
   const targetAction = useParams();
+  const location = useLocation();
   const actionId: string | undefined = targetAction.actionId;
+  const copyJobId = location.state?.copyJobId || "";
   if (!actionId) {
     throw new Error("Action is required");
   }
@@ -253,215 +258,228 @@ export default function JobCreation() {
     ]
   }
 
+  const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>(
+    [
+
+      {
+        propName: 'name',
+        propLabel: 'Name',
+        propValue: '',
+        isRequired: true,
+        propDescription: 'This is name of job',
+        propType: PropType.InputText,
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        textFieldMeta: {
+          onChangeEvent: function (event: any) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue, (stepMetadata) => {
+              if (stepMetadata.name === 'job') {
+                stepMetadata.label = propValue;
+              }
+            }))
+          }
+        }
+      },
+      {
+        propName: 'isAsync',
+        propLabel: 'Asynchronous',
+        propValue: false,
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Switcher,
+        switcherFieldMeta: {
+          onChangeEvent: function (event, propValue) {
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
+              if (propertyMetadata.propName === 'category') {
+                propertyMetadata.disabled = !propValue;
+              }
+            }));
+          }
+        }
+      },
+      {
+        propName: 'outputTargets',
+        propLabel: 'Output',
+        propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
+        propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Selection,
+        selectionMeta: {
+          selections: JOB_OUTPUT_TARGET_VALUES,
+          isMultiple: true,
+          onChangeEvent: function (event) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue))
+          }
+        }
+      },
+      {
+        propName: 'category',
+        propLabel: 'Category',
+        disabled: true,
+        propValue: JOB_CATEGORY_VALUES[0].value,
+        propDefaultValue: JOB_CATEGORY_VALUES[0].value,
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Selection,
+        selectionMeta: {
+          selections: JOB_CATEGORY_VALUES,
+          onChangeEvent: function (event) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue))
+          }
+        }
+      },
+      {
+        propName: 'isScheduled',
+        propLabel: 'Schedule',
+        propValue: false,
+        layoutProperties: { xs: 6 },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propDefaultValue: false,
+        propType: PropType.Switcher,
+        switcherFieldMeta: {
+          onChangeEvent: function (event, propValue) {
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
+              if (propertyMetadata.propName === 'scheduleInterval') {
+                propertyMetadata.disabled = !propValue;
+              }
+            }));
+          }
+        }
+      },
+      {
+        propName: 'scheduleInterval',
+        propLabel: 'Period',
+        disabled: true,
+        info: 'The period between successive executions',
+        propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
+        propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Selection,
+        selectionMeta: {
+          selections: JOB_SCHEDULE_TIME_SELECTION,
+          onChangeEvent: function (event) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue));
+          }
+        }
+      },
+      {
+        propName: 'description',
+        propLabel: 'Description',
+        propValue: '',
+        layoutProperties: { xs: 6 },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Textarea,
+        textareaFieldMeta: {
+          onChangeEvent: function (event: any) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue))
+          }
+        }
+      },
+      {
+        propName: 'status',
+        propLabel: 'Status',
+        propValue: JOB_STATUS_SELECTION[0].value,
+        propDefaultValue: JOB_STATUS_SELECTION[0].value,
+        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
+        labelElementProperties: { xs: 4, sx: { pl: 10 } },
+        valueElementProperties: { xs: 8 },
+        propType: PropType.Selection,
+        selectionMeta: {
+          selections: JOB_STATUS_SELECTION,
+          onChangeEvent: function (event) {
+            let propValue = event.target.value;
+            let propName = event.target.name;
+            setStepMetadatas(onchangeStepDefault(propName, propValue));
+          }
+        }
+      },
+      {
+        propName: 'configurations',
+        propLabel: 'Configurations',
+        isRequired: true,
+        propValue: '{}',
+        propDefaultValue: '{}',
+        layoutProperties: { xs: 12 },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
+        valueElementProperties: { xs: 10 },
+        propType: PropType.CodeEditor,
+        codeEditorMeta:
+        {
+          height: '100px',
+          codeLanguges: [json()],
+          onChangeEvent: function (propName) {
+            return (value, _) => {
+              let propValue = value;
+              setStepMetadatas(onchangeStepDefault(propName, propValue))
+            }
+          }
+        }
+      },
+      {
+        propName: 'content',
+        propLabel: 'Job Content',
+        layoutProperties: { xs: 12 },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
+        valueElementProperties: { xs: 10 },
+        isRequired: true,
+        propValue: DEFAULT_JOB_CONTENT,
+        propDefaultValue: DEFAULT_JOB_CONTENT,
+        propType: PropType.CodeEditor,
+        codeEditorMeta:
+        {
+          codeLanguges: [javascript({ jsx: true })],
+          onChangeEvent: function (propName) {
+            return (value, _) => {
+              let propValue = value;
+              setStepMetadatas(onchangeStepDefault(propName, propValue))
+            }
+          }
+        }
+      }
+    ]
+  )
   let initialStepMetadatas: Array<StepMetadata> = [
     {
       name: "job",
       label: 'Job 1',
       description: 'This step is used to define job information',
-      properties: [
-        {
-          propName: 'name',
-          propLabel: 'Name',
-          propValue: '',
-          isRequired: true,
-          propDescription: 'This is name of job',
-          propType: PropType.InputText,
-          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          textFieldMeta: {
-            onChangeEvent: function (event: any) {
-              let propValue = event.target.value;
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue, (stepMetadata) => {
-                if (stepMetadata.name === 'job') {
-                  stepMetadata.label = propValue;
-                }
-              }))
-            }
-          }
-        },
-        {
-          propName: 'isAsync',
-          propLabel: 'Asynchronous',
-          propValue: false,
-          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          propType: PropType.Switcher,
-          switcherFieldMeta: {
-            onChangeEvent: function (event, propValue) {
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
-                if (propertyMetadata.propName === 'category') {
-                  propertyMetadata.disabled = !propValue;
-                }
-              }));
-            }
-          }
-        },
-        {
-          propName: 'outputTargets',
-          propLabel: 'Output',
-          propValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
-          propDefaultValue: [JOB_OUTPUT_TARGET_VALUES[0].value],
-          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          propType: PropType.Selection,
-          selectionMeta: {
-            selections: JOB_OUTPUT_TARGET_VALUES,
-            isMultiple: true,
-            onChangeEvent: function (event) {
-              let propValue = event.target.value;
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue))
-            }
-          }
-        },
-        {
-          propName: 'category',
-          propLabel: 'Category',
-          disabled: true,
-          propValue: JOB_CATEGORY_VALUES[0].value,
-          propDefaultValue: JOB_CATEGORY_VALUES[0].value,
-          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          propType: PropType.Selection,
-          selectionMeta: {
-            selections: JOB_CATEGORY_VALUES,
-            onChangeEvent: function (event) {
-              let propValue = event.target.value;
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue))
-            }
-          }
-        },
-        {
-          propName: 'isScheduled',
-          propLabel: 'Schedule',
-          propValue: false,
-          layoutProperties: { xs: 6 },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          propDefaultValue: false,
-          propType: PropType.Switcher,
-          switcherFieldMeta: {
-            onChangeEvent: function (event, propValue) {
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
-                if (propertyMetadata.propName === 'scheduleInterval') {
-                  propertyMetadata.disabled = !propValue;
-                }
-              }));
-            }
-          }
-        },
-        {
-          propName: 'scheduleInterval',
-          propLabel: 'Period',
-          disabled: true,
-          info: 'The period between successive executions',
-          propValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
-          propDefaultValue: JOB_SCHEDULE_TIME_SELECTION[0].value,
-          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          propType: PropType.Selection,
-          selectionMeta: {
-            selections: JOB_SCHEDULE_TIME_SELECTION,
-            onChangeEvent: function (event) {
-              let propValue = event.target.value;
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue));
-            }
-          }
-        },
-        {
-          propName: 'description',
-          propLabel: 'Description',
-          propValue: '',
-          layoutProperties: { xs: 6 },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          propType: PropType.Textarea,
-          textareaFieldMeta: {
-            onChangeEvent: function (event: any) {
-              let propValue = event.target.value;
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue))
-            }
-          }
-        },
-        {
-          propName: 'status',
-          propLabel: 'Status',
-          propValue: JOB_STATUS_SELECTION[0].value,
-          propDefaultValue: JOB_STATUS_SELECTION[0].value,
-          layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-          labelElementProperties: { xs: 4, sx: { pl: 10 } },
-          valueElementProperties: { xs: 8 },
-          propType: PropType.Selection,
-          selectionMeta: {
-            selections: JOB_STATUS_SELECTION,
-            onChangeEvent: function (event) {
-              let propValue = event.target.value;
-              let propName = event.target.name;
-              setStepMetadatas(onchangeStepDefault(propName, propValue));
-            }
-          }
-        },
-        {
-          propName: 'configurations',
-          propLabel: 'Configurations',
-          isRequired: true,
-          propValue: '{}',
-          propDefaultValue: '{}',
-          layoutProperties: { xs: 12 },
-          labelElementProperties: { xs: 2, sx: { pl: 10 } },
-          valueElementProperties: { xs: 10 },
-          propType: PropType.CodeEditor,
-          codeEditorMeta:
-          {
-            height: '100px',
-            codeLanguges: [json()],
-            onChangeEvent: function (propName) {
-              return (value, _) => {
-                let propValue = value;
-                setStepMetadatas(onchangeStepDefault(propName, propValue))
-              }
-            }
-          }
-        },
-        {
-          propName: 'content',
-          propLabel: 'Job Content',
-          layoutProperties: { xs: 12 },
-          labelElementProperties: { xs: 2, sx: { pl: 10 } },
-          valueElementProperties: { xs: 10 },
-          isRequired: true,
-          propValue: DEFAULT_JOB_CONTENT,
-          propDefaultValue: DEFAULT_JOB_CONTENT,
-          propType: PropType.CodeEditor,
-          codeEditorMeta:
-          {
-            codeLanguges: [javascript({ jsx: true })],
-            onChangeEvent: function (propName) {
-              return (value, _) => {
-                let propValue = value;
-                setStepMetadatas(onchangeStepDefault(propName, propValue))
-              }
-            }
-          }
-        }
-      ]
+      properties: propertyMetadata
     }
   ]
 
   React.useEffect(() => {
     setStepMetadatas(initialStepMetadatas);
+    if (copyJobId) {
+      JobAPI.load(copyJobId, restClient, (jobDetail: JobDetailMetadata) => {
+        jobDetail.name = `${jobDetail.name}-Copy`
+        Object.keys(jobDetail).forEach((propertyName: string) => {
+          setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
+        })
+      })
+    }
   }, [])
+
 
 
   let initialPageEntityMetdata: PageEntityMetadata = {

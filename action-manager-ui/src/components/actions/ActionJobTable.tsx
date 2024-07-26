@@ -12,6 +12,7 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useNavigate } from 'react-router-dom';
 import {
     ActionAPI, JobOverview, JobAPI
@@ -118,10 +119,18 @@ export default function ActionJobTable(props: any) {
             align: 'right',
             actions: [
                 {
+                    actionIcon: <ContentCopyIcon />,
+                    actionLabel: "Clone",
+                    actionName: "cloneJob",
+                    onClick: (row: JobOverview) => () => {
+                        navigate("/actions/" + actionId + "/jobs/new", { state: { copyJobId: row.hash } })
+                    }
+                },
+                {
                     actionIcon: <DeleteForeverIcon />,
                     properties: { sx: { color: red[800] } },
                     actionLabel: "Delete",
-                    actionName: "deleteAction",
+                    actionName: "deleteJob",
                     onClick: (row: JobOverview) => () => {
                         selectedJob.current = { jobName: row.name, jobId: row.hash }
                         setDeleteConfirmationDialogOpen(true)
