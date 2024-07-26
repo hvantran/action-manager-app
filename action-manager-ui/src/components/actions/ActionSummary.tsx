@@ -46,7 +46,7 @@ export default function ActionSummary() {
   const [pageSize, setPageSize] = React.useState(10);
   const restClient = new RestClient(setCircleProcessOpen);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
-  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
+  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
   const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
 
@@ -181,7 +181,7 @@ export default function ActionSummary() {
             return () => {
 
               setConfirmationDialogTitle("Archive")
-              setConfirmationDialogContent(previous => "Are you sure you want to archive this action?")
+              setConfirmationDialogContent(previous => <p>Are you sure you want to archive <b>{row.name}</b> action?</p>)
               setConfirmationDialogPositiveAction(previous => () => ActionAPI.archive(row.hash, restClient, () => {
                 ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
                 setDeleteConfirmationDialogOpen(previous => !previous);

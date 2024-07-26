@@ -292,6 +292,7 @@ export interface TableMetadata {
     pagingOptions: PagingOptionMetadata
     pagingResult: PagingResult
     onRowClickCallback?: (record: any) => any
+    onMouseWheelClick?: (record: any) => any
 }
 
 

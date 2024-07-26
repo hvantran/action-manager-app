@@ -11,7 +11,7 @@ import { Box, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { green, yellow } from '@mui/material/colors';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ACTION_STATUS_SELECTION, ActionAPI, ActionDetails, ROOT_BREADCRUMB, isAllDependOnPropsValid } from '../AppConstants';
 import { DialogMetadata, GenericActionMetadata, PageEntityMetadata, PropType, PropertyMetadata, RestClient, onChangeProperty } from '../GenericConstants';
@@ -36,6 +36,7 @@ export default function ActionDetail() {
 
   const targetAction = useParams();
   const navigate = useNavigate();
+  const actionRef = useRef<ActionDetails>();
   const actionId: string | undefined = targetAction.actionId;
   if (!actionId) {
     throw new Error("Action is required");
@@ -43,7 +44,7 @@ export default function ActionDetail() {
 
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
-  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
+  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
   const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
   const [replayFlag, setReplayActionFlag] = React.useState(false);
@@ -167,6 +168,7 @@ export default function ActionDetail() {
 
   React.useEffect(() => {
     ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
+      actionRef.current = actionDetail
       Object.keys(actionDetail).forEach((propertyName: string) => {
         setPropertyMetadata(onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails]));
       })
@@ -216,7 +218,7 @@ export default function ActionDetail() {
         isSecondary: true,
         onClick: () => {
           setConfirmationDialogTitle("Archive")
-          setConfirmationDialogContent(previous => "Are you sure you want to archive this action?")
+          setConfirmationDialogContent(previous => <p>Are you sure you want to archive <b>{actionRef.current?.actionName}</b> action?</p>)
           setConfirmationDialogPositiveAction(previous => () => ActionAPI.archive(actionId, restClient, () => navigate("/actions")));
           setDeleteConfirmationDialogOpen(true)
         }

@@ -45,7 +45,7 @@ export default function JobDetail() {
   const targetJob = useParams();
   const location = useLocation();
 
-  const jobName = location.state?.name || "";
+  const jobName = React.useRef(location.state?.name || "");
   const [isPausedJob, setIsPausedJob] = React.useState(false);
   const [isScheduledJob, setIsScheduledJob] = React.useState(false);
   const jobId: string | undefined = targetJob.jobId;
@@ -322,6 +322,7 @@ export default function JobDetail() {
 
   React.useEffect(() => {
     JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
+      jobName.current = jobDetail.name
       setIsPausedJob(jobDetail.status === "PAUSED")
       setIsScheduledJob(jobDetail.isScheduled)
       Object.keys(jobDetail).forEach((propertyName: string) => {
@@ -333,13 +334,11 @@ export default function JobDetail() {
   const onPauseResumeSwicherOnChange = (event: any) => {
     setIsPausedJob(event.target.checked);
     if (event.target.checked) {
-      JobAPI.pause(jobId, jobName, restClient);
+      JobAPI.pause(jobId, jobName.current, restClient);
       return;
     }
-    JobAPI.resume(actionId, jobId, jobName, restClient);
+    JobAPI.resume(actionId, jobId, jobName.current, restClient);
   }
-
-  let troubleshootURL = `${process.env.REACT_APP_TROUBLESHOOTING_BASE_URL}app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now%2Fd,to:now%2Fd))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',key:jobName.keyword,negate:!f,params:(query:${jobName}),type:phrase),query:(match_phrase:(jobName.keyword:${jobName})))),index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',interval:auto,query:(language:kuery,query:''),sort:!(!('@timestamp',desc)))`;
 
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'template-details',
@@ -349,7 +348,7 @@ export default function JobDetail() {
       saveActionMeta,
       {
         actionIcon:
-          <Link underline="hover" key="1" color="black" target="_blank" href={troubleshootURL} rel="noopener noreferrer">
+          <Link underline="hover" key="1" color="black" target="_blank" href={`${process.env.REACT_APP_TROUBLESHOOTING_BASE_URL}app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now%2Fd,to:now%2Fd))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',key:jobName.keyword,negate:!f,params:(query:${jobName}),type:phrase),query:(match_phrase:(jobName.keyword:${jobName})))),index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',interval:auto,query:(language:kuery,query:''),sort:!(!('@timestamp',desc)))`} rel="noopener noreferrer">
             <TroubleshootIcon />
           </Link>,
         actionLabel: "Troubleshoot",
@@ -415,14 +414,14 @@ export default function JobDetail() {
   let confirmationDeleteDialogMeta: DialogMetadata = {
     open: deleteConfirmationDialogOpen,
     title: "Delete Job",
-    content: `Are you sure you want to delete ${jobName} job?`,
+    content: <p>Are you sure you want to delete <b>{jobName.current}</b> job?</p>,
     positiveText: "Yes",
     negativeText: "No",
     negativeAction() {
       setDeleteConfirmationDialogOpen(false);
     },
     positiveAction() {
-      JobAPI.delete(jobId, jobName, restClient, () => navigate("/actions/" + actionId));
+      JobAPI.delete(jobId, jobName.current, restClient, () => navigate("/actions/" + actionId));
     },
   }
 

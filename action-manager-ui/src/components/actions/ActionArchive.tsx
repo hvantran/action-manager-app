@@ -34,7 +34,7 @@ export default function ActionArchive() {
   const [pageIndex, setPageIndex] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(10);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
-  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState("");
+  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
   const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
   const restClient = new RestClient(setCircleProcessOpen);
@@ -154,7 +154,7 @@ export default function ActionArchive() {
           actionName: "deleteAction",
           onClick: (row: ActionOverview) => () => {
             setConfirmationDialogTitle("Delete Action Permanently")
-            setConfirmationDialogContent(previous => `Are you sure you want to delete permanently ${row.name} action?`)
+            setConfirmationDialogContent(previous => <p>Are you sure you want to delete permanently <b>{row.name}</b> action?</p>)
             setConfirmationDialogPositiveAction(previous => () => ActionAPI.deleteAction(row.hash, restClient, () => {
               setDeleteConfirmationDialogOpen(false);
               ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));

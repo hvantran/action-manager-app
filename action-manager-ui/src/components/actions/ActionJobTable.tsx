@@ -160,11 +160,18 @@ export default function ActionJobTable(props: any) {
         }
     }
 
+    const onRowClickCallback = function (row: any) {
+        navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
+    }
+
+    const onMouseWheelClick = function (row: any) {
+        window.open(`/actions/${actionId}/jobs/${row.hash}`, '_blank')
+    }
+
     let tableMetadata: TableMetadata = {
         columns,
-        onRowClickCallback(row) {
-            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
-        },
+        onRowClickCallback,
+        onMouseWheelClick,
         pagingOptions: pagingOptions,
         pagingResult: pagingResult
     }

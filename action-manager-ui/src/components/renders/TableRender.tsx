@@ -86,7 +86,9 @@ export default function TableRender(props: TableMetadata) {
                                             }
                                             const value = row[column.id];
                                             return (
-                                                <TableCell onClick={() => props.onRowClickCallback ? props.onRowClickCallback(row): undefined}
+                                                <TableCell onMouseDown={(event) => {
+                                                    event.button === 1 && props.onMouseWheelClick && props.onMouseWheelClick(row)
+                                                }} onClick={() => props.onRowClickCallback && props.onRowClickCallback(row)}
                                                     sx={{ display: column.isHidden ? 'none' : 'table-cell' }}
                                                     key={column.id}
                                                     align={column.align}>
