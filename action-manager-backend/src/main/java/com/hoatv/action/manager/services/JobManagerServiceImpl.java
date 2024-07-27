@@ -585,7 +585,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         String metricNamePrefix = JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobName;
         if (jobResult instanceof JobResult singleJobResult) {
             ArrayList<MetricTag> metricTags = new ArrayList<>();
-            MetricTag metricTag = new MetricTag(singleJobResult.getData());
+            MetricTag metricTag = new MetricTag(String.valueOf(singleJobResult.getData()));
             metricTag.setAttributes(Map.of("name", metricNamePrefix));
             metricTags.add(metricTag);
             metricService.setMetric(metricNamePrefix, metricTags);

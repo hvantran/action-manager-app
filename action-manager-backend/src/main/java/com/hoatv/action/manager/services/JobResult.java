@@ -10,15 +10,15 @@ import lombok.ToString;
 @Builder
 public class JobResult implements ImmutableJobResult {
 
-    private String data;
+    private Object data;
 
     private String exception;
 
-    public JobResult(String data) {
+    public JobResult(Object data) {
         this.data = data;
     }
 
-    public JobResult(String data, String exception) {
+    public JobResult(Object data, String exception) {
         this.data = data;
         this.exception = exception;
     }
