@@ -517,8 +517,8 @@ public class JobManagerServiceImpl implements JobManagerService {
         Callable<Void> jobProcessRunnable = () -> {
             // Make sure the job data is up-to-date for each running time
             Optional<JobDocument> jobDocument1 = jobDocumentRepository.findById(jobDocument.getHash());
-            ObjectUtils.checkThenThrow(jobDocument1.isEmpty(), "Cannot find job: " + jobName);
-            processPersistenceJob(jobDocument1.get(), jobResultDocument, immutableAction, callback);
+            ImmutableJob immutableJob = jobDocument1.map(ImmutableJob.class::cast).orElse(jobDocument);
+            processPersistenceJob(immutableJob, jobResultDocument, immutableAction, callback);
             return null;
         };
 
