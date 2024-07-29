@@ -11,6 +11,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import { Badge, Box, IconButton, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
@@ -109,7 +110,7 @@ export default function ActionSummary() {
       align: 'left',
       format: (value: number) =>
         <Badge badgeContent={value} color="error" showZero>
-          <ErrorIcon color="error" />
+          <WarningAmberIcon color="error" />
         </Badge>
     },
     {

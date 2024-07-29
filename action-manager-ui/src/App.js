@@ -1,18 +1,17 @@
 import { Stack, ThemeProvider } from '@mui/material'
 import React from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
 import PrimarySearchAppBar from './ResponsiveAppBar'
 import { DEFAULT_THEME } from './components/GenericConstants'
-import HomeContent from './components/HomeContent'
+import ActionArchive from './components/actions/ActionArchive'
 import ActionCreation from './components/actions/ActionCreation'
 import ActionDetail from './components/actions/ActionDetail'
 import ActionSummary from './components/actions/ActionSummary'
-import ActionArchive from './components/actions/ActionArchive'
 import ErrorPage from './components/common/ErrorPage'
-import JobSummary from './components/jobs/JobSummary'
 import JobCreation from './components/jobs/JobCreation'
 import JobDetail from './components/jobs/JobDetail'
-import { ToastContainer } from 'react-toastify'
+import JobSummary from './components/jobs/JobSummary'
 
 function App () {
   window._env_ = {}
@@ -23,9 +22,10 @@ function App () {
         <Routes>
           <Route
             path='/'
-            element={<HomeContent />}
+            element={<Navigate to="/actions" />}
             errorElement={<ErrorPage />}
-          ></Route>
+          >
+          </Route>
           <Route path='/actions' element={<ActionSummary />}></Route>
           <Route path='/actions/archive' element={<ActionArchive />}></Route>
           <Route path='/actions/:actionId' element={<ActionDetail />}></Route>
