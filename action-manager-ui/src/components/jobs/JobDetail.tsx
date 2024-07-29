@@ -1,15 +1,17 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
-import ReplayIcon from '@mui/icons-material/Replay';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
 import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import InfoIcon from '@mui/icons-material/Info';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import PauseCircleOutline from '@mui/icons-material/PauseCircleOutline';
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import ReplayIcon from '@mui/icons-material/Replay';
 import SaveIcon from '@mui/icons-material/Save';
 import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 
-import { Box, Stack, Switch } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
@@ -27,12 +29,12 @@ import ProcessTracking from '../common/ProcessTracking';
 import { red, yellow } from '@mui/material/colors';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
+  ActionAPI,
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
   JOB_STATUS_SELECTION,
   JobAPI,
-  ActionAPI,
   JobDetailMetadata,
   ROOT_BREADCRUMB,
   isAllDependOnPropsValid
@@ -47,7 +49,6 @@ export default function JobDetail() {
 
   const jobName = React.useRef(location.state?.name || "");
   const [isPausedJob, setIsPausedJob] = React.useState(false);
-  const [isScheduledJob, setIsScheduledJob] = React.useState(false);
   const jobId: string | undefined = targetJob.jobId;
   const actionId: string = targetJob.actionId || "";
   if (!jobId) {
@@ -324,21 +325,11 @@ export default function JobDetail() {
     JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
       jobName.current = jobDetail.name
       setIsPausedJob(jobDetail.status === "PAUSED")
-      setIsScheduledJob(jobDetail.isScheduled)
       Object.keys(jobDetail).forEach((propertyName: string) => {
         setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
       })
     })
   }, [jobId, restClient])
-
-  const onPauseResumeSwicherOnChange = (event: any) => {
-    setIsPausedJob(event.target.checked);
-    if (event.target.checked) {
-      JobAPI.pause(jobId, jobName.current, restClient);
-      return;
-    }
-    JobAPI.resume(actionId, jobId, jobName.current, restClient);
-  }
 
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'template-details',
@@ -387,13 +378,32 @@ export default function JobDetail() {
         onClick: () => setDeleteConfirmationDialogOpen(true)
       },
       {
-        actionIcon: <Switch disabled={!isScheduledJob} checked={isPausedJob} onChange={onPauseResumeSwicherOnChange} />,
+        actionIcon: <PlayCircleIcon/>,
+        visible: isPausedJob,
         actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
           <InfoIcon />
-          <p>Paused function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
+          <p>Paused/Resume function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
         </Box>,
-        actionLabel: "Pause/Resume",
-        actionName: "pauseResumeAction",
+        actionLabel: "Resume",
+        actionName: "resumeAction",
+        onClick: () => {
+          setIsPausedJob(false);
+          JobAPI.resume(actionId, jobId, jobName.current, restClient);
+        }
+      },
+      {
+        actionIcon: <PauseCircleOutline/>,
+        visible: !isPausedJob,
+        actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+          <InfoIcon />
+          <p>Paused/Resume function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
+        </Box>,
+        actionLabel: "Pause",
+        actionName: "pauseAction",
+        onClick: () => {
+          setIsPausedJob(true);
+          JobAPI.pause(jobId, jobName.current, restClient);
+        }
       },
       {
         actionIcon: <RefreshIcon />,

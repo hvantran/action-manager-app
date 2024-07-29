@@ -257,7 +257,7 @@ export interface ActionMetadata {
     actionLabel: string
     actionLabelContent?: any
     actionIcon: any
-    visible?: (row: any) => boolean | boolean
+    visible?: any
     disable?: boolean
     isSecondary?: boolean
     properties?: any

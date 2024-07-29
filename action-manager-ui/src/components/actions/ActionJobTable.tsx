@@ -1,28 +1,32 @@
 
-import { Stack, Box } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import React, { useRef } from 'react';
 import {
+    ActionAPI,
+    JobAPI,
+    JobOverview
+} from '../AppConstants';
+import {
     ColumnMetadata, DialogMetadata, LocalStorageService, PageEntityMetadata, PagingOptionMetadata,
-    PagingResult, RestClient,
-    TableMetadata
+    PagingResult, RestClient, TableMetadata
 } from '../GenericConstants';
 
 
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import InfoIcon from '@mui/icons-material/Info';
+import PauseCircleOutline from '@mui/icons-material/PauseCircleOutline';
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import ScheduleIcon from '@mui/icons-material/Schedule';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { red } from '@mui/material/colors';
 import { useNavigate } from 'react-router-dom';
-import {
-    ActionAPI, JobOverview, JobAPI
-} from '../AppConstants';
+import ConfirmationDialog from '../common/ConfirmationDialog';
 import JobStatus from '../common/JobStatus';
 import TextTruncate from '../common/TextTruncate';
 import PageEntityRender from '../renders/PageEntityRender';
 import { ActionContext } from './ActionProvider';
-import { red } from '@mui/material/colors';
-import ConfirmationDialog from '../common/ConfirmationDialog';
 
 const pageIndexStorageKey = "action-manager-action-job-table-page-index"
 const pageSizeStorageKey = "action-manager-action-job-table-page-size"
@@ -35,6 +39,7 @@ export default function ActionJobTable(props: any) {
     const actionId = props.actionId
     const setCircleProcessOpen = props.setCircleProcessOpen
     const replayFlag = props.replayFlag;
+    const [internalReload, setInternalReload] = React.useState(false)
     let initialPagingResult: PagingResult = { totalElements: 0, content: [] }
     const [pagingResult, setPagingResult] = React.useState(initialPagingResult)
     const [pageIndex, setPageIndex] = React.useState(LocalStorageService.getOrDefault(pageIndexStorageKey, 0))
@@ -121,6 +126,30 @@ export default function ActionJobTable(props: any) {
             align: 'right',
             actions: [
                 {
+                  actionIcon: <PlayCircleIcon/>,
+                  visible: (row: any) => row.status === "PAUSED",
+                  actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+                    <InfoIcon />
+                    <p>Paused/Resume function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
+                  </Box>,
+                  actionLabel: "Resume",
+                  actionName: "resumeAction",
+                  onClick: (row: JobOverview) => () => {
+                    JobAPI.resume(actionId, row.hash, row.name, restClient);
+                    setInternalReload((previous: boolean) => !previous)
+                  }
+                },
+                {
+                  actionIcon: <PauseCircleOutline/>,
+                  visible: (row: any) => row.status === "ACTIVE",
+                  actionLabel: "Pause",
+                  actionName: "pauseAction",
+                  onClick: (row: JobOverview) => () => {
+                    JobAPI.pause(row.hash, row.name, restClient);
+                    setInternalReload((previous: boolean) => !previous)
+                  }
+                },
+                {
                     actionIcon: <ContentCopyIcon />,
                     actionLabel: "Clone",
                     actionName: "cloneJob",
@@ -140,7 +169,7 @@ export default function ActionJobTable(props: any) {
                 },
                 {
                     actionIcon: <ReadMoreIcon />,
-                    actionLabel: "Action details",
+                    actionLabel: "Go to details",
                     actionName: "gotoActionDetail",
                     onClick: (row: JobOverview) => () => navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
                 }
@@ -155,7 +184,7 @@ export default function ActionJobTable(props: any) {
             const numberOfFailureJobs = data.content.filter(p => p.executionStatus === 'FAILURE').length
             setNumberOfFailureJobs(numberOfFailureJobs)
         });
-    }, [replayFlag])
+    }, [replayFlag, internalReload])
 
     let pagingOptions: PagingOptionMetadata = {
         pageIndex,
