@@ -5,6 +5,7 @@ import React from 'react';
 import {
   ColumnMetadata,
   DialogMetadata,
+  LocalStorageService,
   PageEntityMetadata,
   PagingOptionMetadata,
   PagingResult,
@@ -28,6 +29,8 @@ import TextTruncate from '../common/TextTruncate';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import { red } from '@mui/material/colors';
 
+const pageIndexStorageKey = "action-manager-job-table-page-index"
+const pageSizeStorageKey = "action-manager-job-table-page-size"
 
 export default function JobSummary() {
   const navigate = useNavigate();
@@ -35,8 +38,8 @@ export default function JobSummary() {
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
-  const [pageIndex, setPageIndex] = React.useState(0);
-  const [pageSize, setPageSize] = React.useState(10);
+  const [pageIndex, setPageIndex] = React.useState(LocalStorageService.getOrDefault(pageIndexStorageKey, 0))
+  const [pageSize, setPageSize] = React.useState(LocalStorageService.getOrDefault(pageSizeStorageKey, 10))
   const restClient = new RestClient(setCircleProcessOpen);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
@@ -161,6 +164,8 @@ export default function JobSummary() {
     onPageChange: (pageIndex: number, pageSize: number) => {
       setPageIndex(pageIndex);
       setPageSize(pageSize);
+      LocalStorageService.put(pageIndexStorageKey, pageIndex)
+      LocalStorageService.put(pageSizeStorageKey, pageSize)
       JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult);
     }
   }

@@ -78,6 +78,21 @@ export class DataTypeDisplayer {
     }
 }
 
+export class LocalStorageService {
+
+    static get(key: string) {
+        return localStorage.getItem(key)
+    }
+
+    static getOrDefault(key: string, default_value: any) {
+        return localStorage.getItem(key) || default_value
+    }
+
+    static put(key: string, value: any) {
+        return localStorage.setItem(key, value)
+    }
+}
+
 export class RestClient {
     setCircleProcessOpen: (value: boolean) => void
 

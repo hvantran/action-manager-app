@@ -20,6 +20,7 @@ import React from 'react';
 import {
   ColumnMetadata,
   DialogMetadata,
+  LocalStorageService,
   PageEntityMetadata,
   PagingOptionMetadata,
   PagingResult,
@@ -36,14 +37,17 @@ import ConfirmationDialog from '../common/ConfirmationDialog';
 import PageEntityRender from '../renders/PageEntityRender';
 
 
+const pageIndexStorageKey = "action-manager-action-table-page-index"
+const pageSizeStorageKey = "action-manager-action-table-page-size"
+
 
 export default function ActionSummary() {
   const navigate = useNavigate();
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
-  const [pageIndex, setPageIndex] = React.useState(0);
-  const [pageSize, setPageSize] = React.useState(10);
+  const [pageIndex, setPageIndex] = React.useState(LocalStorageService.getOrDefault(pageIndexStorageKey, 0))
+  const [pageSize, setPageSize] = React.useState(LocalStorageService.getOrDefault(pageSizeStorageKey, 10))
   const restClient = new RestClient(setCircleProcessOpen);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
@@ -237,6 +241,8 @@ export default function ActionSummary() {
     onPageChange: (pageIndex: number, pageSize: number) => {
       setPageIndex(pageIndex);
       setPageSize(pageSize);
+      LocalStorageService.put(pageIndexStorageKey, pageIndex)
+      LocalStorageService.put(pageSizeStorageKey, pageSize)
     }
   }
 

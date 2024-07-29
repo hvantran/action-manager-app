@@ -2,7 +2,7 @@
 import { Stack, Box } from '@mui/material';
 import React, { useRef } from 'react';
 import {
-    ColumnMetadata, DialogMetadata, PageEntityMetadata, PagingOptionMetadata,
+    ColumnMetadata, DialogMetadata, LocalStorageService, PageEntityMetadata, PagingOptionMetadata,
     PagingResult, RestClient,
     TableMetadata
 } from '../GenericConstants';
@@ -24,6 +24,8 @@ import { ActionContext } from './ActionProvider';
 import { red } from '@mui/material/colors';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 
+const pageIndexStorageKey = "action-manager-action-job-table-page-index"
+const pageSizeStorageKey = "action-manager-action-job-table-page-size"
 
 export default function ActionJobTable(props: any) {
 
@@ -35,8 +37,8 @@ export default function ActionJobTable(props: any) {
     const replayFlag = props.replayFlag;
     let initialPagingResult: PagingResult = { totalElements: 0, content: [] }
     const [pagingResult, setPagingResult] = React.useState(initialPagingResult)
-    const [pageIndex, setPageIndex] = React.useState(0)
-    const [pageSize, setPageSize] = React.useState(10)
+    const [pageIndex, setPageIndex] = React.useState(LocalStorageService.getOrDefault(pageIndexStorageKey, 0))
+    const [pageSize, setPageSize] = React.useState(LocalStorageService.getOrDefault(pageSizeStorageKey, 10))
     const restClient = new RestClient(setCircleProcessOpen)
     const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
@@ -163,6 +165,8 @@ export default function ActionJobTable(props: any) {
         onPageChange: (pageIndex: number, pageSize: number) => {
             setPageIndex(pageIndex);
             setPageSize(pageSize);
+            LocalStorageService.put(pageIndexStorageKey, pageIndex)
+            LocalStorageService.put(pageSizeStorageKey, pageSize)
             ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, actionId, restClient, (data) => {
                 setPagingResult(data)
             });
