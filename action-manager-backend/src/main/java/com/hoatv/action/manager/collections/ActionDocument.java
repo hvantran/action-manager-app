@@ -2,6 +2,7 @@ package com.hoatv.action.manager.collections;
 
 import com.hoatv.action.manager.api.ImmutableAction;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Builder
 @ToString
 @NoArgsConstructor
+@FieldNameConstants
 @AllArgsConstructor
 public class ActionDocument implements ImmutableAction {
     @Id

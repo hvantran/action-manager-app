@@ -3,6 +3,7 @@ package com.hoatv.action.manager.controllers;
 
 import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
+import com.hoatv.action.manager.collections.JobDocument;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
@@ -36,7 +37,7 @@ public class JobControllerV1 {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getJobs(@RequestParam("pageIndex") @Min(0) int pageIndex,
                                      @RequestParam("pageSize") @Min(0) int pageSize) {
-        Sort defaultSorting = Sort.by(Sort.Order.desc("createdAt"));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(JobDocument.Fields.createdAt));
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getOverviewJobs(PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);

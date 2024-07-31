@@ -3,6 +3,7 @@ package com.hoatv.action.manager.controllers;
 
 import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
+import com.hoatv.action.manager.collections.ActionDocument;
 import com.hoatv.action.manager.collections.ActionStatus;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
@@ -32,10 +33,7 @@ import java.util.Optional;
 @RequestMapping(value = "/v1/actions", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ActionControllerV1 {
 
-    public static final String ACTION_CREATED_AT_PROP = "createdAt";
-
-    public static final String IS_FAVORITE = "isFavorite";
-
+    
     private final ActionManagerService actionManagerService;
 
     private final JobManagerService jobManagerService;
@@ -53,7 +51,7 @@ public class ActionControllerV1 {
 
     @PostMapping(value = "/{actionId}/jobs/new", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addNewJobs(@PathVariable("actionId") String hash,
-                                        @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
+                                             @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
         String actionId = actionManagerService.addJobsToAction(hash, jobDefinitionDTOs);
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
@@ -63,7 +61,9 @@ public class ActionControllerV1 {
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc(IS_FAVORITE), Sort.Order.desc(ACTION_CREATED_AT_PROP));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(
+                ActionDocument.Fields.isFavorite), Sort.Order.desc(ActionDocument.Fields.createdAt)
+        );
         List<ActionStatus> statuses = List.of(
                 ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE);
         Page<ActionOverviewDTO> actionResults =
@@ -76,7 +76,7 @@ public class ActionControllerV1 {
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc(ACTION_CREATED_AT_PROP));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(ActionDocument.Fields.createdAt));
         List<ActionStatus> statuses = List.of(ActionStatus.ARCHIVED);
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
@@ -93,7 +93,7 @@ public class ActionControllerV1 {
 
     @PatchMapping(value = "/{actionId}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> setFavoriteActionValue(@PathVariable("actionId") String hash,
-                                                    @RequestParam(IS_FAVORITE) boolean isFavorite) {
+                                                         @RequestParam("isFavorite") boolean isFavorite) {
         ActionDefinitionDTO actionResult = actionManagerService.setFavorite(hash, isFavorite);
         return ResponseEntity.ok(actionResult);
     }
@@ -111,7 +111,7 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(value = "/{actionId}/jobs/{jobId}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> replayJob(@PathVariable("actionId") String actionId, 
+    public ResponseEntity<Object> replayJob(@PathVariable("actionId") String actionId,
                                             @PathVariable("jobId") String jobId) {
         boolean isReplaySuccess = actionManagerService.replayJob(actionId, jobId);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
@@ -128,10 +128,13 @@ public class ActionControllerV1 {
 
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getActions(@RequestParam("search") String search,
-                                        @RequestParam("pageIndex") @Min(0) int pageIndex,
-                                        @RequestParam("pageSize") @Min(0) int pageSize) {
+                                             @RequestParam("pageIndex") @Min(0) int pageIndex,
+                                             @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc(IS_FAVORITE), Sort.Order.desc(ACTION_CREATED_AT_PROP));
+        Sort defaultSorting = Sort.by(
+                Sort.Order.desc(ActionDocument.Fields.isFavorite), 
+                Sort.Order.desc(ActionDocument.Fields.createdAt)
+        );
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.search(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
@@ -139,14 +142,15 @@ public class ActionControllerV1 {
 
     @GetMapping(value = "/{actionId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getJobsFromAction(@PathVariable("actionId") String actionId,
-                                               @RequestParam("pageIndex") @Min(0) int pageIndex,
-                                               @RequestParam("pageSize") @Min(0) int pageSize) {
+                                                    @RequestParam("pageIndex") @Min(0) int pageIndex,
+                                                    @RequestParam("pageSize") @Min(0) int pageSize) {
 
-        Sort defaultSorting = Sort.by(Sort.Order.desc(ACTION_CREATED_AT_PROP));
+        Sort defaultSorting = Sort.by(Sort.Order.desc(ActionDocument.Fields.createdAt));
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(actionResults);
     }
+
     @PutMapping(path = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> update(@PathVariable("actionId") String actionId, @RequestBody ActionDefinitionDTO actionDefinitionDTO) {
         actionManagerService.update(actionId, actionDefinitionDTO);
