@@ -1,12 +1,23 @@
 package com.hoatv.action.manager.document.transformers;
 
 import com.hoatv.action.manager.collections.JobDocument;
+import com.hoatv.action.manager.collections.JobResultDocument;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
+import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.fwk.common.ultilities.DateTimeUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public final class JobTransformer {
-    private JobTransformer() {}
+    private JobTransformer() {
+    }
+
     public static JobDocument fromJobDefinition(JobDefinitionDTO jobDefinitionDTO) {
         return fromJobDefinition(jobDefinitionDTO, "");
     }
@@ -23,6 +34,7 @@ public final class JobTransformer {
         jobDocument.setJobStatus(jobDefinitionDTO.getJobStatus());
         jobDocument.setScheduled(jobDefinitionDTO.isScheduled());
         jobDocument.setScheduleInterval(jobDefinitionDTO.getScheduleInterval());
+        jobDocument.setContentTemplates(jobDefinitionDTO.getContentTemplates());
         jobDocument.setOutputTargets(jobDefinitionDTO.getOutputTargets());
     }
 
@@ -37,6 +49,7 @@ public final class JobTransformer {
                 .isAsync(jobDefinitionDTO.isAsync())
                 .scheduleUnit(jobDefinitionDTO.getScheduleUnit())
                 .isScheduled(jobDefinitionDTO.isScheduled())
+                .contentTemplates(jobDefinitionDTO.getContentTemplates())
                 .scheduleInterval(jobDefinitionDTO.getScheduleInterval())
                 .outputTargets(jobDefinitionDTO.getOutputTargets())
                 .createdAt(DateTimeUtils.getCurrentEpochTimeInSecond())
@@ -56,6 +69,7 @@ public final class JobTransformer {
                 .scheduleInterval(jobDocument.getScheduleInterval())
                 .scheduleUnit(jobDocument.getScheduleUnit())
                 .createdAt(jobDocument.getCreatedAt())
+                .contentTemplates(jobDocument.getContentTemplates())
                 .isAsync(jobDocument.isAsync())
                 .jobStatus(jobDocument.getJobStatus())
                 .build();
@@ -73,7 +87,43 @@ public final class JobTransformer {
                 .scheduleInterval(jobDocument.getScheduleInterval())
                 .scheduleTimeUnit(jobDocument.getScheduleUnit())
                 .isAsync(jobDocument.isAsync())
+                .contentTemplates(jobDocument.getContentTemplates())
                 .status(jobDocument.getJobStatus().name())
                 .build();
+    }
+
+    public static Page<JobOverviewDTO> getJobOverviewDTOs(
+            Page<JobDocument> jobDocuments,
+            List<JobResultDocument> jobResultDocuments) {
+        
+        return jobDocuments.map(jobDocument -> {
+            String jobId = jobDocument.getHash();
+            Optional<JobResultDocument> jobExecutionResultDocument =
+                    jobResultDocuments.stream().filter(p -> p.getJobId().equals(jobId)).findFirst();
+            if (jobExecutionResultDocument.isEmpty()) {
+                return null;
+            }
+            Supplier<JobResultDocument> defaultJobResult = () -> JobResultDocument.builder().build();
+            JobResultDocument jobStat = jobExecutionResultDocument.orElseGet(defaultJobResult);
+            String jobState = Objects.isNull(jobStat.getJobState()) ? "" : jobStat.getJobState().name();
+            String jobStatus = Objects.isNull(jobStat.getJobExecutionStatus()) ? "" : jobStat.getJobExecutionStatus().name();
+            long elapsedTimeAsLong = jobStat.getElapsedTime();
+            String elapsedTimeString = DurationFormatUtils.formatDuration(elapsedTimeAsLong, "HH:mm:ss.S");
+            String elapsedTime = elapsedTimeAsLong == 0 ? "" : elapsedTimeString;
+            return JobOverviewDTO.builder()
+                    .name(jobDocument.getJobName())
+                    .hash(jobId)
+                    .jobState(jobState)
+                    .jobExecutionStatus(jobStatus)
+                    .status(jobDocument.getJobStatus().name())
+                    .jobExecutionStatus(jobStat.getJobExecutionStatus().name())
+                    .isSchedule(jobDocument.isScheduled())
+                    .startedAt(jobStat.getStartedAt())
+                    .updatedAt(jobStat.getUpdatedAt())
+                    .elapsedTime(elapsedTime)
+                    .failureNotes(jobStat.getFailureNotes())
+                    .actionHash(jobDocument.getActionId())
+                    .build();
+        });
     }
 }

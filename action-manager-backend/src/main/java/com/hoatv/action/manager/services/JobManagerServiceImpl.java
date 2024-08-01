@@ -157,14 +157,16 @@ public class JobManagerServiceImpl implements JobManagerService {
     @LoggingMonitor(description = "Get job summary with page info: {argument1}")
     public Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest) {
         Page<JobDocument> jobDocuments = jobDocumentRepository.findAll(pageRequest);
-        return getJobOverviewDTOs(jobDocuments);
+        List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
+        return JobTransformer.getJobOverviewDTOs(jobDocuments, jobResultDocuments);
     }
 
     @Override
     @LoggingMonitor(description = "Get jobs from action hash: {argument0}, page info: {argument1}")
     public Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest) {
         Page<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId, pageRequest);
-        return getJobOverviewDTOs(jobDocuments);
+        List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
+        return JobTransformer.getJobOverviewDTOs(jobDocuments, jobResultDocuments);
     }
 
     @Override
@@ -361,39 +363,6 @@ public class JobManagerServiceImpl implements JobManagerService {
         jobDocumentRepository.save(persistenceJobDocument);
     }
 
-    private Page<JobOverviewDTO> getJobOverviewDTOs(Page<JobDocument> jobDocuments) {
-        List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
-
-        return jobDocuments.map(jobDocument -> {
-            String jobId = jobDocument.getHash();
-            Optional<JobResultDocument> jobExecutionResultDocument =
-                    jobResultDocuments.stream().filter(p -> p.getJobId().equals(jobId)).findFirst();
-            if (jobExecutionResultDocument.isEmpty()) {
-                return null;
-            }
-            Supplier<JobResultDocument> defaultJobResult = () -> JobResultDocument.builder().build();
-            JobResultDocument jobStat = jobExecutionResultDocument.orElseGet(defaultJobResult);
-            String jobState = Objects.isNull(jobStat.getJobState()) ? "" : jobStat.getJobState().name();
-            String jobStatus = Objects.isNull(jobStat.getJobExecutionStatus()) ? "" : jobStat.getJobExecutionStatus().name();
-            long elapsedTimeAsLong = jobStat.getElapsedTime();
-            String elapsedTimeString = DurationFormatUtils.formatDuration(elapsedTimeAsLong, "HH:mm:ss.S");
-            String elapsedTime = elapsedTimeAsLong == 0 ? "" : elapsedTimeString;
-            return JobOverviewDTO.builder()
-                    .name(jobDocument.getJobName())
-                    .hash(jobId)
-                    .jobState(jobState)
-                    .jobExecutionStatus(jobStatus)
-                    .status(jobDocument.getJobStatus().name())
-                    .jobExecutionStatus(jobStat.getJobExecutionStatus().name())
-                    .isSchedule(jobDocument.isScheduled())
-                    .startedAt(jobStat.getStartedAt())
-                    .updatedAt(jobStat.getUpdatedAt())
-                    .elapsedTime(elapsedTime)
-                    .failureNotes(jobStat.getFailureNotes())
-                    .actionHash(jobDocument.getActionId())
-                    .build();
-        });
-    }
 
     private List<JobResultDocument> getJobResultDocuments(Page<JobDocument> jobDocuments) {
         List<String> jobIds = jobDocuments.stream().map(JobDocument::getHash).toList();

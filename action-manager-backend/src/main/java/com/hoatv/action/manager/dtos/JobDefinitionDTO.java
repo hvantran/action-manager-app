@@ -34,6 +34,10 @@ public class JobDefinitionDTO implements ImmutableJob {
     private JobCategory jobCategory = JobCategory.IO;
 
     @Setter
+    @JsonProperty("templates")
+    private String contentTemplates;
+    
+    @Setter
     @JsonProperty("content")
     @NotEmpty(message = "Job content cannot be NULL/empty")
     private String jobContent;

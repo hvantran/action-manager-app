@@ -24,6 +24,9 @@ public class JobOverviewDTO {
     @JsonProperty("executionStatus")
     private String jobExecutionStatus;
 
+    @JsonProperty("templates")
+    private String contentTemplates;
+
     @JsonProperty("isSchedule")
     private boolean isSchedule;
 

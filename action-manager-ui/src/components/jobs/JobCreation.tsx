@@ -9,7 +9,7 @@ import { Stack } from '@mui/material';
 import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   DEFAULT_JOB_CONTENT,
   JOB_CATEGORY_VALUES,
@@ -20,6 +20,8 @@ import {
   JobDefinition,
   JobDetailMetadata,
   ROOT_BREADCRUMB,
+  TemplateAPI,
+  TemplateOverview,
   getJobDetails
 } from '../AppConstants';
 import {
@@ -46,9 +48,9 @@ export default function JobCreation() {
     throw new Error("Action is required");
   }
 
-  let initialStepsV3: Array<StepMetadata> = []
   const [processTracking, setCircleProcessOpen] = React.useState(false);
-  const [stepMetadatas, setStepMetadatas] = React.useState(initialStepsV3);
+  const [stepMetadatas, setStepMetadatas] = React.useState<Array<StepMetadata>>([]);
+  const [templateOptions, setTemplateOptions] = React.useState<Array<TemplateOverview>>([]);
   const restClient = new RestClient(setCircleProcessOpen);
 
   let initialTemplateStep: StepMetadata = {
@@ -437,8 +439,59 @@ export default function JobCreation() {
         }
       },
       {
+        propName: 'templates',
+        propLabel: 'Content Templates',
+        propValue: [],
+        disabled: true,
+        layoutProperties: { xs: 12 },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
+        valueElementProperties: { xs: 10 },
+        propType: PropType.Autocomplete,
+        autoCompleteMeta: {
+          isMultiple: true,
+          options: [],
+          limitTags: 5,
+          filterSelectedOptions: true,
+          isOptionEqualToValue(option: TemplateOverview, value: TemplateOverview) {
+              return option.templateName === value.templateName
+          },
+          getOptionLabel: (option: TemplateOverview) => {
+            return option.templateName
+          },
+          onChange: function (event, value: Array<TemplateOverview>, reason) {
+            const templateContent = value
+            .map(p => `
+//*************** ${p.templateName} ***************
+${p.templateText}
+              `)
+            .join("\n\n");
+
+            switch (reason) {
+              case 'selectOption':
+              case 'clear':
+              case 'removeOption':
+              case 'createOption':
+              case 'blur':
+                setPropertyMetadata(onChangeProperty("content", templateContent));
+                setPropertyMetadata(onChangeProperty("templates", value));
+                break
+            }
+          },
+          onSearchTextChangeEvent: function (event: any) {
+            let propValue = event.target.value;
+            TemplateAPI.search(propValue, restClient, (templateOverviews) => {
+              setPropertyMetadata(onChangeProperty("templates", templateOverviews, undefined, (property: PropertyMetadata) => {
+                if (property.autoCompleteMeta) {
+                  property.autoCompleteMeta.options = templateOverviews;
+                }
+              }));
+            })
+          }
+        }
+      },
+      {
         propName: 'content',
-        propLabel: 'Job Content',
+        propLabel: 'Content',
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
@@ -469,6 +522,15 @@ export default function JobCreation() {
   ]
 
   React.useEffect(() => {
+
+    TemplateAPI.search("", restClient, (templateOverviews) => {
+      setPropertyMetadata(onChangeProperty("templates", templateOverviews, undefined, (property: PropertyMetadata) => {
+        if (property.autoCompleteMeta) {
+          property.autoCompleteMeta.options = templateOverviews;
+        }
+      }));
+    })
+
     setStepMetadatas(initialStepMetadatas);
     if (copyJobId) {
       JobAPI.load(copyJobId, restClient, (jobDetail: JobDetailMetadata) => {

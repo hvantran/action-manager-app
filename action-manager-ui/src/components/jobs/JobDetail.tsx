@@ -37,6 +37,8 @@ import {
   JobAPI,
   JobDetailMetadata,
   ROOT_BREADCRUMB,
+  TemplateAPI,
+  TemplateOverview,
   isAllDependOnPropsValid
 } from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
@@ -262,7 +264,6 @@ export default function JobDetail() {
         propLabel: 'Configurations',
         isRequired: true,
         propValue: '{}',
-
         disabled: true,
         propDefaultValue: '{}',
         layoutProperties: { xs: 12 },
@@ -282,13 +283,63 @@ export default function JobDetail() {
         }
       },
       {
+        propName: 'templates',
+        propLabel: 'Content Templates',
+        propValue: [],
+        disabled: true,
+        layoutProperties: { xs: 12 },
+        labelElementProperties: { xs: 2, sx: { pl: 10 } },
+        valueElementProperties: { xs: 10 },
+        propType: PropType.Autocomplete,
+        autoCompleteMeta: {
+          isMultiple: true,
+          options: [],
+          limitTags: 5,
+          filterSelectedOptions: true,
+          isOptionEqualToValue(option: TemplateOverview, value: TemplateOverview) {
+              return option.templateName === value.templateName
+          },
+          getOptionLabel: (option: TemplateOverview) => {
+            return option.templateName
+          },
+          onChange: function (event, value: Array<TemplateOverview>, reason) {
+            const templateContent = value
+            .map(p => `
+//*************** ${p.templateName} ***************
+${p.templateText}
+              `)
+            .join("\n\n");
+
+            switch (reason) {
+              case 'selectOption':
+              case 'clear':
+              case 'removeOption':
+              case 'createOption':
+              case 'blur':
+                setPropertyMetadata(onChangeProperty("content", templateContent));
+                setPropertyMetadata(onChangeProperty("templates", value));
+                break
+            }
+          },
+          onSearchTextChangeEvent: function (event: any) {
+            let propValue = event.target.value;
+            TemplateAPI.search(propValue, restClient, (templateOverviews) => {
+              setPropertyMetadata(onChangeProperty("templates", templateOverviews, undefined, (property: PropertyMetadata) => {
+                if (property.autoCompleteMeta) {
+                  property.autoCompleteMeta.options = templateOverviews;
+                }
+              }));
+            })
+          }
+        }
+      },
+      {
         propName: 'content',
         propLabel: 'Job Content',
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
         isRequired: true,
-
         disabled: true,
         propValue: "",
         propDefaultValue: "",
@@ -319,17 +370,45 @@ export default function JobDetail() {
     <Typography key="3" color="text.primary">{jobId}</Typography>
   ];
 
+  const onLoad = () => {
 
-
-  React.useEffect(() => {
+    TemplateAPI.search("", restClient, (templateOverviews) => {
+      setPropertyMetadata(onChangeProperty("templates", templateOverviews, undefined, (property: PropertyMetadata) => {
+        if (property.autoCompleteMeta) {
+          property.autoCompleteMeta.options = templateOverviews;
+        }
+      }));
+    })
     JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
       jobName.current = jobDetail.name
       setIsPausedJob(jobDetail.status === "PAUSED")
+      const valueCallback = (property: PropertyMetadata, value: any) => {
+        return property.propValue = property.propName === 'templates' ? JSON.parse(value) : value
+      }
       Object.keys(jobDetail).forEach((propertyName: string) => {
-        setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
+        let rawPropValue = jobDetail[propertyName as keyof JobDetailMetadata]
+        setPropertyMetadata(
+          onChangeProperty(
+            propertyName,
+            rawPropValue,
+            undefined,
+            valueCallback
+          ));
       })
     })
-  }, [jobId, restClient])
+  }
+
+  const onPause = () => {
+    setIsPausedJob(true);
+    JobAPI.pause(jobId, jobName.current, restClient);
+  }
+
+  const onResume = () => {
+    setIsPausedJob(false);
+    JobAPI.resume(actionId, jobId, jobName.current, restClient);
+  }
+
+  React.useEffect(onLoad, [jobId, restClient])
 
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'template-details',
@@ -378,7 +457,7 @@ export default function JobDetail() {
         onClick: () => setDeleteConfirmationDialogOpen(true)
       },
       {
-        actionIcon: <PlayCircleIcon/>,
+        actionIcon: <PlayCircleIcon />,
         visible: isPausedJob,
         actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
           <InfoIcon />
@@ -386,13 +465,10 @@ export default function JobDetail() {
         </Box>,
         actionLabel: "Resume",
         actionName: "resumeAction",
-        onClick: () => {
-          setIsPausedJob(false);
-          JobAPI.resume(actionId, jobId, jobName.current, restClient);
-        }
+        onClick: onResume
       },
       {
-        actionIcon: <PauseCircleOutline/>,
+        actionIcon: <PauseCircleOutline />,
         visible: !isPausedJob,
         actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
           <InfoIcon />
@@ -400,22 +476,13 @@ export default function JobDetail() {
         </Box>,
         actionLabel: "Pause",
         actionName: "pauseAction",
-        onClick: () => {
-          setIsPausedJob(true);
-          JobAPI.pause(jobId, jobName.current, restClient);
-        }
+        onClick: onPause
       },
       {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh",
         actionName: "refreshAction",
-        onClick: () =>
-          JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
-            setIsPausedJob(jobDetail.status === "PAUSED")
-            Object.keys(jobDetail).forEach((propertyName: string) => {
-              setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
-            })
-          })
+        onClick: onLoad
       }
     ],
     properties: propertyMetadata

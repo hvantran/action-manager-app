@@ -29,6 +29,7 @@ export const JOB_STATUS_SELECTION: Array<SelectionData> = [
 ]
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
+export const TEMPLATE_BACKEND_URL: string = `${process.env.REACT_APP_TEMPLATE_MANAGER_BACKEND_URL}/template-manager/templates`
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
 let Collectors = Java.type('java.util.stream.Collectors');
 let StreamSupport = Java.type('java.util.stream.StreamSupport');
@@ -140,6 +141,7 @@ export interface JobDefinition {
   scheduleInterval: number | undefined
   status: string | undefined
   createdAt?: number | undefined
+  templates: string
 }
 
 export interface ActionDefinition {
@@ -170,6 +172,15 @@ export interface ActionDetails {
   actionConfigurations: string
 }
 
+export interface TemplateOverview {
+    uuid: string
+    templateName: string
+    dataTemplateJSON: string
+    templateText: string
+    createdAt: number
+    updatedAt: number
+}
+
 export interface JobOverview {
   hash: string
   actionHash: string
@@ -196,6 +207,7 @@ export interface JobDetailMetadata {
   scheduleInterval?: number
   createdAt?: number
   status?: string
+  templates: string
 }
 
 export const isAllDependOnPropsValid = (dependOnArr: Array<any>, properties: Array<PropertyMetadata> | undefined): boolean => {
@@ -233,17 +245,18 @@ export const getActionDefinition = (properties: Array<PropertyMetadata>): Action
 
 export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
 
-  let name = findPropertyByCondition(properties, property => property.propName.startsWith("name"))?.propValue;
-  let description = findPropertyByCondition(properties, property => property.propName.startsWith("description"))?.propValue;
-  let configurations = findPropertyByCondition(properties, property => property.propName.startsWith("configurations"))?.propValue;
-  let content = findPropertyByCondition(properties, property => property.propName.startsWith("content"))?.propValue;
-  let isAsync = findPropertyByCondition(properties, property => property.propName.startsWith("isAsync"))?.propValue;
-  let category = findPropertyByCondition(properties, property => property.propName.startsWith("category"))?.propValue;
-  let outputTargets = findPropertyByCondition(properties, property => property.propName.startsWith("outputTargets"))?.propValue;
-  let isScheduled = findPropertyByCondition(properties, property => property.propName.startsWith("isScheduled"))?.propValue;
-  let scheduleInterval = findPropertyByCondition(properties, property => property.propName.startsWith("scheduleInterval"))?.propValue;
-  let status = findPropertyByCondition(properties, property => property.propName.startsWith("status"))?.propValue;
-
+  const name = findPropertyByCondition(properties, property => property.propName.startsWith("name"))?.propValue;
+  const description = findPropertyByCondition(properties, property => property.propName.startsWith("description"))?.propValue;
+  const configurations = findPropertyByCondition(properties, property => property.propName.startsWith("configurations"))?.propValue;
+  const content = findPropertyByCondition(properties, property => property.propName.startsWith("content"))?.propValue;
+  const isAsync = findPropertyByCondition(properties, property => property.propName.startsWith("isAsync"))?.propValue;
+  const category = findPropertyByCondition(properties, property => property.propName.startsWith("category"))?.propValue;
+  const outputTargets = findPropertyByCondition(properties, property => property.propName.startsWith("outputTargets"))?.propValue;
+  const isScheduled = findPropertyByCondition(properties, property => property.propName.startsWith("isScheduled"))?.propValue;
+  const scheduleInterval = findPropertyByCondition(properties, property => property.propName.startsWith("scheduleInterval"))?.propValue;
+  const status = findPropertyByCondition(properties, property => property.propName.startsWith("status"))?.propValue;
+  const templateArrays = findPropertyByCondition(properties, property => property.propName.startsWith("templates"))?.propValue;
+  const templates = JSON.stringify(templateArrays)
   return {
     name,
     category,
@@ -254,6 +267,7 @@ export const getJobDefinition = (properties: Array<PropertyMetadata>) => {
     isAsync,
     status,
     isScheduled,
+    templates,
     scheduleInterval: isScheduled ? scheduleInterval : 0
   } as JobDefinition
 
@@ -532,6 +546,21 @@ export class ActionAPI {
   }
 }
 
+export class TemplateAPI {
+
+  static async search(name: string, restClient: RestClient, successCallback: (templateOverviews: Array<TemplateOverview>) => void) {
+    const requestOptions = {
+      method: "GET",
+      headers: {}
+    }
+    const targetURL = `${TEMPLATE_BACKEND_URL}/search?name=${name}`;
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      let templateOverviews = await response.json() as Array<TemplateOverview>;
+      successCallback(templateOverviews)
+      return undefined
+    });
+  }
+}
 
 export class JobAPI {
   static update = async (jobId: string, restClient: RestClient, propertyMetadata: Array<PropertyMetadata>, successCallback: () => void) => {

@@ -33,6 +33,10 @@ public class JobDetailDTO {
     private String jobCategory = JobCategory.IO.name();
 
     @Setter
+    @JsonProperty("templates")
+    private String contentTemplates;
+    
+    @Setter
     @JsonProperty("content")
     @NotEmpty(message = "Job content cannot be NULL/empty")
     private String jobContent;

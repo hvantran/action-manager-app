@@ -26,6 +26,7 @@ public class JobDocument implements ImmutableJob {
 
     private JobCategory jobCategory;
     private String jobContent;
+    private String contentTemplates;
     private String jobDescription;
     private String configurations;
     private String jobName;
