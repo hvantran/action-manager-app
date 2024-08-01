@@ -4,13 +4,14 @@ import AddTaskTwoToneIcon from '@mui/icons-material/AddTaskTwoTone';
 import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 
-import { Stack } from '@mui/material';
+import { Chip, Stack } from '@mui/material';
 
 import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
+  CHIP_RANDOM_COLOR,
   DEFAULT_JOB_CONTENT,
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
@@ -22,6 +23,7 @@ import {
   ROOT_BREADCRUMB,
   TemplateAPI,
   TemplateOverview,
+  findPropertyByCondition,
   getJobDetails
 } from '../AppConstants';
 import {
@@ -442,7 +444,6 @@ export default function JobCreation() {
         propName: 'templates',
         propLabel: 'Content Templates',
         propValue: [],
-        disabled: true,
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
@@ -453,29 +454,53 @@ export default function JobCreation() {
           limitTags: 5,
           filterSelectedOptions: true,
           isOptionEqualToValue(option: TemplateOverview, value: TemplateOverview) {
-              return option.templateName === value.templateName
+            return option.templateName === value.templateName
           },
           getOptionLabel: (option: TemplateOverview) => {
             return option.templateName
           },
+          renderTags: (value: Array<TemplateOverview>, getTagProps) =>
+            value.map((option, index) => {
+              const { key, ...tagProps } = getTagProps({ index });
+              return (
+                <Chip
+                  key={key}
+                  label={option.templateName}
+                  sx={{
+                    backgroundColor: CHIP_RANDOM_COLOR[Math.floor(Math.random() * CHIP_RANDOM_COLOR.length)],
+                    color: 'white'
+                  }}
+                  {...tagProps}
+                />
+              );
+            })
+          ,
           onChange: function (event, value: Array<TemplateOverview>, reason) {
             const templateContent = value
-            .map(p => `
-//*************** ${p.templateName} ***************
-${p.templateText}
-              `)
-            .join("\n\n");
+              .map(p => `//*************** ${p.templateName} ***************\n${p.templateText}`)
+              .join("\n\n");
 
-            switch (reason) {
-              case 'selectOption':
-              case 'clear':
-              case 'removeOption':
-              case 'createOption':
-              case 'blur':
-                setPropertyMetadata(onChangeProperty("content", templateContent));
-                setPropertyMetadata(onChangeProperty("templates", value));
-                break
-            }
+
+            const templateProperty = findPropertyByCondition(propertyMetadata, property => property.propName.startsWith("templates"))
+            const configurationProperty = findPropertyByCondition(propertyMetadata, property => property.propName.startsWith("configurations"))
+            const allOptions = templateProperty?.autoCompleteMeta?.options;
+            const allOptionsArr = allOptions as Array<TemplateOverview>
+            const allTemplateConfigurations = allOptionsArr
+              .map(p => JSON.parse(p.dataTemplateJSON))
+              .reduce((previousValue, currentValue) => { return { ...previousValue, ...currentValue } }, {});
+            const currentConfigurations = JSON.parse(configurationProperty?.propValue)
+
+            const customOwnConfigurations: any = {}
+            Object.keys(currentConfigurations)
+              .filter(p => !allTemplateConfigurations.hasOwnProperty(p))
+              .forEach(p => customOwnConfigurations[p] = currentConfigurations[p])
+
+            const configurations = value
+              .map(p => JSON.parse(p.dataTemplateJSON))
+              .reduce((previousValue, currentValue) => { return { ...previousValue, ...currentValue } }, customOwnConfigurations);
+            setPropertyMetadata(onChangeProperty("content", templateContent));
+            setPropertyMetadata(onChangeProperty("templates", value));
+            setPropertyMetadata(onChangeProperty("configurations", JSON.stringify(configurations, undefined, 2)))
           },
           onSearchTextChangeEvent: function (event: any) {
             let propValue = event.target.value;

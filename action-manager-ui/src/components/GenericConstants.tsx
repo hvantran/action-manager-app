@@ -1,6 +1,6 @@
 import { LanguageSupport } from '@codemirror/language';
 import { ViewUpdate } from "@codemirror/view";
-import { AutocompleteChangeDetails, AutocompleteChangeReason, SelectChangeEvent, createTheme } from '@mui/material';
+import { AutocompleteChangeDetails, AutocompleteChangeReason, AutocompleteOwnerState, AutocompleteRenderGetTagProps, SelectChangeEvent, createTheme } from '@mui/material';
 import * as React from 'react';
 import { Link } from "react-router-dom";
 import { Slide, ToastOptions, toast } from 'react-toastify';
@@ -229,6 +229,7 @@ export interface SelectionMetadata {
 }
 
 export interface AutocompleteMeta {
+    renderTags?: ((value: any[], getTagProps: AutocompleteRenderGetTagProps, ownerState: AutocompleteOwnerState<any, boolean, false, false, "div">) => React.ReactNode) | undefined;
     isOptionEqualToValue: ((option: any, value: any) => boolean) | undefined;
     options: Array<any>
     isMultiple?: boolean

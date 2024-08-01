@@ -27,6 +27,10 @@ export const JOB_STATUS_SELECTION: Array<SelectionData> = [
   { label: "PAUSED", value: "PAUSED" },
   { label: "ACTIVE", value: "ACTIVE" }
 ]
+export const CHIP_RANDOM_COLOR = [
+  '#2C5F2D', '#CC313D', '#20948B', '#1995AD',
+  '#2F3C7E', '#101820', '#990011', '#00246B'
+];
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/actions`
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager/v1/jobs`
 export const TEMPLATE_BACKEND_URL: string = `${process.env.REACT_APP_TEMPLATE_MANAGER_BACKEND_URL}/template-manager/templates`
@@ -173,12 +177,12 @@ export interface ActionDetails {
 }
 
 export interface TemplateOverview {
-    uuid: string
-    templateName: string
-    dataTemplateJSON: string
-    templateText: string
-    createdAt: number
-    updatedAt: number
+  uuid: string
+  templateName: string
+  dataTemplateJSON: string
+  templateText: string
+  createdAt: number
+  updatedAt: number
 }
 
 export interface JobOverview {
