@@ -1,6 +1,6 @@
 import { LanguageSupport } from '@codemirror/language';
 import { ViewUpdate } from "@codemirror/view";
-import { SelectChangeEvent, createTheme } from '@mui/material';
+import { AutocompleteChangeDetails, AutocompleteChangeReason, SelectChangeEvent, createTheme } from '@mui/material';
 import * as React from 'react';
 import { Link } from "react-router-dom";
 import { Slide, ToastOptions, toast } from 'react-toastify';
@@ -50,11 +50,15 @@ export function onchangeStepDefault(propName: string, propValue: any, stepMetada
     };
 }
 
-export function onChangeProperty(propName: string, propValue: any, propertyCallback?: (property: PropertyMetadata) => void): React.SetStateAction<PropertyMetadata[]> {
+export function onChangeProperty(propName: string, propValue: any, propertyCallback?: (property: PropertyMetadata) => void, valueCallback?: (property: PropertyMetadata, value: any) => void): React.SetStateAction<PropertyMetadata[]> {
     return previous => {
         return [...previous].map((prop) => {
             if (prop.propName === propName) {
-                prop.propValue = propValue;
+                if (valueCallback) {
+                    valueCallback(prop, propValue)
+                } else {
+                    prop.propValue = propValue;
+                }
             }
             if (propertyCallback) {
                 propertyCallback(prop);
@@ -194,7 +198,8 @@ export enum PropType {
     Textarea,
     Selection,
     CodeEditor,
-    Switcher
+    Switcher,
+    Autocomplete
 }
 
 export interface TextFieldMetadata {
@@ -223,6 +228,18 @@ export interface SelectionMetadata {
     onChangeEvent: (event: SelectChangeEvent, child: React.ReactNode) => void
 }
 
+export interface AutocompleteMeta {
+    isOptionEqualToValue: ((option: any, value: any) => boolean) | undefined;
+    options: Array<any>
+    isMultiple?: boolean
+    filterSelectedOptions?: boolean
+    getOptionLabel: (option: any) => string
+    onChange: (event: React.SyntheticEvent, value: any, reason: AutocompleteChangeReason, details?: AutocompleteChangeDetails) => void
+    onSearchTextChangeEvent: React.ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement> | undefined | any
+    limitTags?: number
+    defaultValue?: Array<any>
+}
+
 export interface PropertyMetadata {
     propName: string
     propValue: any
@@ -245,6 +262,7 @@ export interface PropertyMetadata {
     textFieldMeta?: TextFieldMetadata
     textareaFieldMeta?: TextFieldMetadata
     switcherFieldMeta?: SwitcherFieldMeta
+    autoCompleteMeta?: AutocompleteMeta
 
 }
 

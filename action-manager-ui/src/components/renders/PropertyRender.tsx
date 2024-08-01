@@ -1,6 +1,6 @@
-import { Box, FormControl, Grid, IconButton, Input, MenuItem, Select, Switch, TextField, Tooltip } from '@mui/material';
-import * as React from 'react';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
+import { Autocomplete, Box, FormControl, Grid, Input, MenuItem, Select, Switch, TextField, Tooltip } from '@mui/material';
+import * as React from 'react';
 import { PropType, PropertyMetadata } from '../GenericConstants';
 import CodeEditor from '../common/CodeEditor';
 
@@ -91,6 +91,31 @@ export default function PropertyRender(props: any) {
             )
             break;
 
+        case PropType.Autocomplete:
+            if (!property.autoCompleteMeta) {
+                throw new Error(`autoCompleteMeta is required for ${property.propName} selection property`);
+            }
+            let autoCompleteMeta = property.autoCompleteMeta;
+            renderNode = (
+                <Autocomplete
+                    key={property.propName}
+                    multiple={autoCompleteMeta.isMultiple}
+                    limitTags={autoCompleteMeta.limitTags}
+                    id={property.propName}
+                    isOptionEqualToValue={autoCompleteMeta.isOptionEqualToValue}
+                    value={property.propValue}
+                    disabled={property.disabled}
+                    options={autoCompleteMeta.options}
+                    filterSelectedOptions={autoCompleteMeta.filterSelectedOptions}
+                    getOptionLabel={autoCompleteMeta.getOptionLabel}
+                    defaultValue={autoCompleteMeta.defaultValue}
+                    onChange={autoCompleteMeta.onChange}
+                    renderInput={ (params) => <TextField {...params} onChange={autoCompleteMeta.onSearchTextChangeEvent} placeholder="..." />}
+                    sx={{ width: '100%' }}
+                />
+            )
+            break;
+
         case PropType.InputText:
         default:
             if (!property.textFieldMeta) {
@@ -119,9 +144,9 @@ export default function PropertyRender(props: any) {
                     <Box {...property.labelElementProperties.sx}>
                         <label>{property.propLabel} {property.isRequired ? (<span>*</span>) : (<span />)}</label>
                         {
-                            property.info && 
+                            property.info &&
                             <Tooltip title={property.info}>
-                                <HelpRoundedIcon sx={{fontSize: 12}}  style={{position:"relative", top: '-5px', left: '-2px'}}/>
+                                <HelpRoundedIcon sx={{ fontSize: 12 }} style={{ position: "relative", top: '-5px', left: '-2px' }} />
                             </Tooltip>
                         }
                     </Box>

@@ -32,7 +32,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
             <Box display="flex" key={pageName + "-box-actions"} justifyContent="flex-end" sx={{ px: 2 }}>
                 {
                     primaryActions.map(action => {
-                        return (action.visible==true || action.visible==undefined) && (
+                        return (action.visible === true || action.visible === undefined) && (
                             <IconButton
                                 key={action.actionName}
                                 onClick={action.onClick}
@@ -121,7 +121,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     } else if (pageEntityActions) {
         gridItems.push((<Grid item xs={12} key="grid-actions" justifyContent="flex-end">
             <Box display="flex" key={pageName + "-box-actions"} justifyContent="flex-end">{pageEntityActions.map(action => {
-                return (action.visible==true || action.visible==undefined) && (
+                return (action.visible === true || action.visible === undefined) && (
                     <IconButton
                         key={action.actionName}
                         onClick={action.onClick}
