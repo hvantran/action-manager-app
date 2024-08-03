@@ -111,7 +111,7 @@ export default function PropertyRender(props: any) {
                     defaultValue={autoCompleteMeta.defaultValue}
                     onChange={autoCompleteMeta.onChange}
                     renderTags={autoCompleteMeta.renderTags}
-                    renderInput={(params) => <TextField {...params} onChange={autoCompleteMeta.onSearchTextChangeEvent} placeholder="..." />}
+                    renderInput={(params) => <TextField {...params} name={property.propName} onChange={autoCompleteMeta.onSearchTextChangeEvent} placeholder="..." />}
                     sx={{ width: '100%' }}
                 />
             )

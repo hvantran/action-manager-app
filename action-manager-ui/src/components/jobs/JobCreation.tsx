@@ -239,8 +239,8 @@ export default function JobCreation() {
         }
       },
       {
-        propName: 'content',
-        propLabel: 'Job Content',
+        propName: 'Content Script',
+        propLabel: 'Content Script',
         isRequired: true,
         propValue: DEFAULT_JOB_CONTENT,
         propType: PropType.CodeEditor,
@@ -442,7 +442,7 @@ export default function JobCreation() {
       },
       {
         propName: 'templates',
-        propLabel: 'Content Templates',
+        propLabel: 'Templates',
         propValue: [],
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
@@ -451,7 +451,7 @@ export default function JobCreation() {
         autoCompleteMeta: {
           isMultiple: true,
           options: [],
-          limitTags: 5,
+          limitTags: 4,
           filterSelectedOptions: true,
           isOptionEqualToValue(option: TemplateOverview, value: TemplateOverview) {
             return option.templateName === value.templateName
@@ -462,15 +462,19 @@ export default function JobCreation() {
           renderTags: (value: Array<TemplateOverview>, getTagProps) =>
             value.map((option, index) => {
               const { key, ...tagProps } = getTagProps({ index });
+              const properties = {
+                ...{
+                  sx: {
+                    backgroundColor: CHIP_RANDOM_COLOR[Math.floor(Math.random() * CHIP_RANDOM_COLOR.length)],
+                    color: 'white'
+                  }
+                }, ...tagProps
+              }
               return (
                 <Chip
                   key={key}
                   label={option.templateName}
-                  sx={{
-                    backgroundColor: CHIP_RANDOM_COLOR[Math.floor(Math.random() * CHIP_RANDOM_COLOR.length)],
-                    color: 'white'
-                  }}
-                  {...tagProps}
+                  {...properties}
                 />
               );
             })
@@ -515,8 +519,8 @@ export default function JobCreation() {
         }
       },
       {
-        propName: 'content',
-        propLabel: 'Content',
+        propName: 'Content Script',
+        propLabel: 'Content Script',
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },

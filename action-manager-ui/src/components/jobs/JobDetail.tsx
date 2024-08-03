@@ -296,7 +296,7 @@ export default function JobDetail() {
         autoCompleteMeta: {
           isMultiple: true,
           options: [],
-          limitTags: 5,
+          limitTags: 4,
           filterSelectedOptions: true,
           isOptionEqualToValue(option: TemplateOverview, value: TemplateOverview) {
             return option.templateName === value.templateName
@@ -360,8 +360,8 @@ export default function JobDetail() {
         }
       },
       {
-        propName: 'content',
-        propLabel: 'Job Content',
+        propName: 'Content Script',
+        propLabel: 'Content Script',
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
         valueElementProperties: { xs: 10 },
