@@ -168,7 +168,7 @@ export default function ActionCreation() {
         switcherFieldMeta: {
           onChangeEvent: function (event, propValue) {
             let propName = event.target.name;
-            let jobIndex = propName.replace('category', '');
+            let jobIndex = propName.replace('isAsync', '');
             setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
               if (propertyMetadata.propName === `category${jobIndex}`) {
                 propertyMetadata.disabled = !propValue;
@@ -227,7 +227,7 @@ export default function ActionCreation() {
         switcherFieldMeta: {
           onChangeEvent: function (event, propValue) {
             let propName = event.target.name;
-            let jobIndex = propName.replace('scheduleInterval', '');
+            let jobIndex = propName.replace('isScheduled', '');
             setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
               if (propertyMetadata.propName === `scheduleInterval${jobIndex}`) {
                 propertyMetadata.disabled = !propValue;
@@ -457,7 +457,7 @@ export default function ActionCreation() {
             let propName = event.target.name;
             let jobIndex = propName.replace('isAsync', '');
             setStepMetadatas(onchangeStepDefault(propName, propValue, undefined, (propertyMetadata) => {
-              if (propertyMetadata.propName === `jobCategory${jobIndex}`) {
+              if (propertyMetadata.propName === `category${jobIndex}`) {
                 propertyMetadata.disabled = !propValue;
               }
             }));
