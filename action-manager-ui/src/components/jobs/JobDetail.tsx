@@ -360,7 +360,7 @@ export default function JobDetail() {
         }
       },
       {
-        propName: 'Content Script',
+        propName: 'content',
         propLabel: 'Content Script',
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },

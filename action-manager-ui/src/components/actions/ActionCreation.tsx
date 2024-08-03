@@ -392,7 +392,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'Content Script',
+        propName: 'content',
         propLabel: 'Content Script',
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
@@ -666,7 +666,7 @@ export default function ActionCreation() {
         }
       },
       {
-        propName: 'Content Script',
+        propName: 'content',
         propLabel: 'Content Script',
         isRequired: true,
         propValue: DEFAULT_JOB_CONTENT,

@@ -239,7 +239,7 @@ export default function JobCreation() {
         }
       },
       {
-        propName: 'Content Script',
+        propName: 'content',
         propLabel: 'Content Script',
         isRequired: true,
         propValue: DEFAULT_JOB_CONTENT,
@@ -519,7 +519,7 @@ export default function JobCreation() {
         }
       },
       {
-        propName: 'Content Script',
+        propName: 'content',
         propLabel: 'Content Script',
         layoutProperties: { xs: 12 },
         labelElementProperties: { xs: 2, sx: { pl: 10 } },
