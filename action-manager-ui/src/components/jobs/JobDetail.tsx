@@ -445,7 +445,7 @@ export default function JobDetail() {
       saveActionMeta,
       {
         actionIcon:
-          <Link underline="hover" key="1" color="black" target="_blank" href={`${process.env.REACT_APP_TROUBLESHOOTING_BASE_URL}app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now%2Fd,to:now%2Fd))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',key:jobName.keyword,negate:!f,params:(query:${jobName}),type:phrase),query:(match_phrase:(jobName.keyword:${jobName})))),index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',interval:auto,query:(language:kuery,query:''),sort:!(!('@timestamp',desc)))`} rel="noopener noreferrer">
+          <Link underline="hover" key="1" color="black" target="_blank" href={`${process.env.REACT_APP_TROUBLESHOOTING_BASE_URL}app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now%2Fd,to:now%2Fd))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',key:jobName.keyword,negate:!f,params:(query:${jobName.current}),type:phrase),query:(match_phrase:(jobName.keyword:${jobName.current})))),index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',interval:auto,query:(language:kuery,query:''),sort:!(!('@timestamp',desc)))`} rel="noopener noreferrer">
             <TroubleshootIcon />
           </Link>,
         actionLabel: "Troubleshoot",
