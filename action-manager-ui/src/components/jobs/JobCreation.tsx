@@ -563,6 +563,7 @@ export default function JobCreation() {
     setStepMetadatas(initialStepMetadatas);
     if (copyJobId) {
       JobAPI.load(copyJobId, restClient, (jobDetail: JobDetailMetadata) => {
+        jobDetail.templates = JSON.parse(jobDetail.templates)
         jobDetail.name = `${jobDetail.name}-Copy`
         Object.keys(jobDetail).forEach((propertyName: string) => {
           setPropertyMetadata(onChangeProperty(propertyName, jobDetail[propertyName as keyof JobDetailMetadata]));
