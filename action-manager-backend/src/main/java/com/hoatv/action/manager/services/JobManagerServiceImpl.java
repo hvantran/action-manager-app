@@ -208,7 +208,6 @@ public class JobManagerServiceImpl implements JobManagerService {
             return;
         }
 
-        LOGGER.info("Pause job {} - hash: {}", jobName, jobHash);
         jobDocument.setJobStatus(JobStatus.PAUSED);
         if (jobDocument.isScheduled()) {
             scheduledJobRegistry.entrySet().stream()
