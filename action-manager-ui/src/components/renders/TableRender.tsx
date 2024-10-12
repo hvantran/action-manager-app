@@ -43,7 +43,12 @@ export default function TableRender(props: TableMetadata) {
                         <TableRow>
                             {props.columns.map((column) => (
                                 <TableCell
-                                    sx={{ display: column.isHidden ? 'none' : 'table-cell' }}
+                                    sx={{
+                                        display: column.isHidden ? 'none' : 'table-cell',
+                                        fontWeight: 'bold',
+                                        backgroundColor: '#f5f5f5',
+                                        borderBottom: '2px solid black'
+                                    }}
                                     key={column.id}
                                     align={column.align}
                                     style={{ minWidth: column.minWidth }}
@@ -72,8 +77,8 @@ export default function TableRender(props: TableMetadata) {
                                                                     onClick={action.onClick(row)}
                                                                     color="primary"
                                                                     aria-label="Next"
-                                                                    component="label" 
-                                                                    
+                                                                    component="label"
+
                                                                     {...action.properties}>
                                                                     <Tooltip title={action.actionLabel}>
                                                                         {action.actionIcon}
