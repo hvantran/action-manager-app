@@ -311,7 +311,8 @@ export interface PagingOptionMetadata {
     component: string | "div"
     pageSize: number
     pageIndex: number
-    onPageChange: (pageIndex: number, pageSize: number) => void
+    orderBy: string
+    onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => void
 }
 
 export interface PagingResult {
@@ -322,6 +323,7 @@ export interface PagingResult {
 }
 
 export interface TableMetadata {
+    name: string
     columns: Array<ColumnMetadata>
     pagingOptions: PagingOptionMetadata
     pagingResult: PagingResult
@@ -329,6 +331,11 @@ export interface TableMetadata {
     onMouseWheelClick?: (record: any) => any
 }
 
+export interface TabMetadata {
+    name: string
+    properties?: Array<PropertyMetadata>
+    tableMetadata?: TableMetadata
+}
 
 export interface PageEntityMetadata {
     pageName: string
@@ -338,6 +345,7 @@ export interface PageEntityMetadata {
     breadcumbsMeta?: Array<React.ReactNode>
     pageEntityActions?: Array<GenericActionMetadata>
     properties?: Array<PropertyMetadata>
+    tabMetadata?: Array<TabMetadata>
 }
 
 export interface StepMetadata extends EntityMetadata {

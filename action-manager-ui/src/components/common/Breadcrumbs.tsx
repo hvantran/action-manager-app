@@ -10,6 +10,7 @@ export default function BreadcrumbsComponent(props: any) {
         <Breadcrumbs
             separator={<NavigateNextIcon fontSize="small" />}
             aria-label="breadcrumb"
+            sx={{fontWeight: 'bold'}}
         >
             {breadcrumbs1}
         </Breadcrumbs>

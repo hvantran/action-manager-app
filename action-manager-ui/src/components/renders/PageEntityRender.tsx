@@ -1,15 +1,52 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { Box, Divider, Grid, IconButton, Stack, Tooltip } from '@mui/material';
+import { Box, Divider, Grid, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import * as React from 'react';
-import { PageEntityMetadata } from '../GenericConstants';
+import { PageEntityMetadata, PropertyMetadata, TableMetadata } from '../GenericConstants';
 import BreadcrumbsComponent from '../common/Breadcrumbs';
 import FloatingSpeedDialButtons from '../common/FloatingActions';
 import PropertyRender from './PropertyRender';
 import StepperRender from './StepperRender';
 import TableRender from './TableRender';
 
+
+interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
+
+function CustomTabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+
+    return (
+        <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`simple-tabpanel-${index}`}
+            aria-labelledby={`simple-tab-${index}`}
+            {...other}
+        >
+            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        </div>
+    );
+}
+
+const renderProperties = (pageName: string, propertiesMetadata: Array<PropertyMetadata>, tabId = ''): React.ReactNode => {
+    return (
+        <Box key={pageName + tabId + "-properties"}>
+            <Grid container spacing={2} sx={{ py: 1 }}>
+                {propertiesMetadata
+                    .map((propertyMeta, index) => {
+                        return (
+                            <PropertyRender key={`${propertyMeta.propName}-${index}`} property={propertyMeta} />
+                        )
+                    })}
+            </Grid>
+        </Box>
+    )
+}
 export default function PageEntityRender(props: PageEntityMetadata) {
     let floatingActions = props.floatingActions
     let stepMetadatas = props.stepMetadatas
@@ -18,9 +55,16 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     let propertiesMetadata = props.properties
     let pageEntityActions = props.pageEntityActions
     let pageName = props.pageName
+    let tabMetadatas = props.tabMetadata
 
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
     const open = Boolean(anchorEl);
+
+    const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
+        setCurrentTabIndex(newValue);
+    };
+
 
     let nodes: Array<React.ReactNode> = []
     let gridItems: Array<React.ReactNode> = [];
@@ -139,20 +183,48 @@ export default function PageEntityRender(props: PageEntityMetadata) {
         </Grid>))
         gridItems.push((<Grid key="line" item xs={12}><Divider /></Grid>))
     }
-    nodes.push((<Grid container key={pageName} spacing={2}>{gridItems}</Grid>));
-    if (propertiesMetadata) {
+    if (gridItems.length > 1) {
+        nodes.push((<Grid container key={pageName} spacing={2}>{gridItems}</Grid>));
+    }
+    if (tabMetadatas) {
         nodes.push((
-            <Box key={pageName + "-properties"}>
-                <Grid container spacing={2} sx={{ py: 1 }}>
-                    {propertiesMetadata
-                        .map((propertyMeta, index) => {
-                            return (
-                                <PropertyRender key={propertyMeta.propName} property={propertyMeta} />
-                            )
-                        })}
-                </Grid>
+            <Box sx={{ width: '100%' }}>
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <Tabs
+                        value={currentTabIndex}
+                        onChange={handleChangeTab}
+                        textColor="primary"
+                        indicatorColor="primary"
+                        aria-label="primary tabs"
+                    >
+                        {tabMetadatas
+                            .map((tabMetadata, index) => {
+                                return (
+                                    <Tab label={tabMetadata.name} {... {
+                                        id: `simple-tab-${index}`,
+                                        'aria-controls': `simple-tabpanel-${index}`,
+                                    }} />
+                                )
+                            })}
+                    </Tabs>
+                </Box>
+
+                {tabMetadatas
+                    .map((tabMetadata, index) => {
+                        let tableMetadata: TableMetadata | undefined = tabMetadata.tableMetadata
+                        let propertyMetadata: Array<PropertyMetadata> | undefined = tabMetadata.properties
+                        return (
+                            <CustomTabPanel value={currentTabIndex} index={index}>
+                                {tableMetadata ? <TableRender key={pageName + tabMetadata.name + '-table'} {...tableMetadata} /> : <></>}
+                                {propertyMetadata ? renderProperties(pageName, propertyMetadata, tabMetadata.name) : <></>}
+                            </CustomTabPanel>
+                        )
+                    })}
             </Box>
         ))
+    }
+    if (propertiesMetadata) {
+        nodes.push(renderProperties(pageName, propertiesMetadata))
     }
     if (floatingActions) {
         nodes.push(<FloatingSpeedDialButtons key={pageName + '-floating-actions'} actions={floatingActions} />)
