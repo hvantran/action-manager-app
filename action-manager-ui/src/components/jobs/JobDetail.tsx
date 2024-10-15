@@ -9,7 +9,7 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SaveIcon from '@mui/icons-material/Save';
-import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
+import PestControlIcon from '@mui/icons-material/PestControl';
 
 import { Box, Chip, Stack } from '@mui/material';
 import Link from '@mui/material/Link';
@@ -446,8 +446,8 @@ export default function JobDetail() {
       {
         actionIcon:
           <Link underline="hover" key="1" color="black" target="_blank" href={`${process.env.REACT_APP_TROUBLESHOOTING_BASE_URL}app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now%2Fd,to:now%2Fd))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',key:jobName.keyword,negate:!f,params:(query:${jobName.current}),type:phrase),query:(match_phrase:(jobName.keyword:${jobName.current})))),index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',interval:auto,query:(language:kuery,query:''),sort:!(!('@timestamp',desc)))`} rel="noopener noreferrer">
-            <TroubleshootIcon />
-          </Link>,
+            <PestControlIcon sx={{color: red[900]}}/>
+            </Link>,
         actionLabel: "Troubleshoot",
         actionName: "troubleshootAction",
         isSecondary: true
