@@ -30,6 +30,7 @@ import PageEntityRender from '../renders/PageEntityRender';
 
 const pageIndexStorageKey = "action-manager-action-archive-table-page-index"
 const pageSizeStorageKey = "action-manager-action-archive-table-page-size"
+const orderByStorageKey = "action-manager-job-table-order"
 
 export default function ActionArchive() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
@@ -37,6 +38,7 @@ export default function ActionArchive() {
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
   const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
   const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)))
+  const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-name'));
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
@@ -146,7 +148,7 @@ export default function ActionArchive() {
           onClick: (row: ActionOverview) => {
             return () => {
               return ActionAPI.restore(row.hash, restClient, () => {
-                ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
+                ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
               });
             }
           }
@@ -161,7 +163,7 @@ export default function ActionArchive() {
             setConfirmationDialogContent(previous => <p>Are you sure you want to delete permanently <b>{row.name}</b> action?</p>)
             setConfirmationDialogPositiveAction(previous => () => ActionAPI.deleteAction(row.hash, restClient, () => {
               setDeleteConfirmationDialogOpen(false);
-              ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+              ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
             }));
             setDeleteConfirmationDialogOpen(true)
           }
@@ -171,24 +173,29 @@ export default function ActionArchive() {
   ];
 
   React.useEffect(() => {
-    ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+    ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
   }, [pageIndex, pageSize])
 
   let pagingOptions: PagingOptionMetadata = {
     pageIndex,
     pageSize,
+    orderBy,
     component: 'div',
     rowsPerPageOptions: [5, 10, 20],
-    onPageChange: (pageIndex: number, pageSize: number) => {
+    onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
       setPageIndex(pageIndex);
       setPageSize(pageSize);
+      setOrderBy(orderBy);
       LocalStorageService.put(pageIndexStorageKey, pageIndex)
       LocalStorageService.put(pageSizeStorageKey, pageSize)
+      LocalStorageService.put(orderByStorageKey, orderBy)
+      ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
     }
   }
 
   let tableMetadata: TableMetadata = {
     columns,
+    name: 'Overview',
     pagingOptions: pagingOptions,
     pagingResult: pagingResult
   }
@@ -203,7 +210,7 @@ export default function ActionArchive() {
         actionLabel: "Refresh action",
         actionName: "refreshAction",
         onClick: () => {
-          ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+          ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
         }
       }
     ]

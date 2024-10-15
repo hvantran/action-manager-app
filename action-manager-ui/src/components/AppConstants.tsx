@@ -307,7 +307,12 @@ export class ActionAPI {
       return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
-  static loadTrashSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult: PagingResult) => void) => {
+  static loadTrashSummarysAsync = async (
+    pageIndex: number, 
+    pageSize: number, 
+    orderBy: string,
+    restClient: RestClient, 
+    successCallback: (pageingResult: PagingResult) => void) => {
     const requestOptions = {
       method: "GET",
       headers: {
@@ -315,7 +320,7 @@ export class ActionAPI {
       }
     }
 
-    const targetURL = `${ACTION_MANAGER_API_URL}/trash?pageIndex=${pageIndex}&pageSize=${pageSize}`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/trash?pageIndex=${pageIndex}&pageSize=${pageSize}&orderBy=${orderBy}`;
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let actionPagingResult = await response.json() as PagingResult;
       successCallback(actionPagingResult);
@@ -326,7 +331,12 @@ export class ActionAPI {
     });
   }
 
-  static loadActionSummarysAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (pageingResult: PagingResult) => void) => {
+  static loadActionSummarysAsync = async (
+    pageIndex: number, 
+    pageSize: number, 
+    orderBy: string,
+    restClient: RestClient, 
+    successCallback: (pageingResult: PagingResult) => void) => {
     const requestOptions = {
       method: "GET",
       headers: {
@@ -334,7 +344,7 @@ export class ActionAPI {
       }
     }
 
-    const targetURL = `${ACTION_MANAGER_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}`;
+    const targetURL = `${ACTION_MANAGER_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&orderBy=${orderBy}`;
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let actionPagingResult = await response.json() as PagingResult;
       successCallback(actionPagingResult);
@@ -371,7 +381,13 @@ export class ActionAPI {
     });
   }
 
-  static loadRelatedJobsAsync = async (pageIndex: number, pageSize: number, targetAction: string, restClient: RestClient, successCallback: (data: PagingResult) => void) => {
+  static loadRelatedJobsAsync = async (
+    pageIndex: number, 
+    pageSize: number, 
+    orderBy: string,
+    targetAction: string, 
+    restClient: RestClient, 
+    successCallback: (data: PagingResult) => void) => {
     const requestOptions = {
       method: "GET",
       headers: {
@@ -379,7 +395,7 @@ export class ActionAPI {
       }
     }
 
-    const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(targetAction)}/jobs?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(targetAction)}/jobs?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}&orderBy=${orderBy}`;
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let responseJSON = await response.json() as PagingResult;
       successCallback(responseJSON);
@@ -655,7 +671,12 @@ export class JobAPI {
     });
   }
 
-  static loadRelatedJobsAsync = async (pageIndex: number, pageSize: number, restClient: RestClient, successCallback: (data: any) => void) => {
+  static loadRelatedJobsAsync = async (
+    pageIndex: number, 
+    pageSize: number, 
+    orderBy: string,
+    restClient: RestClient, 
+    successCallback: (data: any) => void) => {
     const requestOptions = {
       method: "GET",
       headers: {
@@ -663,7 +684,7 @@ export class JobAPI {
       }
     }
 
-    const targetURL = `${JOB_MANAGER_API_URL}?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}`;
+    const targetURL = `${JOB_MANAGER_API_URL}?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}&orderBy=${orderBy}`;
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let responseJSON = await response.json() as PagingResult;
       successCallback(responseJSON);

@@ -39,6 +39,7 @@ import PageEntityRender from '../renders/PageEntityRender';
 
 const pageIndexStorageKey = "action-manager-action-table-page-index"
 const pageSizeStorageKey = "action-manager-action-table-page-size"
+const orderByStorageKey = "action-manager-action-table-order"
 
 
 export default function ActionSummary() {
@@ -47,7 +48,8 @@ export default function ActionSummary() {
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
   const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
-  const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)))
+  const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
+  const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-name'));
   const restClient = new RestClient(setCircleProcessOpen);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
@@ -161,7 +163,7 @@ export default function ActionSummary() {
           actionName: "favoriteAction",
           onClick: (row: ActionOverview) => {
             return () => ActionAPI.setFavoriteAction(row.hash, true, restClient, () => {
-              ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+              ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
             });
           }
         },
@@ -173,7 +175,7 @@ export default function ActionSummary() {
           actionName: "unFavoriteAction",
           onClick: (row: ActionOverview) => {
             return () => ActionAPI.setFavoriteAction(row.hash, false, restClient, () => {
-              ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+              ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
             });
           }
         },
@@ -187,7 +189,7 @@ export default function ActionSummary() {
               setConfirmationDialogTitle("Archive")
               setConfirmationDialogContent(previous => <p>Are you sure you want to archive <b>{row.name}</b> action?</p>)
               setConfirmationDialogPositiveAction(previous => () => ActionAPI.archive(row.hash, restClient, () => {
-                ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+                ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
                 setDeleteConfirmationDialogOpen(previous => !previous);
               }))
               setDeleteConfirmationDialogOpen(previous => !previous)
@@ -217,7 +219,7 @@ export default function ActionSummary() {
   ];
 
   React.useEffect(() => {
-    ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+    ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
   }, [pageIndex, pageSize])
 
   const actions: Array<SpeedDialActionMetadata> = [
@@ -236,18 +238,23 @@ export default function ActionSummary() {
   let pagingOptions: PagingOptionMetadata = {
     pageIndex,
     pageSize,
+    orderBy,
     component: 'div',
     rowsPerPageOptions: [5, 10, 20],
-    onPageChange: (pageIndex: number, pageSize: number) => {
+    onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
       setPageIndex(pageIndex);
       setPageSize(pageSize);
+      setOrderBy(orderBy);
       LocalStorageService.put(pageIndexStorageKey, pageIndex)
       LocalStorageService.put(pageSizeStorageKey, pageSize)
+      LocalStorageService.put(orderByStorageKey, orderBy)
+      ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
     }
   }
 
   let tableMetadata: TableMetadata = {
     columns,
+    name: 'Overview',
     onRowClickCallback: (row: ActionOverview) => navigate(`/actions/${row.hash}`),
     pagingOptions: pagingOptions,
     pagingResult: pagingResult
@@ -260,7 +267,7 @@ export default function ActionSummary() {
     let uploadFormData = new FormData()
     uploadFormData.append('file', importAction.files[0])
     ActionAPI.importFromFile(uploadFormData, restClient, (actionName) => {
-      ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+      ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
     })
   }
 
@@ -292,7 +299,7 @@ export default function ActionSummary() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
+        onClick: () => ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
       }
     ]
   }

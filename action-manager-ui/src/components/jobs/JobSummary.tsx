@@ -31,6 +31,7 @@ import { red } from '@mui/material/colors';
 
 const pageIndexStorageKey = "action-manager-job-table-page-index"
 const pageSizeStorageKey = "action-manager-job-table-page-size"
+const orderByStorageKey = "action-manager-job-table-order"
 
 export default function JobSummary() {
   const navigate = useNavigate();
@@ -39,7 +40,8 @@ export default function JobSummary() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
   const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
-  const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)))
+  const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
+  const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-updatedAt'));
   const restClient = new RestClient(setCircleProcessOpen);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
@@ -153,24 +155,28 @@ export default function JobSummary() {
   ];
 
   React.useEffect(() => {
-    JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult);
+    JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
   }, [])
 
   let pagingOptions: PagingOptionMetadata = {
     pageIndex,
     component: 'div',
+    orderBy,
     pageSize,
     rowsPerPageOptions: [5, 10, 20],
-    onPageChange: (pageIndex: number, pageSize: number) => {
+    onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
       setPageIndex(pageIndex);
       setPageSize(pageSize);
+      setOrderBy(orderBy);
       LocalStorageService.put(pageIndexStorageKey, pageIndex)
       LocalStorageService.put(pageSizeStorageKey, pageSize)
-      JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult);
+      LocalStorageService.put(orderByStorageKey, orderBy)
+      JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
     }
   }
 
   let tableMetadata: TableMetadata = {
+    name: 'Overview',
     columns,
     onRowClickCallback(row) {
       navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
@@ -188,7 +194,7 @@ export default function JobSummary() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult)
+        onClick: () => JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult)
       }
     ]
   }
@@ -203,7 +209,7 @@ export default function JobSummary() {
       },
       positiveAction() {
           JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
-            JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, restClient, setPagingResult);
+            JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
           });
           setDeleteConfirmationDialogOpen(false);
       }

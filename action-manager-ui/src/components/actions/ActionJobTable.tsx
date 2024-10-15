@@ -30,6 +30,7 @@ import { ActionContext } from './ActionProvider';
 
 const pageIndexStorageKey = "action-manager-action-job-table-page-index"
 const pageSizeStorageKey = "action-manager-action-job-table-page-size"
+const orderByStorageKey = "action-manager-job-table-order"
 
 export default function ActionJobTable(props: any) {
 
@@ -44,6 +45,7 @@ export default function ActionJobTable(props: any) {
     const [pagingResult, setPagingResult] = React.useState(initialPagingResult)
     const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
     const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)))
+    const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-name'));
     const restClient = new RestClient(setCircleProcessOpen)
     const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
@@ -179,7 +181,7 @@ export default function ActionJobTable(props: any) {
 
 
     React.useEffect(() => {
-        ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, actionId, restClient, (data) => {
+        ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, actionId, restClient, (data) => {
             setPagingResult(data)
             const numberOfFailureJobs = data.content.filter(p => p.executionStatus === 'FAILURE').length
             setNumberOfFailureJobs(numberOfFailureJobs)
@@ -189,14 +191,17 @@ export default function ActionJobTable(props: any) {
     let pagingOptions: PagingOptionMetadata = {
         pageIndex,
         component: 'div',
+        orderBy,
         pageSize,
         rowsPerPageOptions: [5, 10, 20],
-        onPageChange: (pageIndex: number, pageSize: number) => {
-            setPageIndex(pageIndex);
-            setPageSize(pageSize);
-            LocalStorageService.put(pageIndexStorageKey, pageIndex)
-            LocalStorageService.put(pageSizeStorageKey, pageSize)
-            ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, actionId, restClient, (data) => {
+        onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
+          setPageIndex(pageIndex);
+          setPageSize(pageSize);
+          setOrderBy(orderBy);
+          LocalStorageService.put(pageIndexStorageKey, pageIndex)
+          LocalStorageService.put(pageSizeStorageKey, pageSize)
+          LocalStorageService.put(orderByStorageKey, orderBy)
+            ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, actionId, restClient, (data) => {
                 setPagingResult(data)
             });
         }
@@ -212,6 +217,7 @@ export default function ActionJobTable(props: any) {
 
     let tableMetadata: TableMetadata = {
         columns,
+        name: 'Job Table',
         onRowClickCallback,
         onMouseWheelClick,
         pagingOptions: pagingOptions,
@@ -233,7 +239,7 @@ export default function ActionJobTable(props: any) {
         },
         positiveAction() {
             JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
-                ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, actionId, restClient, (data) => {
+                ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, actionId, restClient, (data) => {
                     setPagingResult(data)
                     const numberOfFailureJobs = data.content.filter(p => p.executionStatus === 'FAILURE').length
                     setNumberOfFailureJobs(numberOfFailureJobs)
