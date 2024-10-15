@@ -64,14 +64,43 @@ export default function ActionArchive() {
   }
 
   const columns: ColumnMetadata[] = [
-    { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
-    { id: 'name', label: 'Name', minWidth: 100 },
+    { 
+      id: 'hash', 
+      label: 'Hash', 
+      minWidth: 100, 
+      isHidden: true, 
+      isKeyColumn: true 
+    },
+    { 
+      id: 'name', 
+      label: 'Name', 
+      isSortable: true,
+      minWidth: 100 
+    },
     {
       id: 'status',
       label: 'Status',
       minWidth: 170,
+      isSortable: true,
       align: 'left',
       format: (value: string) => value,
+    },
+    {
+      id: 'createdAt',
+      label: 'Created at',
+      isSortable: true,
+      minWidth: 170,
+      align: 'left',
+      format: (value: number) => {
+
+        if (!value) {
+          return "";
+        }
+
+        let createdAtDate = new Date(0);
+        createdAtDate.setUTCSeconds(value);
+        return createdAtDate.toISOString();
+      }
     },
     {
       id: 'numberOfJobs',
@@ -121,22 +150,6 @@ export default function ActionArchive() {
         </Badge>
     },
     {
-      id: 'createdAt',
-      label: 'Created at',
-      minWidth: 170,
-      align: 'left',
-      format: (value: number) => {
-
-        if (!value) {
-          return "";
-        }
-
-        let createdAtDate = new Date(0);
-        createdAtDate.setUTCSeconds(value);
-        return createdAtDate.toISOString();
-      }
-    },
-    {
       id: 'actions',
       label: '',
       align: 'right',
@@ -174,7 +187,7 @@ export default function ActionArchive() {
 
   React.useEffect(() => {
     ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
-  }, [pageIndex, pageSize])
+  }, [pageIndex, pageSize, orderBy])
 
   let pagingOptions: PagingOptionMetadata = {
     pageIndex,

@@ -300,6 +300,7 @@ export interface ColumnMetadata {
     isHidden?: boolean
     minWidth?: number
     isKeyColumn?: boolean
+    isSortable?: boolean
     align?: "center" | "right" | "left" | "inherit" | "justify" | undefined
     format?: any
     actions?: Array<ColumnActionMetadata>

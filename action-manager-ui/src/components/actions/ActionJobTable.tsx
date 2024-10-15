@@ -50,12 +50,24 @@ export default function ActionJobTable(props: any) {
     const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
     const columns: ColumnMetadata[] = [
-        { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
-        { id: 'name', label: 'Name', minWidth: 100 },
+        { 
+            id: 'hash', 
+            label: 'Hash', 
+            minWidth: 100, 
+            isHidden: true, 
+            isKeyColumn: true 
+        },
+        { 
+            id: 'name', 
+            label: 'Name', 
+            isSortable: true,
+            minWidth: 100 
+        },
         {
             id: 'status',
             label: 'Status',
             minWidth: 100,
+            isSortable: true,
             align: 'left',
             format: (value: string) => value
         },
@@ -83,6 +95,7 @@ export default function ActionJobTable(props: any) {
         {
             id: 'startedAt',
             label: 'Started At',
+            isSortable: true,
             minWidth: 100,
             align: 'left',
             format: (value: number) => {
@@ -97,6 +110,7 @@ export default function ActionJobTable(props: any) {
         {
             id: 'updatedAt',
             label: 'Last run',
+            isSortable: true,
             minWidth: 100,
             align: 'left',
             format: (value: number) => {

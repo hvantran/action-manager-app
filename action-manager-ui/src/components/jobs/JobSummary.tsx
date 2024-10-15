@@ -55,11 +55,23 @@ export default function JobSummary() {
   ];
 
   const columns: ColumnMetadata[] = [
-    { id: 'hash', label: 'Hash', minWidth: 100, isHidden: true, isKeyColumn: true },
-    { id: 'name', label: 'Name', minWidth: 100 },
+    { 
+      id: 'hash', 
+      label: 'Hash', 
+      minWidth: 100, 
+      isHidden: true, 
+      isKeyColumn: true 
+    },
+    { 
+      id: 'name', 
+      label: 'Name', 
+      isSortable: true,
+      minWidth: 100
+    },
     {
       id: 'status',
       label: 'Status',
+      isSortable: true,
       minWidth: 100,
       align: 'left',
       format: (value: string) => value
@@ -67,6 +79,7 @@ export default function JobSummary() {
     {
       id: 'state',
       label: 'Execution State',
+      isSortable: true,
       minWidth: 100,
       align: 'left',
       format: (value: number) => value.toLocaleString('en-US'),
@@ -74,12 +87,14 @@ export default function JobSummary() {
     {
       id: 'executionStatus',
       label: 'Execution Status',
+      isSortable: true,
       minWidth: 100,
       align: 'left',
       format: (value: string) => (<JobStatus status={value} />)
     },
     {
       id: 'schedule',
+      isSortable: true,
       label: 'Type',
       minWidth: 100,
       align: 'left',
@@ -88,6 +103,7 @@ export default function JobSummary() {
     {
       id: 'startedAt',
       label: 'Started At',
+      isSortable: true,
       minWidth: 100,
       align: 'left',
       format: (value: number) => {
@@ -101,7 +117,8 @@ export default function JobSummary() {
     },
     {
       id: 'updatedAt',
-      label: 'Last run',
+      label: 'Updated At',
+      isSortable: true,
       minWidth: 100,
       align: 'left',
       format: (value: number) => {

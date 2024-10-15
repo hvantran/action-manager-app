@@ -100,12 +100,12 @@ export default function TableRender(props: TableMetadata) {
                                     align={column.align}
                                     style={{ minWidth: column.minWidth }}
                                 >
-                                    <TableSortLabel
+                                    {column.isSortable ? <TableSortLabel
                                         active={orderBy.replace('-', '') === column.id}
                                         direction={orderBy.replace('-', '') === column.id ? (orderBy.startsWith('-') ? 'desc' : 'asc') : 'asc'}
                                         onClick={handleChangeOrder(column.id)}>
                                         {column.label}
-                                    </TableSortLabel>
+                                    </TableSortLabel> : column.label}
                                 </StyledTableCell>
                             ))}
                         </StyledTableRow>
