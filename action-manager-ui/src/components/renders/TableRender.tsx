@@ -7,7 +7,6 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import * as React from 'react';
 import { TableMetadata } from '../GenericConstants';
-import FilterListIcon from '@mui/icons-material/FilterList';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
