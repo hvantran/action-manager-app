@@ -721,8 +721,6 @@ export default function ActionCreation() {
           let responseJSON = await response.json();
           let message = `Action ${responseJSON['actionId']} is created`;
           return { 'message': message, key: new Date().getTime() } as SnackbarMessage;
-        }, async (response: Response) => {
-          return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
         });
       }
     }
@@ -752,8 +750,6 @@ export default function ActionCreation() {
     const targetURL = `${ACTION_MANAGER_API_URL}/dryRun`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       return { 'message': "Dry run action successfully", key: new Date().getTime() } as SnackbarMessage;
-    }, async (response: Response) => {
-      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
     });
   }
 

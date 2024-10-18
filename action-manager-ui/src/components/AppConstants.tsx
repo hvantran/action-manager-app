@@ -302,9 +302,6 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
   static loadTrashSummarysAsync = async (
@@ -325,9 +322,6 @@ export class ActionAPI {
       let actionPagingResult = await response.json() as PagingResult;
       successCallback(actionPagingResult);
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -349,9 +343,6 @@ export class ActionAPI {
       let actionPagingResult = await response.json() as PagingResult;
       successCallback(actionPagingResult);
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -375,9 +366,6 @@ export class ActionAPI {
       }
       successCallback(actionDetail);
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -400,8 +388,6 @@ export class ActionAPI {
       let responseJSON = await response.json() as PagingResult;
       successCallback(responseJSON);
       return undefined;
-    }, async (response: Response) => {
-      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -417,9 +403,6 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -451,9 +434,6 @@ export class ActionAPI {
       let responseJSON = await response.json();
       successCallback(responseJSON.name)
       return undefined
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -470,9 +450,6 @@ export class ActionAPI {
       let fileName = response.headers.get('X-DOWNLOAD-FILE-NAME');
       fileDownload(blob, fileName || `${actionName}.zip`)
       return { 'message': "The action is export sucessfully", key: new Date().getTime() } as SnackbarMessage;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -488,9 +465,6 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -506,9 +480,6 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -525,9 +496,6 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       successCallback();
       return undefined
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -543,11 +511,9 @@ export class ActionAPI {
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       successCallback();
       return undefined
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
+
   static replayJob = async (actionId: string, jobId: string, restClient: RestClient) => {
 
     const requestOptions = {
@@ -559,9 +525,6 @@ export class ActionAPI {
     const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/replay`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       return undefined
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 }
@@ -624,8 +587,6 @@ export class JobAPI {
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       successCallback()
       return undefined;
-    }, async (response: Response) => {
-      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -665,9 +626,6 @@ export class JobAPI {
       let jobDetail: JobDetailMetadata = await response.json() as JobDetailMetadata;
       successCallback(jobDetail);
       return undefined;
-    }, async (response: Response) => {
-      let responseJSON = await response.json();
-      return { 'message': responseJSON['message'], key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
@@ -689,8 +647,6 @@ export class JobAPI {
       let responseJSON = await response.json() as PagingResult;
       successCallback(responseJSON);
       return undefined;
-    }, async (response: Response) => {
-      return { 'message': "An interal error occurred during your request!", key: new Date().getTime() } as SnackbarMessage;
     });
   }
 
