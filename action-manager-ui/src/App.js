@@ -12,13 +12,23 @@ import ErrorPage from './components/common/ErrorPage'
 import JobCreation from './components/jobs/JobCreation'
 import JobDetail from './components/jobs/JobDetail'
 import JobSummary from './components/jobs/JobSummary'
+import { DARK_THEME, DEFAULT_THEME, LocalStorageService } from './components/GenericConstants'
+import PrimarySearchAppBar from './ResponsiveAppBar'
+
+const selectThemeStorageKey = "action-manager-enable-dark-theme"
 
 function App () {
-  window._env_ = {}
+  const [toggleDarkMode, setToggleDarkMode] = React.useState(LocalStorageService.getOrDefault(selectThemeStorageKey, false) === 'true');
+  const switchTheme = () => {
+    setToggleDarkMode((previous) => {
+      LocalStorageService.put(selectThemeStorageKey, !previous);
+      return !previous
+    })
+  }
   return (
-    <ThemeProvider theme={DEFAULT_THEME}>
-      <Stack spacing={4}>
-        <PrimarySearchAppBar />
+    <ThemeProvider theme={!toggleDarkMode ? DEFAULT_THEME : DARK_THEME}>
+      <Stack>
+        <PrimarySearchAppBar toggleDarkMode={toggleDarkMode} setToggleDarkMode={switchTheme}/>
         <Routes>
           <Route
             path='/'

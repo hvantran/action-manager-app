@@ -5,7 +5,37 @@ import * as React from 'react';
 import { Link } from "react-router-dom";
 import { Slide, ToastOptions, toast } from 'react-toastify';
 
+export const DARK_THEME = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#90caf9',
+        },
+        secondary: {
+            main: '#f48fb1',
+        }
+    },
+    typography: {
+        fontSize: 13,
+        fontFamily: [
+            '-apple-system',
+            'BlinkMacSystemFont',
+            '"Segoe UI"',
+            'Roboto',
+            '"Helvetica Neue"',
+            'Arial',
+            'sans-serif',
+            '"Apple Color Emoji"',
+            '"Segoe UI Emoji"',
+            '"Segoe UI Symbol"',
+        ].join(','),
+    },
+});
+
 export const DEFAULT_THEME = createTheme({
+    palette: {
+        mode: 'light'
+    },
     typography: {
         fontSize: 13,
         fontFamily: [
@@ -327,6 +357,7 @@ export interface TableMetadata {
     name: string
     columns: Array<ColumnMetadata>
     pagingOptions: PagingOptionMetadata
+    tableContainerCssProps?: any
     pagingResult: PagingResult
     onRowClickCallback?: (record: any) => any
     onMouseWheelClick?: (record: any) => any

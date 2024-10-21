@@ -71,8 +71,8 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     if (breadcrumbsMetadata && pageEntityActions) {
         const secondaryActions = pageEntityActions.filter(p => p.isSecondary)
         const primaryActions = pageEntityActions.filter(p => !p.isSecondary)
-        gridItems.push((<Grid item key="grid-breadcrumbs" xs={6}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
-        gridItems.push((<Grid item key="grid-actions" xs={6} >
+        gridItems.push((<Grid item key="grid-breadcrumbs" xs={6} sx={{marginTop: 4}}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
+        gridItems.push((<Grid item key="grid-actions" xs={6} sx={{marginTop: 4}}>
             <Box display="flex" key={pageName + "-box-actions"} justifyContent="flex-end" sx={{ px: 2 }}>
                 {
                     primaryActions.map(action => {
@@ -126,7 +126,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
                                         action.onClick && action.onClick()
                                         setAnchorEl(null)
                                     }}>
-                                        <Box paddingRight={5} >
+                                        <Box sx={{backgroundColor: 'background.default'}} paddingRight={5} >
                                             <IconButton sx={{ paddingRight: 4 }}
                                                 key={action.actionName}
                                                 aria-label={action.actionLabel}
@@ -160,7 +160,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
         </Grid>))
         gridItems.push((<Grid item key="grid-line" xs={12}><Divider /></Grid>))
     } else if (breadcrumbsMetadata) {
-        gridItems.push((<Grid item key="grid-breadcrumbs" xs={12}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
+        gridItems.push((<Grid item key="grid-breadcrumbs" xs={12} sx={{marginTop: 4}}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
         gridItems.push((<Grid item key="grid-line" xs={12}><Divider /></Grid>))
     } else if (pageEntityActions) {
         gridItems.push((<Grid item xs={12} key="grid-actions" justifyContent="flex-end">
@@ -188,8 +188,8 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     }
     if (tabMetadatas) {
         nodes.push((
-            <Box sx={{ width: '100%' }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ backgroundColor: 'background.default', width: '100%' }}>
+                <Box sx={{ borderBottom: 1, backgroundColor: 'background.default', borderColor: 'divider' }}>
                     <Tabs
                         value={currentTabIndex}
                         onChange={handleChangeTab}
@@ -239,7 +239,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     }
 
     return (
-        <Stack spacing={1} sx={{ px: 2 }}>
+        <Stack spacing={1} sx={{ backgroundColor: 'background.default', px: 2 }}>
             {nodes}
         </Stack>
     )

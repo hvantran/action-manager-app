@@ -48,7 +48,7 @@ export default function ActionCreation() {
   let initialStepsV3: Array<StepMetadata> = []
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [stepMetadatas, setStepMetadatas] = React.useState(initialStepsV3);
-  const restClient = new RestClient(setCircleProcessOpen);
+  const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
   const [actionPropertyMetadata, setActionPropertyMetadata] = React.useState<Array<PropertyMetadata>>(
     [
       {

@@ -31,6 +31,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 export default function TableRender(props: TableMetadata) {
 
     const pagingOptions = props.pagingOptions;
+    const tableContainerCssProps = props.tableContainerCssProps;
     const [page, setPage] = React.useState(pagingOptions.pageIndex);
     const [orderBy, setOrderBy] = React.useState(pagingOptions.orderBy);
     const [rowsPerPage, setRowsPerPage] = React.useState(pagingOptions.pageSize);
@@ -86,7 +87,7 @@ export default function TableRender(props: TableMetadata) {
                 </Typography>
                 <TextField id="standard-basic" sx={{ width: '30%' }} label="Search" variant="standard" />
             </Toolbar>
-            <TableContainer sx={{ maxHeight: 640 }}>
+            <TableContainer sx={{ maxHeight: 640 , ...tableContainerCssProps}}>
                 <Table stickyHeader aria-label="sticky table">
                     <TableHead>
                         <StyledTableRow>

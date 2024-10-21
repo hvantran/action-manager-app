@@ -48,7 +48,7 @@ export default function ActionDetail() {
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
   const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
   const [replayFlag, setReplayActionFlag] = React.useState(false);
-  const restClient = new RestClient(setCircleProcessOpen);
+  const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
   const [numberOfFailureJobs, setNumberOfFailureJobs] = React.useState(0);
 
 

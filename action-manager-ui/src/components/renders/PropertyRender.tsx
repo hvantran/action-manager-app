@@ -1,8 +1,14 @@
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
-import { Autocomplete, Box, FormControl, Grid, Input, MenuItem, Select, Switch, TextField, Tooltip } from '@mui/material';
+import { Autocomplete, Box, FormControl, Grid, Input, MenuItem, Select, styled, Switch, TextField, Tooltip } from '@mui/material';
 import * as React from 'react';
 import { PropType, PropertyMetadata } from '../GenericConstants';
 import CodeEditor from '../common/CodeEditor';
+
+
+const StyledLabel = styled('label')(({ theme }) => ({
+    color: theme.palette.text.primary,
+    fontSize: '1rem',
+}));
 
 export default function PropertyRender(props: any) {
     let property: PropertyMetadata = props.property
@@ -143,7 +149,7 @@ export default function PropertyRender(props: any) {
             <Grid container spacing={2}>
                 <Grid item {...property.labelElementProperties}>
                     <Box {...property.labelElementProperties.sx}>
-                        <label>{property.propLabel} {property.isRequired ? (<span>*</span>) : (<span />)}</label>
+                        <StyledLabel>{property.propLabel} {property.isRequired ? (<span>*</span>) : (<span />)}</StyledLabel>
                         {
                             property.info &&
                             <Tooltip title={property.info}>

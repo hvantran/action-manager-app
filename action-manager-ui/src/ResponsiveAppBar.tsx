@@ -18,6 +18,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { alpha, styled } from '@mui/material/styles';
 import * as React from 'react';
+import DarkModeToggle from './components/common/DarkModeToggle';
 
 const APP_ENVIRONMENT_VARIABLES = window._env_;
 
@@ -53,7 +54,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: 'inherit',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create('width'),
     width: '100%',
@@ -63,7 +63,9 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function PrimarySearchAppBar() {
+export default function PrimarySearchAppBar(props: any) {
+  const setToggleDarkMode = props.setToggleDarkMode
+  const toggleDarkMode = props.toggleDarkMode
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [anchorAppSwicherEl, setAnchorAppSwicherEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
@@ -322,11 +324,15 @@ export default function PrimarySearchAppBar() {
               <MoreIcon />
             </IconButton>
           </Box>
+          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+              <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
+          </Box>
         </Toolbar>
       </AppBar>
       {renderMobileMenu}
       {renderMenu}
       {renderAppSwicherMenu}
+      
     </Box>
   );
 }

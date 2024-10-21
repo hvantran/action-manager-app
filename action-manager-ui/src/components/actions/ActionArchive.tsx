@@ -43,7 +43,7 @@ export default function ActionArchive() {
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
   const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
-  const restClient = new RestClient(setCircleProcessOpen);
+  const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href='#'>
@@ -187,7 +187,7 @@ export default function ActionArchive() {
 
   React.useEffect(() => {
     ActionAPI.loadTrashSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
-  }, [pageIndex, pageSize, orderBy])
+  }, [pageIndex, pageSize, orderBy, restClient])
 
   let pagingOptions: PagingOptionMetadata = {
     pageIndex,

@@ -50,7 +50,7 @@ export default function ActionSummary() {
   const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
   const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
   const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-name'));
-  const restClient = new RestClient(setCircleProcessOpen);
+  const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
@@ -233,7 +233,7 @@ export default function ActionSummary() {
 
   React.useEffect(() => {
     ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
-  }, [pageIndex, pageSize, orderBy])
+  }, [pageIndex, pageSize, orderBy, restClient])
 
   const actions: Array<SpeedDialActionMetadata> = [
     {
