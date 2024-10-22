@@ -232,6 +232,10 @@ export default function PrimarySearchAppBar(props: any) {
         </IconButton>
         <p>Profile</p>
       </MenuItem>
+      <MenuItem onClick={setToggleDarkMode}>
+        <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
+        <p>Enable dark mode</p>
+      </MenuItem>
     </Menu>
   );
 
@@ -275,6 +279,9 @@ export default function PrimarySearchAppBar(props: any) {
               inputProps={{ 'aria-label': 'search' }}
             />
           </Search>
+          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+            <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
+          </Box>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <IconButton size="large" aria-label="show 4 new mails" color="inherit">
               <Badge badgeContent={4} color="error">
