@@ -331,9 +331,6 @@ export default function PrimarySearchAppBar(props: any) {
               <MoreIcon />
             </IconButton>
           </Box>
-          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
-          </Box>
         </Toolbar>
       </AppBar>
       {renderMobileMenu}
