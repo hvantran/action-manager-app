@@ -146,10 +146,10 @@ export default function PrimarySearchAppBar(props: any) {
         direction="row"
         alignItems="center"
         justifyContent="center"
-        style={{ minHeight: '50vh' }}>
+        style={{ minHeight: '30vh' }}>
         <Grid item xs={6}>
           <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_FRONTEND_URL}/templates`)}>
-            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME} src='/template-manager.jpg' width={70} />
+            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME} src='/template-manager.png' width={70} />
             <Typography variant="caption" display="block" gutterBottom>
               {APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME}
             </Typography>
@@ -164,16 +164,8 @@ export default function PrimarySearchAppBar(props: any) {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ECOMMERCE_MANAGER_FRONTEND_URL}/`)}>
-            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ECOMMERCE_MANAGER_NAME} src='/ecommerce-stats.png' width={70} />
-            <Typography variant="caption" display="block" gutterBottom>
-              {APP_ENVIRONMENT_VARIABLES.REACT_APP_ECOMMERCE_MANAGER_NAME}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={6}>
           <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_FRONTEND_URL}/endpoints`)}>
-            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME} src='/rest-api.png' width={70} />
+            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME} src='/data-collection.png' width={70} />
             <Typography variant="caption" display="block" gutterBottom>
               {APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME}
             </Typography>
@@ -336,7 +328,7 @@ export default function PrimarySearchAppBar(props: any) {
       {renderMobileMenu}
       {renderMenu}
       {renderAppSwicherMenu}
-      
+
     </Box>
   );
 }
