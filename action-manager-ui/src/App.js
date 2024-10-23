@@ -1,4 +1,4 @@
-import { Stack, ThemeProvider } from '@mui/material'
+import { Stack, ThemeProvider, CssBaseline } from '@mui/material'
 import React from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
@@ -25,6 +25,7 @@ function App () {
   }
   return (
     <ThemeProvider theme={!toggleDarkMode ? DEFAULT_THEME : DARK_THEME}>
+    <CssBaseline />
       <Stack>
         <PrimarySearchAppBar toggleDarkMode={toggleDarkMode} setToggleDarkMode={switchTheme}/>
         <Routes>
