@@ -39,10 +39,11 @@ export default function JobSummary() {
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
+
   const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
   const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
   const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-updatedAt'));
-  const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
+  const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
   const breadcrumbs = [
@@ -55,16 +56,16 @@ export default function JobSummary() {
   ];
 
   const columns: ColumnMetadata[] = [
-    { 
-      id: 'hash', 
-      label: 'Hash', 
-      minWidth: 100, 
-      isHidden: true, 
-      isKeyColumn: true 
+    {
+      id: 'hash',
+      label: 'Hash',
+      minWidth: 100,
+      isHidden: true,
+      isKeyColumn: true
     },
-    { 
-      id: 'name', 
-      label: 'Name', 
+    {
+      id: 'name',
+      label: 'Name',
       isSortable: true,
       minWidth: 100
     },
@@ -150,24 +151,24 @@ export default function JobSummary() {
       align: 'left',
       actions: [
         {
-            actionIcon: <DeleteForeverIcon />,
-            properties: { sx: { color: red[800] } },
-            actionLabel: "Delete",
-            actionName: "deleteAction",
-            onClick: (row: JobOverview) => () => {
-                selectedJob.current = { jobName: row.name, jobId: row.hash }
-                setDeleteConfirmationDialogOpen(true)
-            }
+          actionIcon: <DeleteForeverIcon />,
+          properties: { sx: { color: red[800] } },
+          actionLabel: "Delete",
+          actionName: "deleteAction",
+          onClick: (row: JobOverview) => () => {
+            selectedJob.current = { jobName: row.name, jobId: row.hash }
+            setDeleteConfirmationDialogOpen(true)
+          }
         },
         {
-        actionIcon: <ReadMoreIcon />,
-        actionLabel: "Job details",
-        actionName: "gotoJobDetail",
-        onClick: (row: JobOverview) => {
-          return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
+          actionIcon: <ReadMoreIcon />,
+          actionLabel: "Job details",
+          actionName: "gotoJobDetail",
+          onClick: (row: JobOverview) => {
+            return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
+          }
         }
-      }
-    ]
+      ]
     }
   ];
 
@@ -180,6 +181,7 @@ export default function JobSummary() {
     component: 'div',
     orderBy,
     pageSize,
+    searchText: "",
     rowsPerPageOptions: [5, 10, 20],
     onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
       setPageIndex(pageIndex);
@@ -216,20 +218,20 @@ export default function JobSummary() {
     ]
   }
   let confirmationDeleteDialogMeta: DialogMetadata = {
-      open: deleteConfirmationDialogOpen,
-      title: "Delete Job",
-      content: <p>Are you sure you want to delete <b>{selectedJob.current.jobName}</b> job?</p>,
-      positiveText: "Yes",
-      negativeText: "No",
-      negativeAction() {
-          setDeleteConfirmationDialogOpen(false);
-      },
-      positiveAction() {
-          JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
-            JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
-          });
-          setDeleteConfirmationDialogOpen(false);
-      }
+    open: deleteConfirmationDialogOpen,
+    title: "Delete Job",
+    content: <p>Are you sure you want to delete <b>{selectedJob.current.jobName}</b> job?</p>,
+    positiveText: "Yes",
+    negativeText: "No",
+    negativeAction() {
+      setDeleteConfirmationDialogOpen(false);
+    },
+    positiveAction() {
+      JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
+        JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
+      });
+      setDeleteConfirmationDialogOpen(false);
+    }
   }
 
   return (

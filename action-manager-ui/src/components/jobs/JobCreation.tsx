@@ -52,7 +52,6 @@ export default function JobCreation() {
 
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [stepMetadatas, setStepMetadatas] = React.useState<Array<StepMetadata>>([]);
-  const [templateOptions, setTemplateOptions] = React.useState<Array<TemplateOverview>>([]);
   const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
 
   let initialTemplateStep: StepMetadata = {

@@ -50,18 +50,18 @@ export default function ActionJobTable(props: any) {
     const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
 
     const columns: ColumnMetadata[] = [
-        { 
-            id: 'hash', 
-            label: 'Hash', 
-            minWidth: 100, 
-            isHidden: true, 
-            isKeyColumn: true 
+        {
+            id: 'hash',
+            label: 'Hash',
+            minWidth: 100,
+            isHidden: true,
+            isKeyColumn: true
         },
-        { 
-            id: 'name', 
-            label: 'Name', 
+        {
+            id: 'name',
+            label: 'Name',
             isSortable: true,
-            minWidth: 100 
+            minWidth: 100
         },
         {
             id: 'status',
@@ -142,28 +142,28 @@ export default function ActionJobTable(props: any) {
             align: 'right',
             actions: [
                 {
-                  actionIcon: <PlayCircleIcon/>,
-                  visible: (row: any) => row.status === "PAUSED",
-                  actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
-                    <InfoIcon />
-                    <p>Paused/Resume function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
-                  </Box>,
-                  actionLabel: "Resume",
-                  actionName: "resumeAction",
-                  onClick: (row: JobOverview) => () => {
-                    JobAPI.resume(actionId, row.hash, row.name, restClient);
-                    setInternalReload((previous: boolean) => !previous)
-                  }
+                    actionIcon: <PlayCircleIcon />,
+                    visible: (row: any) => row.status === "PAUSED",
+                    actionLabelContent: <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+                        <InfoIcon />
+                        <p>Paused/Resume function only support for schedule jobs, <b>doesn't support for one time jobs</b></p>
+                    </Box>,
+                    actionLabel: "Resume",
+                    actionName: "resumeAction",
+                    onClick: (row: JobOverview) => () => {
+                        JobAPI.resume(actionId, row.hash, row.name, restClient);
+                        setInternalReload((previous: boolean) => !previous)
+                    }
                 },
                 {
-                  actionIcon: <PauseCircleOutline/>,
-                  visible: (row: any) => row.status === "ACTIVE",
-                  actionLabel: "Pause",
-                  actionName: "pauseAction",
-                  onClick: (row: JobOverview) => () => {
-                    JobAPI.pause(row.hash, row.name, restClient);
-                    setInternalReload((previous: boolean) => !previous)
-                  }
+                    actionIcon: <PauseCircleOutline />,
+                    visible: (row: any) => row.status === "ACTIVE",
+                    actionLabel: "Pause",
+                    actionName: "pauseAction",
+                    onClick: (row: JobOverview) => () => {
+                        JobAPI.pause(row.hash, row.name, restClient);
+                        setInternalReload((previous: boolean) => !previous)
+                    }
                 },
                 {
                     actionIcon: <ContentCopyIcon />,
@@ -206,15 +206,16 @@ export default function ActionJobTable(props: any) {
         pageIndex,
         component: 'div',
         orderBy,
+        searchText: "",
         pageSize,
         rowsPerPageOptions: [5, 10, 20],
         onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
-          setPageIndex(pageIndex);
-          setPageSize(pageSize);
-          setOrderBy(orderBy);
-          LocalStorageService.put(pageIndexStorageKey, pageIndex)
-          LocalStorageService.put(pageSizeStorageKey, pageSize)
-          LocalStorageService.put(orderByStorageKey, orderBy)
+            setPageIndex(pageIndex);
+            setPageSize(pageSize);
+            setOrderBy(orderBy);
+            LocalStorageService.put(pageIndexStorageKey, pageIndex)
+            LocalStorageService.put(pageSizeStorageKey, pageSize)
+            LocalStorageService.put(orderByStorageKey, orderBy)
             ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, actionId, restClient, (data) => {
                 setPagingResult(data)
             });

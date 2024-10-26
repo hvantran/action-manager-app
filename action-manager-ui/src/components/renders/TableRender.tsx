@@ -1,32 +1,13 @@
-import { IconButton, Paper, styled, TableContainer, TableSortLabel, TextField, Toolbar, Tooltip, Typography } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import { IconButton, Paper, TableContainer, TableSortLabel, Toolbar, Tooltip, Typography } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
 import * as React from 'react';
 import { TableMetadata } from '../GenericConstants';
+import { Search, SearchIconWrapper, StyledInputBase, StyledTableCell, StyledTableRow } from '../common/GenericComponent';
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.head}`]: {
-        fontWeight: 'bold',
-        backgroundColor: theme.palette.primary.main,
-        borderBottom: '2px solid black'
-    },
-    [`&.${tableCellClasses.body}`]: {
-        fontSize: 14,
-    },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-    '&:nth-of-type(odd)': {
-        backgroundColor: theme.palette.action.hover,
-    },
-    '&:last-child td, &:last-child th': {
-        border: 0,
-    },
-}));
 
 export default function TableRender(props: TableMetadata) {
 
@@ -34,11 +15,12 @@ export default function TableRender(props: TableMetadata) {
     const tableContainerCssProps = props.tableContainerCssProps;
     const [page, setPage] = React.useState(pagingOptions.pageIndex);
     const [orderBy, setOrderBy] = React.useState(pagingOptions.orderBy);
+    const [searchText, setSearchText] = React.useState(pagingOptions.searchText);
     const [rowsPerPage, setRowsPerPage] = React.useState(pagingOptions.pageSize);
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(+newPage);
-        props.pagingOptions.onPageChange(newPage, rowsPerPage, orderBy);
+        props.pagingOptions.onPageChange(newPage, rowsPerPage, orderBy, searchText);
     };
     const handleChangeOrder = (orderByColumn: string) => (event: React.MouseEvent<unknown>) => {
         let newOrderBy = orderByColumn
@@ -47,14 +29,25 @@ export default function TableRender(props: TableMetadata) {
             newOrderBy = orderBy.startsWith('-') ? previousColumnName : `-${orderBy}`
         }
         setOrderBy(newOrderBy)
-        props.pagingOptions.onPageChange(page, rowsPerPage, newOrderBy);
+        props.pagingOptions.onPageChange(page, rowsPerPage, newOrderBy, searchText);
     };
 
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPage(0);
         setRowsPerPage(+event.target.value);
-        props.pagingOptions.onPageChange(0, +event.target.value, orderBy);
+        props.pagingOptions.onPageChange(0, +event.target.value, orderBy, searchText);
     };
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        let searchValue = event.target.value;
+        setSearchText(searchValue);
+    };
+
+    const handleBlurSearchChange = () => {
+        setPage(0);
+        props.pagingOptions.onPageChange(0, rowsPerPage, orderBy, searchText);
+    };
+
     let recordTransfromCallback = props.pagingResult.elementTransformCallback
     let pagingContent = props.pagingResult.content;
     const keyColumn = props.columns.find(p => p.isKeyColumn === true)?.id
@@ -68,15 +61,7 @@ export default function TableRender(props: TableMetadata) {
 
     return (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-
-            <Toolbar
-                sx={[
-                    {
-                        pl: { sm: 2 },
-                        pr: { xs: 1, sm: 1 },
-                    }
-                ]}
-            >
+            <Toolbar sx={[{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 }, }]}>
                 <Typography
                     sx={{ flex: '1 1 100%' }}
                     variant="h6"
@@ -85,9 +70,20 @@ export default function TableRender(props: TableMetadata) {
                 >
                     {props.name}
                 </Typography>
-                <TextField id="standard-basic" sx={{ width: '30%' }} label="Search" variant="standard" />
+                {props.visibleSearchbar ? (
+                <Search>
+                    <SearchIconWrapper>
+                        <SearchIcon />
+                    </SearchIconWrapper>
+                    <StyledInputBase
+                        placeholder="Search…"
+                        inputProps={{ 'aria-label': 'search' }}
+                        onChange={handleSearchChange}
+                        onBlur={handleBlurSearchChange}
+                    />
+                </Search>) : <></>}
             </Toolbar>
-            <TableContainer sx={{ maxHeight: 640 , ...tableContainerCssProps}}>
+            <TableContainer sx={{ maxHeight: 640, ...tableContainerCssProps }}>
                 <Table stickyHeader aria-label="sticky table">
                     <TableHead>
                         <StyledTableRow>

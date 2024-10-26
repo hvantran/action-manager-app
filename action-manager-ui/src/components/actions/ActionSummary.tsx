@@ -47,10 +47,11 @@ export default function ActionSummary() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
+
   const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
   const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
   const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-name'));
-  const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
+  const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
@@ -78,18 +79,18 @@ export default function ActionSummary() {
   ];
 
   const columns: ColumnMetadata[] = [
-    { 
-      id: 'hash', 
-      label: 'Hash', 
-      minWidth: 100, 
-      isHidden: true, 
-      isKeyColumn: true 
+    {
+      id: 'hash',
+      label: 'Hash',
+      minWidth: 100,
+      isHidden: true,
+      isKeyColumn: true
     },
-    { 
-      id: 'name', 
-      label: 'Name', 
+    {
+      id: 'name',
+      label: 'Name',
       isSortable: true,
-      minWidth: 100 
+      minWidth: 100
     },
     {
       id: 'status',
@@ -253,6 +254,7 @@ export default function ActionSummary() {
     pageSize,
     orderBy,
     component: 'div',
+    searchText: "",
     rowsPerPageOptions: [5, 10, 20],
     onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
       setPageIndex(pageIndex);
