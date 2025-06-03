@@ -8,6 +8,7 @@ import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
+import com.hoatv.action.manager.dtos.PageResponseDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class JobControllerV1 {
         Sort defaultSorting = Sort.by(Sort.Order.desc(JobDocument.Fields.createdAt));
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getOverviewJobs(PageRequest.of(pageIndex, pageSize, defaultSorting));
-        return ResponseEntity.ok(actionResults);
+        return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
     }
 
     @PutMapping(path = "/{jobId}", consumes = MediaType.APPLICATION_JSON_VALUE)

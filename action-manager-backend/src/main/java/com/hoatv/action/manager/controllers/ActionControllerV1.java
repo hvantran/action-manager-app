@@ -9,6 +9,7 @@ import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
+import com.hoatv.action.manager.dtos.PageResponseDTO;
 import com.hoatv.action.manager.exceptions.EntityNotFoundException;
 import com.hoatv.fwk.common.ultilities.Pair;
 import jakarta.servlet.http.HttpServletResponse;
@@ -68,7 +69,7 @@ public class ActionControllerV1 {
                 ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE);
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
-        return ResponseEntity.ok(actionResults);
+        return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
     }
 
     @GetMapping(value = "/trash", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -80,7 +81,7 @@ public class ActionControllerV1 {
         List<ActionStatus> statuses = List.of(ActionStatus.ARCHIVED);
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
-        return ResponseEntity.ok(actionResults);
+        return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
     }
 
     @GetMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -137,7 +138,7 @@ public class ActionControllerV1 {
         );
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.search(search, PageRequest.of(pageIndex, pageSize, defaultSorting));
-        return ResponseEntity.ok(actionResults);
+        return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
     }
 
     @GetMapping(value = "/{actionId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -148,7 +149,7 @@ public class ActionControllerV1 {
         Sort defaultSorting = Sort.by(Sort.Order.desc(ActionDocument.Fields.createdAt));
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting));
-        return ResponseEntity.ok(actionResults);
+        return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
     }
 
     @PutMapping(path = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
