@@ -10,7 +10,7 @@ import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.dtos.PageResponseDTO;
-import com.hoatv.action.manager.exceptions.EntityNotFoundException;
+import com.hoatv.fwk.common.exceptions.EntityNotFoundException;
 import com.hoatv.fwk.common.ultilities.Pair;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

@@ -29,7 +29,7 @@ import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
-import com.hoatv.action.manager.exceptions.EntityNotFoundException;
+import com.hoatv.fwk.common.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
