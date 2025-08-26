@@ -46,7 +46,7 @@ import com.hoatv.action.manager.services.JobManagerStatistics;
 import com.hoatv.fwk.common.ultilities.Pair;
 
 @WebMvcTest(ActionControllerV1.class)
-@ContextConfiguration(classes = com.hoatv.action.manager.ActionManagerApplication.class)
+@ContextConfiguration(classes = TestConfig.class)
 class ActionControllerV1Test {
 
     @Autowired

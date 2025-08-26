@@ -35,8 +35,8 @@ import com.hoatv.action.manager.repositories.JobDocumentRepository;
 import com.hoatv.action.manager.repositories.JobExecutionResultDocumentRepository;
 import com.hoatv.action.manager.services.JobManagerStatistics;
 
-@WebMvcTest(ActionControllerV1.class)
-@ContextConfiguration(classes = com.hoatv.action.manager.ActionManagerApplication.class)
+@WebMvcTest(JobControllerV1.class)
+@ContextConfiguration(classes = TestConfig.class)
 class JobControllerV1Test {
 
     @Autowired
