@@ -1,4 +1,4 @@
-package com.hoatv.action.manager.config;
+package com.hoatv.action.manager.services;
 
 import com.hoatv.fwk.common.ultilities.StringCommonUtils;
 import com.hoatv.metric.mgmt.annotations.MetricConsumer;
