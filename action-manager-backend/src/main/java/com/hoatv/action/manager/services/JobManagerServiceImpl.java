@@ -552,7 +552,7 @@ public class JobManagerServiceImpl implements JobManagerService {
         if (jobResult instanceof JobResult singleJobResult) {
             ArrayList<MetricTag> metricTags = new ArrayList<>();
             MetricTag metricTag = new MetricTag(String.valueOf(singleJobResult.getData()));
-            metricTag.setAttributes(Map.of("name", metricNamePrefix));
+            metricTag.add("name", metricNamePrefix);
             metricTags.add(metricTag);
             metricService.setMetric(metricNamePrefix, metricTags);
             return;
@@ -570,7 +570,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                 ArrayList<MetricTag> metricTags = new ArrayList<>();
                 MetricTag metricTag = new MetricTag(value);
                 String metricName = metricNamePrefix + "-" + name;
-                metricTag.setAttributes(Map.of("name", metricName));
+                metricTag.add("name", metricName);
                 metricTags.add(metricTag);
                 metricService.setMetric(metricName, metricTags);
             });

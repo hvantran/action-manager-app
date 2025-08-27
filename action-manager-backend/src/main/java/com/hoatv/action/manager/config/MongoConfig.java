@@ -27,6 +27,7 @@ public class MongoConfig {
     @Bean
     public MongoClient getMongoClient() {
         String connectionURI = environment.getProperty("spring.data.mongodb.uri");
+        assert connectionURI != null;
         final ConnectionString connectionString = new ConnectionString(connectionURI);
         final MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
                 .applyConnectionString(connectionString)

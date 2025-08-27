@@ -1,5 +1,7 @@
 package com.hoatv.action.manager.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hoatv.fwk.common.services.CheckedSupplier;
 import com.hoatv.fwk.common.ultilities.StringCommonUtils;
 import com.hoatv.metric.mgmt.annotations.MetricConsumer;
 import com.hoatv.metric.mgmt.consumers.MetricConsumerHandler;
@@ -10,17 +12,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.kafka.core.KafkaTemplate;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.hoatv.fwk.common.ultilities.StringCommonUtils.deAccent;
 
 @MetricConsumer
-public record KafkaMetricConsumer(KafkaTemplate<String, String> kafkaTemplate) implements MetricConsumerHandler {
+public record KafkaMetricConsumer(KafkaTemplate<String, String> kafkaTemplate,
+                                  ObjectMapper objectMapper) implements MetricConsumerHandler {
 
     public static final String UNIT = "unit";
     public static final String NAME_PROPERTY = "name";
@@ -51,51 +51,61 @@ public record KafkaMetricConsumer(KafkaTemplate<String, String> kafkaTemplate) i
     }
 
     private void processSimpleValue(String unit, String name, SimpleValue simpleValue) {
-        sendMessage(name, simpleValue.getValue(), unit);
+        sendMessage(name, simpleValue.getValue().toString());
     }
 
     private void processSimpleValue(String unit, String name, Long simpleValue) {
-        sendMessage(name, simpleValue, unit);
+        sendMessage(name, simpleValue.toString());
     }
 
     private void processSimpleValue(String unit, String name, Double simpleValue) {
-        sendMessage(name, simpleValue, unit);
+        sendMessage(name, simpleValue.toString());
     }
 
-    private void processComplexValue(String unit, String name, ComplexValue complexValue) {
+    private void processComplexValue(String unit, String annotationMetricName, ComplexValue complexValue) {
         Collection<MetricTag> metricTags = complexValue.getTags();
 
         for (MetricTag metricTag : metricTags) {
-            String metricUnit = getMetricUnit(unit, metricTag);
             Map<String, String> attributes = metricTag.getAttributes();
-            String nameTag = attributes.get(NAME_PROPERTY);
-            String metricNameCompute = name;
-            if (Objects.nonNull(nameTag)) {
-                Predicate<Map.Entry<String, String>> filterOutName = p -> !NAME_PROPERTY.equals(p.getKey());
-                Map<String, String> newAttributes =
-                        attributes.entrySet()
-                                .stream()
-                                .filter(filterOutName)
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                String nameReplaced = nameTag.toLowerCase().replace(" ", "-");
-                String attNames = newAttributes.values().stream().map(StringCommonUtils::deAccent).collect(Collectors.joining("-"));
-
-                StringJoiner stringJoiner = new StringJoiner("-");
-                stringJoiner.add(deAccent(nameReplaced));
-                if (StringUtils.isNotEmpty(attNames)) {
-                    stringJoiner.add(attNames);
+            String metricNameCompute = getMetricName(annotationMetricName, attributes);
+            CheckedSupplier<String> metricValueSupplier = () -> {
+                // In case the Metric Tag attributes are empty, or just have only one name prop.
+                // Just return the metric value
+                // Otherwise, return the metric tag json object
+                if (attributes.isEmpty() || attributes.size() == 1 && attributes.containsKey(NAME_PROPERTY)) {
+                    return metricTag.getValue();
                 }
-
-                metricNameCompute = stringJoiner.toString();
-            } else {
-                metricNameCompute = name.concat(attributes.toString());
-            }
-            sendMessage(metricNameCompute, metricTag, metricUnit);
+                return objectMapper.writeValueAsString(metricTag);
+            };
+            sendMessage(metricNameCompute, metricValueSupplier.get());
         }
     }
 
-    private void sendMessage(String name, Object value, String unit) {
-        kafkaTemplate.send(name, "%s%s".formatted(value, unit));
+    private static String getMetricName(String annotationMetricName, Map<String, String> attributes) {
+        String nameTag = attributes.getOrDefault(NAME_PROPERTY, annotationMetricName)
+                .toLowerCase()
+                .replace(" ", "-");
+        List<String> restPropNames =
+                attributes.keySet()
+                        .stream()
+                        .filter(Predicate.not(NAME_PROPERTY::equals))
+                        .toList();
+
+        StringJoiner stringJoiner = new StringJoiner("-");
+        stringJoiner.add(nameTag);
+        if (!restPropNames.isEmpty()) {
+            String propNames = restPropNames.stream()
+                    .map(String::toLowerCase)
+                    .map(prop -> prop.replace(" ", "-"))
+                    .map(StringCommonUtils::deAccent)
+                    .collect(Collectors.joining("-"));
+            stringJoiner.add(propNames);
+        }
+        return stringJoiner.toString();
+    }
+
+    private void sendMessage(String name, String value) {
+        kafkaTemplate.send(name, value);
     }
 
     private String getMetricUnit(String unit, Object value) {

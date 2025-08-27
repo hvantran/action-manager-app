@@ -6,6 +6,7 @@ import com.hoatv.metric.mgmt.entities.ComplexValue;
 import com.hoatv.metric.mgmt.services.MetricService;
 import com.hoatv.task.mgmt.services.ScheduleTaskMgmtService;
 import com.hoatv.task.mgmt.services.TaskMgmtServiceV1;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -24,12 +25,16 @@ public class JobManagerStatistics {
 
     private final AtomicLong numberOfFailureJobs = new AtomicLong(0);
 
+    @Setter
     private TaskMgmtServiceV1 ioTaskMgmtService;
 
+    @Setter
     private MetricService metricService;
 
+    @Setter
     private TaskMgmtServiceV1 cpuTaskMgmtService;
 
+    @Setter
     private ScheduleTaskMgmtService scheduleTaskMgmtService;
 
     public void setTotalNumberOfJobs(long totalNumberOfJobs) {
@@ -54,22 +59,6 @@ public class JobManagerStatistics {
 
     public void decreaseNumberOfProcessingJobs() {
         this.numberOfActiveJobs.decrementAndGet();
-    }
-
-    public void setMetricService(MetricService metricService) {
-        this.metricService = metricService;
-    }
-
-    public void setIoTaskMgmtService(TaskMgmtServiceV1 ioTaskMgmtService) {
-        this.ioTaskMgmtService = ioTaskMgmtService;
-    }
-
-    public void setCpuTaskMgmtService(TaskMgmtServiceV1 cpuTaskMgmtService) {
-        this.cpuTaskMgmtService = cpuTaskMgmtService;
-    }
-
-    public void setScheduleTaskMgmtService(ScheduleTaskMgmtService scheduleTaskMgmtService) {
-        this.scheduleTaskMgmtService = scheduleTaskMgmtService;
     }
 
     @Metric(name = JOB_MANAGER_METRIC_NAME_PREFIX)
