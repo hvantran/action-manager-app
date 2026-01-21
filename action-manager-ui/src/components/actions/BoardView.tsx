@@ -1,4 +1,4 @@
-import { Box, Grid } from '@mui/material';
+import { Box } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RestClient } from '../GenericConstants';
@@ -26,18 +26,38 @@ export default function BoardView({ restClient, refreshTrigger }: BoardViewProps
         minHeight: 'calc(100vh - 200px)'
       }}
     >
-      <Grid container spacing={2}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          minWidth: 'fit-content'
+        }}
+      >
         {statusOrder.map((status) => (
-          <Grid item xs={12} sm={6} md={2.4} key={status}>
+          <Box
+            key={status}
+            sx={{
+              flex: '0 0 auto',
+              width: {
+                xs: '100%',
+                sm: 'calc(50% - 8px)',
+                md: 'calc(20% - 12.8px)'
+              },
+              minWidth: {
+                xs: '280px',
+                md: '240px'
+              }
+            }}
+          >
             <BoardColumn
               status={status}
               onActionClick={handleActionClick}
               restClient={restClient}
               refreshTrigger={refreshTrigger}
             />
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 }
