@@ -73,9 +73,19 @@ public class ActionControllerV1 {
             try {
                 statuses = List.of(ActionStatus.valueOf(status.toUpperCase()));
             } catch (IllegalArgumentException e) {
-                // If invalid status, return all
-                statuses = List.of(
-                    ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE, ActionStatus.DELETED, ActionStatus.ARCHIVED);
+                // If invalid status, return 400 Bad Request with a clear message
+                return ResponseEntity.badRequest().body(
+                        Map.of(
+                                "error", "Invalid status value: " + status,
+                                "allowedStatuses", List.of(
+                                        ActionStatus.INITIAL,
+                                        ActionStatus.PAUSED,
+                                        ActionStatus.ACTIVE,
+                                        ActionStatus.DELETED,
+                                        ActionStatus.ARCHIVED
+                                )
+                        )
+                );
             }
         } else {
             // Return all statuses
