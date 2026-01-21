@@ -19,6 +19,7 @@ export interface BoardColumnProps {
   status: ActionStatus;
   onActionClick: (actionHash: string) => void;
   restClient: RestClient;
+  refreshTrigger?: number;
 }
 
 const statusConfig = {
@@ -31,7 +32,7 @@ const statusConfig = {
 
 const PAGE_SIZE = 3;
 
-export default function BoardColumn({ status, onActionClick, restClient }: BoardColumnProps) {
+export default function BoardColumn({ status, onActionClick, restClient, refreshTrigger }: BoardColumnProps) {
   const navigate = useNavigate();
   const config = statusConfig[status];
   const StatusIcon = config.icon;
@@ -41,7 +42,7 @@ export default function BoardColumn({ status, onActionClick, restClient }: Board
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
     setLoading(true);
     ActionAPI.loadActionSummarysAsync(
       0, 
@@ -56,7 +57,11 @@ export default function BoardColumn({ status, onActionClick, restClient }: Board
       },
       status
     );
-  }, [status, restClient]);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [status, restClient, refreshTrigger]);
 
   const handleLoadMore = () => {
     setLoading(true);
@@ -128,6 +133,8 @@ export default function BoardColumn({ status, onActionClick, restClient }: Board
                 key={action.hash}
                 action={action}
                 onClick={() => onActionClick(action.hash)}
+                restClient={restClient}
+                onRefresh={loadData}
               />
             ))}
             

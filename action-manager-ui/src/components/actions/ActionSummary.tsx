@@ -59,6 +59,7 @@ export default function ActionSummary() {
   const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
   const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-name'));
   const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
   const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
@@ -335,7 +336,13 @@ export default function ActionSummary() {
         actionIcon: <RefreshIcon />,
         actionLabel: "Refresh action",
         actionName: "refreshAction",
-        onClick: () => ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult))
+        onClick: () => {
+          if (viewMode === 'board') {
+            setRefreshTrigger(prev => prev + 1);
+          } else {
+            ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+          }
+        }
       }
     ]
   }
@@ -365,7 +372,7 @@ export default function ActionSummary() {
               ))}
             </Box>
           </Box>
-          <BoardView restClient={restClient} />
+          <BoardView restClient={restClient} refreshTrigger={refreshTrigger} />
         </>
       ) : (
         <PageEntityRender {...pageEntityMetadata}></PageEntityRender>

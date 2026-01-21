@@ -1,16 +1,18 @@
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
 import { Box, Card, CardContent, Chip, IconButton, LinearProgress, Link, Typography } from '@mui/material';
 import React from 'react';
-import { ActionOverview } from '../AppConstants';
+import { ActionAPI, ActionOverview } from '../AppConstants';
+import { RestClient } from '../GenericConstants';
 
 export interface ActionCardProps {
   action: ActionOverview;
   onClick: () => void;
+  restClient: RestClient;
+  onRefresh?: () => void;
 }
 
 type HealthStatus = 'Critical' | 'Warning' | 'Healthy';
@@ -36,7 +38,7 @@ function formatDate(timestamp: number): string {
   return date.toISOString().split('T')[0];
 }
 
-const ActionCard = React.memo(function ActionCard({ action, onClick }: ActionCardProps) {
+const ActionCard = React.memo(function ActionCard({ action, onClick, restClient, onRefresh }: ActionCardProps) {
   const [isFavorite, setIsFavorite] = React.useState(action.isFavorite || false);
   const healthStatus = getHealthStatus(action);
   const successRate = calculateSuccessRate(action);
@@ -52,8 +54,19 @@ const ActionCard = React.memo(function ActionCard({ action, onClick }: ActionCar
     e.stopPropagation();
   };
 
-  const handleActionClick = (e: React.MouseEvent) => {
+  const handleExport = (e: React.MouseEvent) => {
     e.stopPropagation();
+    ActionAPI.export(action.hash, action.name, restClient);
+  };
+
+  const handleArchive = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    ActionAPI.archive(action.hash, restClient, () => {
+      // Trigger refresh after successful archive
+      if (onRefresh) {
+        onRefresh();
+      }
+    });
   };
 
   const getHealthColor = (status: HealthStatus) => {
@@ -217,13 +230,10 @@ const ActionCard = React.memo(function ActionCard({ action, onClick }: ActionCar
             View Details
           </Link>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" onClick={handleActionClick} sx={{ p: 0.5 }}>
+            <IconButton size="small" onClick={handleExport} sx={{ p: 0.5 }} title="Export">
               <FileDownloadIcon sx={{ fontSize: 18 }} />
             </IconButton>
-            <IconButton size="small" onClick={handleActionClick} sx={{ p: 0.5 }}>
-              <ContentCopyIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-            <IconButton size="small" onClick={handleActionClick} sx={{ p: 0.5 }}>
+            <IconButton size="small" onClick={handleArchive} sx={{ p: 0.5 }} title="Archive">
               <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Box>
