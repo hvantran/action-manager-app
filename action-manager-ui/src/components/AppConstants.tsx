@@ -330,7 +330,8 @@ export class ActionAPI {
     pageSize: number, 
     orderBy: string,
     restClient: RestClient, 
-    successCallback: (pageingResult: PagingResult) => void) => {
+    successCallback: (pageingResult: PagingResult) => void,
+    status?: string) => {
     const requestOptions = {
       method: "GET",
       headers: {
@@ -338,9 +339,16 @@ export class ActionAPI {
       }
     }
 
-    const targetURL = `${ACTION_MANAGER_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&orderBy=${orderBy}`;
+    let targetURL = `${ACTION_MANAGER_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&orderBy=${orderBy}`;
+    if (status) {
+      targetURL += `&status=${status}`;
+    }
+    
+    console.log(`[ActionAPI] Loading actions with status: ${status}, URL: ${targetURL}`);
+    
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let actionPagingResult = await response.json() as PagingResult;
+      console.log(`[ActionAPI] Received ${actionPagingResult.content.length} actions for status: ${status}`);
       successCallback(actionPagingResult);
       return undefined;
     });

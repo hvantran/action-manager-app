@@ -60,13 +60,29 @@ public class ActionControllerV1 {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getActions(
             @RequestParam("pageIndex") @Min(0) int pageIndex,
-            @RequestParam("pageSize") @Min(0) int pageSize) {
+            @RequestParam("pageSize") @Min(0) int pageSize,
+            @RequestParam(value = "status", required = false) String status) {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc(
                 ActionDocument.Fields.isFavorite), Sort.Order.desc(ActionDocument.Fields.createdAt)
         );
-        List<ActionStatus> statuses = List.of(
-                ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE);
+        
+        List<ActionStatus> statuses;
+        if (status != null && !status.isEmpty()) {
+            // Filter by specific status
+            try {
+                statuses = List.of(ActionStatus.valueOf(status.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                // If invalid status, return all
+                statuses = List.of(
+                    ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE, ActionStatus.DELETED, ActionStatus.ARCHIVED);
+            }
+        } else {
+            // Return all statuses
+            statuses = List.of(
+                ActionStatus.INITIAL, ActionStatus.PAUSED, ActionStatus.ACTIVE, ActionStatus.DELETED, ActionStatus.ARCHIVED);
+        }
+        
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(new PageResponseDTO<>(actionResults));

@@ -2,12 +2,14 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
-import { Box, Button, Chip, Paper, Typography } from '@mui/material';
-import React from 'react';
+import { Box, Button, Chip, CircularProgress, Paper, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ActionOverview } from '../AppConstants';
+import { ActionAPI, ActionOverview } from '../AppConstants';
+import { RestClient } from '../GenericConstants';
 import ActionCard from './ActionCard';
 import EmptyState from './EmptyState';
 
@@ -15,8 +17,8 @@ export type ActionStatus = 'INITIAL' | 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIV
 
 export interface BoardColumnProps {
   status: ActionStatus;
-  actions: ActionOverview[];
   onActionClick: (actionHash: string) => void;
+  restClient: RestClient;
 }
 
 const statusConfig = {
@@ -27,10 +29,53 @@ const statusConfig = {
   ARCHIVED: { icon: ArchiveIcon, color: '#9ca3af', bg: '#e5e7eb' }
 };
 
-export default function BoardColumn({ status, actions, onActionClick }: BoardColumnProps) {
+const PAGE_SIZE = 3;
+
+export default function BoardColumn({ status, onActionClick, restClient }: BoardColumnProps) {
   const navigate = useNavigate();
   const config = statusConfig[status];
   const StatusIcon = config.icon;
+
+  const [actions, setActions] = useState<ActionOverview[]>([]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    ActionAPI.loadActionSummarysAsync(
+      0, 
+      PAGE_SIZE, 
+      '-createdAt', 
+      restClient, 
+      (result) => {
+        setActions(result.content);
+        setTotalElements(result.totalElements);
+        setPageIndex(0);
+        setLoading(false);
+      },
+      status
+    );
+  }, [status, restClient]);
+
+  const handleLoadMore = () => {
+    setLoading(true);
+    const nextPage = pageIndex + 1;
+    ActionAPI.loadActionSummarysAsync(
+      nextPage,
+      PAGE_SIZE,
+      '-createdAt',
+      restClient,
+      (result) => {
+        setActions(prev => [...prev, ...result.content]);
+        setPageIndex(nextPage);
+        setLoading(false);
+      },
+      status
+    );
+  };
+
+  const hasMore = actions.length < totalElements;
 
   return (
     <Paper
@@ -70,28 +115,58 @@ export default function BoardColumn({ status, actions, onActionClick }: BoardCol
 
       {/* Cards Container */}
       <Box sx={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 300px)' }}>
-        {actions.length === 0 ? (
-          <EmptyState />
+        {loading && actions.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : actions.length === 0 ? (
+          <EmptyState showAddButton={false} />
         ) : (
-          actions.map((action) => (
-            <ActionCard
-              key={action.hash}
-              action={action}
-              onClick={() => onActionClick(action.hash)}
-            />
-          ))
+          <>
+            {actions.map((action) => (
+              <ActionCard
+                key={action.hash}
+                action={action}
+                onClick={() => onActionClick(action.hash)}
+              />
+            ))}
+            
+            {/* Load More Button */}
+            {hasMore && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Button
+                  size="small"
+                  startIcon={loading ? <CircularProgress size={16} /> : <ExpandMoreIcon />}
+                  onClick={handleLoadMore}
+                  disabled={loading}
+                  variant="outlined"
+                  fullWidth
+                >
+                  {loading ? 'Loading...' : `Load More (${totalElements - actions.length} more)`}
+                </Button>
+              </Box>
+            )}
+          </>
         )}
       </Box>
 
       {/* Add Action Button */}
-      {status !== 'DELETED' && status !== 'ARCHIVED' && (
+      {status !== 'PAUSED' && status !== 'DELETED' && status !== 'ARCHIVED' && (
         <Button
           size="small"
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => navigate('/actions/new')}
-          sx={{ mt: 2 }}
+          sx={{ 
+            mt: 2,
+            borderColor: 'divider',
+            color: 'text.secondary',
+            '&:hover': {
+              borderColor: 'text.secondary',
+              bgcolor: 'action.hover'
+            }
+          }}
           fullWidth
-          variant="text"
+          variant="outlined"
         >
           Add Action
         </Button>
