@@ -56,6 +56,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     let pageEntityActions = props.pageEntityActions
     let pageName = props.pageName
     let tabMetadatas = props.tabMetadata
+    let pageTitle = props.pageTitle
 
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [currentTabIndex, setCurrentTabIndex] = React.useState(0);
@@ -159,19 +160,19 @@ export default function PageEntityRender(props: PageEntityMetadata) {
             </Box>
         </Grid>))
         gridItems.push((<Grid item key="grid-line" xs={12}><Divider /></Grid>))
-        gridItems.push((<Grid item key="grid-heading" xs={12} sx={{px: 3, pt: 2}}>
+        {pageTitle && gridItems.push((<Grid item key="grid-heading" xs={12} sx={{px: 3, pt: 2}}>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 600, mt: 1 }}>
-                Action Status Monitor
+                {pageTitle}
             </Typography>
-        </Grid>))
+        </Grid>))}
     } else if (breadcrumbsMetadata) {
         gridItems.push((<Grid item key="grid-breadcrumbs" xs={12} sx={{marginTop: 2, px: 3}}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
         gridItems.push((<Grid item key="grid-line" xs={12}><Divider /></Grid>))
-        gridItems.push((<Grid item key="grid-heading" xs={12} sx={{px: 3, pt: 2}}>
+        {pageTitle && gridItems.push((<Grid item key="grid-heading" xs={12} sx={{px: 3, pt: 2}}>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 600, mt: 1 }}>
-                Action Status Monitor
+                {pageTitle}
             </Typography>
-        </Grid>))
+        </Grid>))}
     } else if (pageEntityActions) {
         gridItems.push((<Grid item xs={12} key="grid-actions" justifyContent="flex-end">
             <Box display="flex" key={pageName + "-box-actions"} justifyContent="flex-end">{pageEntityActions.map(action => {

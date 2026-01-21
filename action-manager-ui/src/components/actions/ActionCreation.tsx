@@ -9,6 +9,7 @@ import { blue, green } from '@mui/material/colors';
 import LinkBreadcrumd from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ACTION_MANAGER_API_URL,
   ACTION_STATUS_SELECTION,
@@ -45,6 +46,9 @@ import PageEntityRender from '../renders/PageEntityRender';
 
 export default function ActionCreation() {
 
+  const [searchParams] = useSearchParams();
+  const statusFromQuery = searchParams.get('status') || ACTION_STATUS_SELECTION[0].value;
+  
   let initialStepsV3: Array<StepMetadata> = []
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [stepMetadatas, setStepMetadatas] = React.useState(initialStepsV3);
@@ -77,7 +81,7 @@ export default function ActionCreation() {
       {
         propName: 'actionStatus',
         propLabel: 'Status',
-        propValue: ACTION_STATUS_SELECTION[0].value,
+        propValue: statusFromQuery,
         isRequired: true,
         layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
         labelElementProperties: { xs: 4, sx: { pl: 15 } },

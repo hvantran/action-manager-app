@@ -299,6 +299,7 @@ export default function ActionSummary() {
 
   let pageEntityMetadata: PageEntityMetadata = {
     pageName: 'action-summary',
+    pageTitle: 'Actions Overview',
     floatingActions: actions,
     tableMetadata: tableMetadata,
     breadcumbsMeta: breadcrumbs,

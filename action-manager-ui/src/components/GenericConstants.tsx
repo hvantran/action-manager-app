@@ -373,6 +373,7 @@ export interface TabMetadata {
 
 export interface PageEntityMetadata {
     pageName: string
+    pageTitle?: string
     floatingActions?: Array<SpeedDialActionMetadata>
     stepMetadatas?: Array<StepMetadata>
     tableMetadata?: TableMetadata
