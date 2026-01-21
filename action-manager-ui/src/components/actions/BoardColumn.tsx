@@ -8,8 +8,10 @@ import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import { Box, Button, Chip, CircularProgress, Paper, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { ActionAPI, ActionOverview } from '../AppConstants';
 import { RestClient } from '../GenericConstants';
+
 import ActionCard from './ActionCard';
 import EmptyState from './EmptyState';
 
@@ -27,12 +29,17 @@ const statusConfig = {
   ACTIVE: { icon: CheckCircleIcon, color: '#10b981', bg: '#d1fae5' },
   PAUSED: { icon: PauseCircleIcon, color: '#f59e0b', bg: '#fef3c7' },
   DELETED: { icon: DeleteIcon, color: '#ef4444', bg: '#fee2e2' },
-  ARCHIVED: { icon: ArchiveIcon, color: '#9ca3af', bg: '#e5e7eb' }
+  ARCHIVED: { icon: ArchiveIcon, color: '#9ca3af', bg: '#e5e7eb' },
 };
 
 const PAGE_SIZE = 3;
 
-export default function BoardColumn({ status, onActionClick, restClient, refreshTrigger }: BoardColumnProps) {
+export default function BoardColumn({
+  status,
+  onActionClick,
+  restClient,
+  refreshTrigger,
+}: BoardColumnProps) {
   const navigate = useNavigate();
   const config = statusConfig[status];
   const StatusIcon = config.icon;
@@ -46,10 +53,10 @@ export default function BoardColumn({ status, onActionClick, restClient, refresh
     setLoading(true);
     try {
       await ActionAPI.loadActionSummarysAsync(
-        0, 
-        PAGE_SIZE, 
-        '-createdAt', 
-        restClient, 
+        0,
+        PAGE_SIZE,
+        '-createdAt',
+        restClient,
         (result) => {
           setActions(result.content);
           setTotalElements(result.totalElements);
@@ -76,7 +83,7 @@ export default function BoardColumn({ status, onActionClick, restClient, refresh
         '-createdAt',
         restClient,
         (result) => {
-          setActions(prev => [...prev, ...result.content]);
+          setActions((prev) => [...prev, ...result.content]);
           setPageIndex(nextPage);
         },
         status
@@ -99,26 +106,38 @@ export default function BoardColumn({ status, onActionClick, restClient, refresh
         borderRadius: 2,
         minHeight: '500px',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
     >
       {/* Column Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          mb: 2,
+          pb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             width: 32,
             height: 32,
             borderRadius: 1,
             bgcolor: config.bg,
-            mr: 1
+            mr: 1,
           }}
         >
           <StatusIcon sx={{ fontSize: 18, color: config.color }} />
         </Box>
-        <Typography variant="subtitle2" sx={{ textTransform: 'uppercase', fontWeight: 600, flex: 1 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ textTransform: 'uppercase', fontWeight: 600, flex: 1 }}
+        >
           {status}
         </Typography>
         <Chip label={actions.length} size="small" />
@@ -143,7 +162,7 @@ export default function BoardColumn({ status, onActionClick, restClient, refresh
                 onRefresh={loadData}
               />
             ))}
-            
+
             {/* Load More Button */}
             {hasMore && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
@@ -169,14 +188,14 @@ export default function BoardColumn({ status, onActionClick, restClient, refresh
           size="small"
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => navigate(`/actions/new?status=${status}`)}
-          sx={{ 
+          sx={{
             mt: 2,
             borderColor: 'divider',
             color: 'text.secondary',
             '&:hover': {
               borderColor: 'text.secondary',
-              bgcolor: 'action.hover'
-            }
+              bgcolor: 'action.hover',
+            },
           }}
           fullWidth
           variant="outlined"

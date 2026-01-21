@@ -10,7 +10,11 @@ export interface CardMetricsProps {
   pendingCount: number;
 }
 
-export default function CardMetrics({ successCount, failureCount, pendingCount }: CardMetricsProps) {
+export default function CardMetrics({
+  successCount,
+  failureCount,
+  pendingCount,
+}: CardMetricsProps) {
   return (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
       <Tooltip title="Success jobs">
@@ -21,7 +25,7 @@ export default function CardMetrics({ successCount, failureCount, pendingCount }
           </Typography>
         </Box>
       </Tooltip>
-      
+
       <Tooltip title="Failed jobs">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <WarningAmberIcon sx={{ fontSize: 18, color: '#ef4444' }} />
@@ -30,7 +34,7 @@ export default function CardMetrics({ successCount, failureCount, pendingCount }
           </Typography>
         </Box>
       </Tooltip>
-      
+
       <Tooltip title="Pending jobs">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <ScheduleIcon sx={{ fontSize: 18, color: '#6b7280' }} />
