@@ -343,12 +343,9 @@ export class ActionAPI {
     if (status) {
       targetURL += `&status=${status}`;
     }
-    
-    console.log(`[ActionAPI] Loading actions with status: ${status}, URL: ${targetURL}`);
-    
+
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       let actionPagingResult = await response.json() as PagingResult;
-      console.log(`[ActionAPI] Received ${actionPagingResult.content.length} actions for status: ${status}`);
       successCallback(actionPagingResult);
       return undefined;
     });
