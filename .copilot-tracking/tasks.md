@@ -653,6 +653,55 @@ Update `src/components/GenericConstants.tsx`:
 
 ---
 
+## Phase 7: Enhancements (Future Work)
+
+### Task 7.1: Add Description Field to Actions
+**Status**: ☐  
+**Priority**: Medium  
+**Estimated Time**: 2-3 hours  
+**Dependencies**: None
+
+**Description**:
+Add a description field to actions that displays in the action card to provide more context about what each action does.
+
+**Backend Changes**:
+- [ ] Add `description` field to `ActionDocument` (MongoDB model)
+- [ ] Add `description` field to `ActionOverviewDTO`
+- [ ] Add `description` field to `ActionDefinitionDTO`
+- [ ] Update `ActionManagerService` to handle description in create/update operations
+- [ ] Add database migration script if needed
+
+**Frontend Changes**:
+- [ ] Add `description` field to `ActionOverview` interface in `AppConstants.tsx`
+- [ ] Update `ActionCard` component to display description
+- [ ] Remove temporary `getActionDescription()` function
+- [ ] Add description input field in `ActionCreation` form
+- [ ] Add description display/edit in `ActionDetail` view
+- [ ] Update action import/export to include description
+
+**UI Requirements**:
+- [ ] Description should be truncated to 2 lines with ellipsis in card view
+- [ ] Full description visible on hover (tooltip) or in detail view
+- [ ] Support for multiline text (up to 200 characters recommended)
+- [ ] Graceful fallback for actions without description ("No description")
+
+**Acceptance Criteria**:
+- Description field stored in database
+- Description visible in Kanban board cards
+- Description editable in action creation/edit forms
+- Description included in action export/import
+- Empty descriptions handled gracefully
+- No breaking changes to existing actions
+
+**Testing Requirements**:
+- [ ] Test creating action with description
+- [ ] Test updating action description
+- [ ] Test actions without description (backward compatibility)
+- [ ] Test description truncation in card view
+- [ ] Test description display in different themes (light/dark)
+
+---
+
 ## Risk Mitigation Tracker
 
 ### High Priority Risks

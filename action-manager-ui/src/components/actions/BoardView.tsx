@@ -1,38 +1,15 @@
 import { Box, Grid } from '@mui/material';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ActionOverview } from '../AppConstants';
+import { RestClient } from '../GenericConstants';
 import BoardColumn, { ActionStatus } from './BoardColumn';
 
 export interface BoardViewProps {
-  actions: ActionOverview[];
+  restClient: RestClient;
 }
 
-type GroupedActions = Record<ActionStatus, ActionOverview[]>;
-
-function groupActionsByStatus(actions: ActionOverview[]): GroupedActions {
-  const grouped: GroupedActions = {
-    INITIAL: [],
-    ACTIVE: [],
-    PAUSED: [],
-    DELETED: [],
-    ARCHIVED: []
-  };
-
-  actions.forEach((action) => {
-    const status = (action.status?.toUpperCase() || 'INITIAL') as ActionStatus;
-    if (grouped[status]) {
-      grouped[status].push(action);
-    }
-  });
-
-  return grouped;
-}
-
-export default function BoardView({ actions }: BoardViewProps) {
+export default function BoardView({ restClient }: BoardViewProps) {
   const navigate = useNavigate();
-
-  const groupedActions = useMemo(() => groupActionsByStatus(actions), [actions]);
 
   const statusOrder: ActionStatus[] = ['INITIAL', 'ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED'];
 
@@ -53,8 +30,8 @@ export default function BoardView({ actions }: BoardViewProps) {
           <Grid item xs={12} sm={6} md={2.4} key={status}>
             <BoardColumn
               status={status}
-              actions={groupedActions[status]}
               onActionClick={handleActionClick}
+              restClient={restClient}
             />
           </Grid>
         ))}

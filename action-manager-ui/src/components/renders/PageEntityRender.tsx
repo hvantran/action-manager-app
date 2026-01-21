@@ -1,5 +1,5 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { Box, Divider, Grid, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material';
+import { Box, Divider, Grid, IconButton, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import * as React from 'react';
@@ -71,9 +71,9 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     if (breadcrumbsMetadata && pageEntityActions) {
         const secondaryActions = pageEntityActions.filter(p => p.isSecondary)
         const primaryActions = pageEntityActions.filter(p => !p.isSecondary)
-        gridItems.push((<Grid item key="grid-breadcrumbs" xs={6} sx={{marginTop: 4}}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
-        gridItems.push((<Grid item key="grid-actions" xs={6} sx={{marginTop: 4}}>
-            <Box display="flex" key={pageName + "-box-actions"} justifyContent="flex-end" sx={{ px: 2 }}>
+        gridItems.push((<Grid item key="grid-breadcrumbs" xs={6} sx={{marginTop: 2, px: 3}}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
+        gridItems.push((<Grid item key="grid-actions" xs={6} sx={{marginTop: 2, px: 3}}>
+            <Box display="flex" key={pageName + "-box-actions"} justifyContent="flex-end">
                 {
                     primaryActions.map(action => {
                         return (action.visible === true || action.visible === undefined) && (
@@ -159,9 +159,19 @@ export default function PageEntityRender(props: PageEntityMetadata) {
             </Box>
         </Grid>))
         gridItems.push((<Grid item key="grid-line" xs={12}><Divider /></Grid>))
+        gridItems.push((<Grid item key="grid-heading" xs={12} sx={{px: 3, pt: 2}}>
+            <Typography variant="h5" component="h1" sx={{ fontWeight: 600, mt: 1 }}>
+                Action Status Monitor
+            </Typography>
+        </Grid>))
     } else if (breadcrumbsMetadata) {
-        gridItems.push((<Grid item key="grid-breadcrumbs" xs={12} sx={{marginTop: 4}}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
+        gridItems.push((<Grid item key="grid-breadcrumbs" xs={12} sx={{marginTop: 2, px: 3}}><BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} /></Grid>))
         gridItems.push((<Grid item key="grid-line" xs={12}><Divider /></Grid>))
+        gridItems.push((<Grid item key="grid-heading" xs={12} sx={{px: 3, pt: 2}}>
+            <Typography variant="h5" component="h1" sx={{ fontWeight: 600, mt: 1 }}>
+                Action Status Monitor
+            </Typography>
+        </Grid>))
     } else if (pageEntityActions) {
         gridItems.push((<Grid item xs={12} key="grid-actions" justifyContent="flex-end">
             <Box display="flex" key={pageName + "-box-actions"} justifyContent="flex-end">{pageEntityActions.map(action => {

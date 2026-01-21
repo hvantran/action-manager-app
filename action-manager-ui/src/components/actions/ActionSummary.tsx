@@ -33,6 +33,7 @@ import ProcessTracking from '../common/ProcessTracking';
 
 import { useNavigate } from 'react-router-dom';
 import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
+import BreadcrumbsComponent from '../common/Breadcrumbs';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import ViewModeToggle from '../common/ViewModeToggle';
 import PageEntityRender from '../renders/PageEntityRender';
@@ -79,7 +80,7 @@ export default function ActionSummary() {
     <Link underline="hover" key="1" color="inherit" href='#'>
       {ROOT_BREADCRUMB}
     </Link>,
-    <Typography key="3" color="text.primary">
+    <Typography key="2" color="text.primary">
       Summary
     </Typography>
   ];
@@ -239,8 +240,11 @@ export default function ActionSummary() {
   ];
 
   React.useEffect(() => {
-    ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
-  }, [pageIndex, pageSize, orderBy, restClient])
+    // Only load actions for list view; board view columns handle their own data
+    if (viewMode === 'list') {
+      ActionAPI.loadActionSummarysAsync(pageIndex, pageSize, orderBy, restClient, (actionPagingResult) => setPagingResult(actionPagingResult));
+    }
+  }, [pageIndex, pageSize, orderBy, restClient, viewMode])
 
   const actions: Array<SpeedDialActionMetadata> = [
     {
@@ -339,7 +343,30 @@ export default function ActionSummary() {
   return (
     <Stack spacing={2}>
       {viewMode === 'board' ? (
-        <BoardView actions={pagingResult.content} />
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, pt: 2 }}>
+            <Box>
+              <BreadcrumbsComponent breadcrumbs={breadcrumbs} />
+              <Typography variant="h5" sx={{ fontWeight: 600, mt: 1 }}>
+                Action Status Monitor
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {pageEntityMetadata.pageEntityActions?.map((action, index) => (
+                <Box key={index}>
+                  {action.onClick ? (
+                    <IconButton onClick={action.onClick} title={action.actionLabel}>
+                      {action.actionIcon}
+                    </IconButton>
+                  ) : (
+                    action.actionIcon
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+          <BoardView restClient={restClient} />
+        </>
       ) : (
         <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       )}
