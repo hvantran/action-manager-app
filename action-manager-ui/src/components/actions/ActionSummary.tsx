@@ -34,12 +34,15 @@ import ProcessTracking from '../common/ProcessTracking';
 import { useNavigate } from 'react-router-dom';
 import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
+import ViewModeToggle from '../common/ViewModeToggle';
 import PageEntityRender from '../renders/PageEntityRender';
+import BoardView from './BoardView';
 
 
 const pageIndexStorageKey = "action-manager-action-table-page-index"
 const pageSizeStorageKey = "action-manager-action-table-page-size"
 const orderByStorageKey = "action-manager-action-table-order"
+const viewModeStorageKey = "action-manager-view-mode"
 
 
 export default function ActionSummary() {
@@ -47,6 +50,9 @@ export default function ActionSummary() {
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
+  const [viewMode, setViewMode] = React.useState<'board' | 'list'>(
+    LocalStorageService.getOrDefault(viewModeStorageKey, 'board') as 'board' | 'list'
+  );
 
   const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
   const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
@@ -293,6 +299,17 @@ export default function ActionSummary() {
     breadcumbsMeta: breadcrumbs,
     pageEntityActions: [
       {
+        actionIcon: <ViewModeToggle 
+          currentMode={viewMode} 
+          onModeChange={(mode) => {
+            setViewMode(mode);
+            LocalStorageService.put(viewModeStorageKey, mode);
+          }} 
+        />,
+        actionLabel: "Toggle view mode",
+        actionName: "toggleViewMode"
+      },
+      {
         actionIcon: <Box><input
           id="raised-button-file"
           accept=".zip"
@@ -321,7 +338,11 @@ export default function ActionSummary() {
 
   return (
     <Stack spacing={2}>
-      <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
+      {viewMode === 'board' ? (
+        <BoardView actions={pagingResult.content} />
+      ) : (
+        <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
+      )}
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
