@@ -6,9 +6,10 @@ import BoardColumn, { ActionStatus } from './BoardColumn';
 
 export interface BoardViewProps {
   restClient: RestClient;
+  refreshTrigger?: number;
 }
 
-export default function BoardView({ restClient }: BoardViewProps) {
+export default function BoardView({ restClient, refreshTrigger }: BoardViewProps) {
   const navigate = useNavigate();
 
   const statusOrder: ActionStatus[] = ['INITIAL', 'ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED'];
@@ -32,6 +33,7 @@ export default function BoardView({ restClient }: BoardViewProps) {
               status={status}
               onActionClick={handleActionClick}
               restClient={restClient}
+              refreshTrigger={refreshTrigger}
             />
           </Grid>
         ))}
