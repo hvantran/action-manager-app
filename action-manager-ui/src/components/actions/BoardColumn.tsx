@@ -6,7 +6,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import { Box, Button, Chip, CircularProgress, Paper, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ActionAPI, ActionOverview } from '../AppConstants';
 import { RestClient } from '../GenericConstants';
@@ -42,42 +42,48 @@ export default function BoardColumn({ status, onActionClick, restClient, refresh
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const loadData = () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
-    ActionAPI.loadActionSummarysAsync(
-      0, 
-      PAGE_SIZE, 
-      '-createdAt', 
-      restClient, 
-      (result) => {
-        setActions(result.content);
-        setTotalElements(result.totalElements);
-        setPageIndex(0);
-        setLoading(false);
-      },
-      status
-    );
-  };
+    try {
+      await ActionAPI.loadActionSummarysAsync(
+        0, 
+        PAGE_SIZE, 
+        '-createdAt', 
+        restClient, 
+        (result) => {
+          setActions(result.content);
+          setTotalElements(result.totalElements);
+          setPageIndex(0);
+        },
+        status
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [status, restClient]);
 
   useEffect(() => {
     loadData();
-  }, [status, restClient, refreshTrigger]);
+  }, [loadData, refreshTrigger]);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
     setLoading(true);
     const nextPage = pageIndex + 1;
-    ActionAPI.loadActionSummarysAsync(
-      nextPage,
-      PAGE_SIZE,
-      '-createdAt',
-      restClient,
-      (result) => {
-        setActions(prev => [...prev, ...result.content]);
-        setPageIndex(nextPage);
-        setLoading(false);
-      },
-      status
-    );
+    try {
+      await ActionAPI.loadActionSummarysAsync(
+        nextPage,
+        PAGE_SIZE,
+        '-createdAt',
+        restClient,
+        (result) => {
+          setActions(prev => [...prev, ...result.content]);
+          setPageIndex(nextPage);
+        },
+        status
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const hasMore = actions.length < totalElements;
