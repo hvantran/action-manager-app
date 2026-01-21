@@ -9,9 +9,9 @@ export interface EmptyStateProps {
   showAddButton?: boolean;
 }
 
-export default function EmptyState({ 
-  message = 'No actions in this column', 
-  showAddButton = true 
+export default function EmptyState({
+  message = 'No actions in this column',
+  showAddButton = true,
 }: EmptyStateProps) {
   const navigate = useNavigate();
 
@@ -24,7 +24,7 @@ export default function EmptyState({
         justifyContent: 'center',
         py: 6,
         px: 2,
-        textAlign: 'center'
+        textAlign: 'center',
       }}
     >
       <InboxIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2, opacity: 0.5 }} />

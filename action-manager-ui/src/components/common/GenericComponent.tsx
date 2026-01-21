@@ -34,8 +34,8 @@ export const StyledInputBase = styled(InputBase)(({ theme }) => ({
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    border: `1px solid ${theme.palette.divider}`, 
-    borderRadius: theme.shape.borderRadius, 
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: theme.shape.borderRadius,
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('md')]: {
@@ -44,23 +44,22 @@ export const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-      fontWeight: 'bold',
-      backgroundColor: theme.palette.primary.main,
-      borderBottom: '2px solid black'
+    fontWeight: 'bold',
+    backgroundColor: theme.palette.primary.main,
+    borderBottom: '2px solid black',
   },
   [`&.${tableCellClasses.body}`]: {
-      fontSize: 14,
+    fontSize: 14,
   },
 }));
 
 export const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(odd)': {
-      backgroundColor: theme.palette.action.hover,
+    backgroundColor: theme.palette.action.hover,
   },
   '&:last-child td, &:last-child th': {
-      border: 0,
+    border: 0,
   },
 }));

@@ -1,4 +1,3 @@
-
 import { json } from '@codemirror/lang-json';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
@@ -8,20 +7,35 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Stack } from '@mui/material';
-import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
+import Badge, { BadgeProps } from '@mui/material/Badge';
 import { green, yellow } from '@mui/material/colors';
+import Link from '@mui/material/Link';
+import { styled } from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
 import React, { useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ACTION_STATUS_SELECTION, ActionAPI, ActionDetails, ROOT_BREADCRUMB, isAllDependOnPropsValid } from '../AppConstants';
-import { DialogMetadata, GenericActionMetadata, PageEntityMetadata, PropType, PropertyMetadata, RestClient, onChangeProperty } from '../GenericConstants';
+
+import {
+  ACTION_STATUS_SELECTION,
+  ActionAPI,
+  ActionDetails,
+  ROOT_BREADCRUMB,
+  isAllDependOnPropsValid,
+} from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import ProcessTracking from '../common/ProcessTracking';
+import {
+  DialogMetadata,
+  GenericActionMetadata,
+  PageEntityMetadata,
+  PropType,
+  PropertyMetadata,
+  RestClient,
+  onChangeProperty,
+} from '../GenericConstants';
 import PageEntityRender from '../renders/PageEntityRender';
-import ActionJobTable from './ActionJobTable';
 
-import Badge, { BadgeProps } from '@mui/material/Badge';
-import { styled } from '@mui/material/styles';
+import ActionJobTable from './ActionJobTable';
 import { ActionProvider } from './ActionProvider';
 
 const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
@@ -31,41 +45,40 @@ const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
   },
 }));
 
-
 export default function ActionDetail() {
-
   const targetAction = useParams();
   const navigate = useNavigate();
   const actionRef = useRef<ActionDetails>();
   const actionId: string | undefined = targetAction.actionId;
   if (!actionId) {
-    throw new Error("Action is required");
+    throw new Error('Action is required');
   }
 
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
   const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
-  const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState("");
-  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(() => () => { });
+  const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState('');
+  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(
+    () => () => {}
+  );
   const [replayFlag, setReplayActionFlag] = React.useState(false);
-  const restClient = React.useMemo(() =>  new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
+  const restClient = React.useMemo(
+    () => new RestClient(setCircleProcessOpen),
+    [setCircleProcessOpen]
+  );
   const [numberOfFailureJobs, setNumberOfFailureJobs] = React.useState(0);
 
-
   const enableEditFunction = function (isEnabled: boolean) {
-
-    setEditActionMeta(previous => {
+    setEditActionMeta((previous) => {
       previous.disable = isEnabled;
       return previous;
-    })
-    setSaveActionMeta(previous => {
+    });
+    setSaveActionMeta((previous) => {
       previous.disable = !isEnabled;
       return previous;
     });
-    setPropertyMetadata(previous => {
-
-      return [...previous].map(p => {
-
+    setPropertyMetadata((previous) => {
+      return [...previous].map((p) => {
         if (p.dependOn && !isAllDependOnPropsValid(p.dependOn, previous)) {
           return p;
         }
@@ -75,194 +88,215 @@ export default function ActionDetail() {
         }
 
         return p;
-      })
-    })
-  }
-
-  const [saveActionMeta, setSaveActionMeta] = React.useState<GenericActionMetadata>(
-    {
-      actionIcon: <SaveIcon />,
-      actionLabel: "Save",
-      actionName: "saveAction",
-      disable: true,
-      onClick: () => ActionAPI.updateAction(actionId, restClient, propertyMetadata, () => enableEditFunction(false))
+      });
     });
+  };
 
-  const [editActionMeta, setEditActionMeta] = React.useState<GenericActionMetadata>(
+  const [saveActionMeta, setSaveActionMeta] = React.useState<GenericActionMetadata>({
+    actionIcon: <SaveIcon />,
+    actionLabel: 'Save',
+    actionName: 'saveAction',
+    disable: true,
+    onClick: () =>
+      ActionAPI.updateAction(actionId, restClient, propertyMetadata, () =>
+        enableEditFunction(false)
+      ),
+  });
+
+  const [editActionMeta, setEditActionMeta] = React.useState<GenericActionMetadata>({
+    actionIcon: <EditIcon />,
+    properties: { sx: { color: yellow[800] } },
+    actionLabel: 'Edit',
+    actionName: 'editAction',
+    onClick: () => enableEditFunction(true),
+  });
+
+  const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>([
     {
-      actionIcon: <EditIcon />,
-      properties: { sx: { color: yellow[800] } },
-      actionLabel: "Edit",
-      actionName: "editAction",
-      onClick: () => enableEditFunction(true)
-    });
-
-
-  const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>(
-    [
-      {
-        propName: 'actionName',
-        propLabel: 'Name',
-        propValue: '',
-        isRequired: true,
-        disabled: true,
-        disablePerpetualy: true,
-        propDescription: 'This is action name',
-        propType: PropType.InputText,
-        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 2.5, sx: { pl: 5 } },
-        valueElementProperties: { xs: 9.5 },
-        textFieldMeta: {
-          onChangeEvent: function (event: any) {
-            let propValue = event.target.value;
-            let propName = event.target.name;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
-          }
-        }
+      propName: 'actionName',
+      propLabel: 'Name',
+      propValue: '',
+      isRequired: true,
+      disabled: true,
+      disablePerpetualy: true,
+      propDescription: 'This is action name',
+      propType: PropType.InputText,
+      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
+      labelElementProperties: { xs: 2.5, sx: { pl: 5 } },
+      valueElementProperties: { xs: 9.5 },
+      textFieldMeta: {
+        onChangeEvent: function (event: any) {
+          const propValue = event.target.value;
+          const propName = event.target.name;
+          setPropertyMetadata(onChangeProperty(propName, propValue));
+        },
       },
-      {
-        propName: 'actionStatus',
-        propLabel: 'Status',
-        propValue: '',
-        propDefaultValue: '',
-        disabled: true,
-        isRequired: true,
-        layoutProperties: { xs: 6, alignItems: "center", justifyContent: "center" },
-        labelElementProperties: { xs: 4, sx: { pl: 15 } },
-        valueElementProperties: { xs: 8 },
-        propDescription: 'This is status of action',
-        propType: PropType.Selection,
-        selectionMeta: {
-          selections: ACTION_STATUS_SELECTION,
-          onChangeEvent: function (event) {
-            let propValue = event.target.value;
-            let propName = event.target.name;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
-          }
-        }
+    },
+    {
+      propName: 'actionStatus',
+      propLabel: 'Status',
+      propValue: '',
+      propDefaultValue: '',
+      disabled: true,
+      isRequired: true,
+      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
+      labelElementProperties: { xs: 4, sx: { pl: 15 } },
+      valueElementProperties: { xs: 8 },
+      propDescription: 'This is status of action',
+      propType: PropType.Selection,
+      selectionMeta: {
+        selections: ACTION_STATUS_SELECTION,
+        onChangeEvent: function (event) {
+          const propValue = event.target.value;
+          const propName = event.target.name;
+          setPropertyMetadata(onChangeProperty(propName, propValue));
+        },
       },
-      {
-        propName: 'actionConfigurations',
-        propLabel: 'Configurations',
-        propValue: '{}',
-        propDefaultValue: '{}',
-        disabled: true,
-        layoutProperties: { xs: 12 },
-        labelElementProperties: { xs: 1.2, sx: { pl: 5 } },
-        valueElementProperties: { xs: 10.8 },
-        isRequired: true,
-        propType: PropType.CodeEditor,
-        codeEditorMeta:
-        {
-          height: '100px',
-          codeLanguges: [json()],
-          onChangeEvent: function (propName) {
-            return (value, _) => {
-              let propValue = value;
-              setPropertyMetadata(onChangeProperty(propName, propValue))
-            }
-          }
-        }
-      }
-    ])
+    },
+    {
+      propName: 'actionConfigurations',
+      propLabel: 'Configurations',
+      propValue: '{}',
+      propDefaultValue: '{}',
+      disabled: true,
+      layoutProperties: { xs: 12 },
+      labelElementProperties: { xs: 1.2, sx: { pl: 5 } },
+      valueElementProperties: { xs: 10.8 },
+      isRequired: true,
+      propType: PropType.CodeEditor,
+      codeEditorMeta: {
+        height: '100px',
+        codeLanguges: [json()],
+        onChangeEvent: function (propName) {
+          return (value, _) => {
+            const propValue = value;
+            setPropertyMetadata(onChangeProperty(propName, propValue));
+          };
+        },
+      },
+    },
+  ]);
 
   React.useEffect(() => {
     ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
-      actionRef.current = actionDetail
+      actionRef.current = actionDetail;
       Object.keys(actionDetail).forEach((propertyName: string) => {
-        setPropertyMetadata(onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails]));
-      })
-    })
+        setPropertyMetadata(
+          onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
+        );
+      });
+    });
   }, [actionId]);
 
-  let confirmationDeleteDialogMeta: DialogMetadata = {
+  const confirmationDeleteDialogMeta: DialogMetadata = {
     open: deleteConfirmationDialogOpen,
     title: confirmationDialogTitle,
     content: confirmationDialogContent,
-    positiveText: "Yes",
-    negativeText: "No",
+    positiveText: 'Yes',
+    negativeText: 'No',
     negativeAction() {
       setDeleteConfirmationDialogOpen(false);
     },
-    positiveAction: confirmationDialogPositiveAction
-  }
+    positiveAction: confirmationDialogPositiveAction,
+  };
 
-  let pageEntityMetadata: PageEntityMetadata = {
+  const pageEntityMetadata: PageEntityMetadata = {
     pageName: 'action-details',
     breadcumbsMeta: [
       <Link underline="hover" key="1" color="inherit" href="/actions">
         {ROOT_BREADCRUMB}
       </Link>,
-      <Typography key="3" color="text.primary">{actionId}</Typography>,
+      <Typography key="3" color="text.primary">
+        {actionId}
+      </Typography>,
     ],
     pageEntityActions: [
       editActionMeta,
       saveActionMeta,
       {
         actionIcon: <RefreshIcon />,
-        actionLabel: "Refresh action",
-        actionName: "refreshAction",
+        actionLabel: 'Refresh action',
+        actionName: 'refreshAction',
         onClick: () => {
           ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
             Object.keys(actionDetail).forEach((propertyName: string) => {
-              setPropertyMetadata(onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails]));
-            })
-          })
-          setReplayActionFlag(previous => !previous);
-        }
+              setPropertyMetadata(
+                onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
+              );
+            });
+          });
+          setReplayActionFlag((previous) => !previous);
+        },
       },
       {
         actionIcon: <ArchiveOutlinedIcon />,
-        actionLabel: "Archive",
-        actionName: "archiveAction",
+        actionLabel: 'Archive',
+        actionName: 'archiveAction',
         isSecondary: true,
         onClick: () => {
-          setConfirmationDialogTitle("Archive")
-          setConfirmationDialogContent(previous => <p>Are you sure you want to archive <b>{actionRef.current?.actionName}</b> action?</p>)
-          setConfirmationDialogPositiveAction(previous => () => ActionAPI.archive(actionId, restClient, () => navigate("/actions")));
-          setDeleteConfirmationDialogOpen(true)
-        }
+          setConfirmationDialogTitle('Archive');
+          setConfirmationDialogContent((previous) => (
+            <p>
+              Are you sure you want to archive <b>{actionRef.current?.actionName}</b> action?
+            </p>
+          ));
+          setConfirmationDialogPositiveAction(
+            (previous) => () => ActionAPI.archive(actionId, restClient, () => navigate('/actions'))
+          );
+          setDeleteConfirmationDialogOpen(true);
+        },
       },
       {
         actionIcon: <ReplayIcon />,
-        actionLabel: "Replay all",
+        actionLabel: 'Replay all',
         isSecondary: true,
-        actionLabelContent:
-          <Box sx={{ display: 'flex', alignItems: "center", flexDirection: 'row' }}>
+        actionLabelContent: (
+          <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
             <InfoIcon />
-            <p>Replay function only support for <b>one time</b> and <b>schedule jobs</b></p>
-          </Box>,
-        actionName: "replayAction",
-        onClick: () => ActionAPI.replayAction(actionId, restClient, () => setReplayActionFlag(previous => !previous))
+            <p>
+              Replay function only support for <b>one time</b> and <b>schedule jobs</b>
+            </p>
+          </Box>
+        ),
+        actionName: 'replayAction',
+        onClick: () =>
+          ActionAPI.replayAction(actionId, restClient, () =>
+            setReplayActionFlag((previous) => !previous)
+          ),
       },
       {
-        actionIcon: <>
-          <StyledBadge color="error" badgeContent={numberOfFailureJobs} showZero>
-            <ReplayIcon />
-          </StyledBadge>
-        </>,
+        actionIcon: (
+          <>
+            <StyledBadge color="error" badgeContent={numberOfFailureJobs} showZero>
+              <ReplayIcon />
+            </StyledBadge>
+          </>
+        ),
         disable: numberOfFailureJobs === 0,
         isSecondary: true,
-        actionLabel: "Replay failures",
-        actionName: "replayOnlyFailureAction",
-        onClick: () => numberOfFailureJobs && ActionAPI.replayFailures(actionId, restClient, () => setReplayActionFlag(previous => !previous))
+        actionLabel: 'Replay failures',
+        actionName: 'replayOnlyFailureAction',
+        onClick: () =>
+          numberOfFailureJobs &&
+          ActionAPI.replayFailures(actionId, restClient, () =>
+            setReplayActionFlag((previous) => !previous)
+          ),
       },
       {
         actionIcon: <AddCircleOutlineIcon />,
         properties: { sx: { color: green[800] } },
-        actionLabel: "Add Jobs",
-        actionName: "addAction",
-        onClick: () => navigate("/actions/" + actionId + "/jobs/new")
-      }
+        actionLabel: 'Add Jobs',
+        actionName: 'addAction',
+        onClick: () => navigate('/actions/' + actionId + '/jobs/new'),
+      },
     ],
-    properties: propertyMetadata
-  }
+    properties: propertyMetadata,
+  };
 
-  let actionJobTableParams = {
+  const actionJobTableParams = {
     setCircleProcessOpen,
-    replayFlag
-  }
-
+    replayFlag,
+  };
 
   return (
     <ActionProvider setNumberOfFailureJobs={setNumberOfFailureJobs}>
@@ -271,7 +305,7 @@ export default function ActionDetail() {
         <ActionJobTable {...actionJobTableParams} actionId={actionId}></ActionJobTable>
         <ProcessTracking isLoading={processTracking}></ProcessTracking>
         <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
-      </Stack >
+      </Stack>
     </ActionProvider>
   );
 }

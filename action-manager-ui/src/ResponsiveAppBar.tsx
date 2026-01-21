@@ -16,6 +16,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
+
 import DarkModeToggle from './components/common/DarkModeToggle';
 import { Search, SearchIconWrapper, StyledInputBase } from './components/common/GenericComponent';
 
@@ -24,12 +25,11 @@ const APP_ENVIRONMENT_VARIABLES = window._env_;
 const pages = JSON.parse(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_PAGES}`);
 
 export default function PrimarySearchAppBar(props: any) {
-  const setToggleDarkMode = props.setToggleDarkMode
-  const toggleDarkMode = props.toggleDarkMode
+  const setToggleDarkMode = props.setToggleDarkMode;
+  const toggleDarkMode = props.toggleDarkMode;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [anchorAppSwicherEl, setAnchorAppSwicherEl] = React.useState<null | HTMLElement>(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
-    React.useState<null | HTMLElement>(null);
+  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const isMenuOpen = Boolean(anchorEl);
   const isAppSwicherMenuOpen = Boolean(anchorAppSwicherEl);
@@ -83,7 +83,7 @@ export default function PrimarySearchAppBar(props: any) {
 
   const goooApp = function (targetURL: string) {
     window.location.href = targetURL;
-  }
+  };
 
   const renderAppSwicherMenu = (
     <Menu
@@ -101,31 +101,71 @@ export default function PrimarySearchAppBar(props: any) {
       open={isAppSwicherMenuOpen}
       onClose={handleAppSwicherMenuClose}
     >
-      <Grid container spacing={2}
+      <Grid
+        container
+        spacing={2}
         sx={{ maxWidth: '600px' }}
         direction="row"
         alignItems="center"
         justifyContent="center"
-        style={{ minHeight: '30vh' }}>
+        style={{ minHeight: '30vh' }}
+      >
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_FRONTEND_URL}/templates`)}>
-            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME} src='/template-manager.png' width={70} />
+          <Paper
+            variant="outlined"
+            square
+            sx={{ mx: 2, textAlign: 'center' }}
+            onClick={() =>
+              goooApp(
+                `${APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_FRONTEND_URL}/templates`
+              )
+            }
+          >
+            <img
+              alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME}
+              src="/template-manager.png"
+              width={70}
+            />
             <Typography variant="caption" display="block" gutterBottom>
               {APP_ENVIRONMENT_VARIABLES.REACT_APP_TEMPLATE_MANAGER_NAME}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_FRONTEND_URL}/actions`)}>
-            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_NAME} src='/action-manager.png' width={70} />
+          <Paper
+            variant="outlined"
+            square
+            sx={{ mx: 2, textAlign: 'center' }}
+            onClick={() =>
+              goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_FRONTEND_URL}/actions`)
+            }
+          >
+            <img
+              alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_NAME}
+              src="/action-manager.png"
+              width={70}
+            />
             <Typography variant="caption" display="block" gutterBottom>
               {APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_NAME}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper variant="outlined" square sx={{ mx: 2, textAlign: 'center' }} onClick={() => goooApp(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_FRONTEND_URL}/endpoints`)}>
-            <img alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME} src='/data-collection.png' width={70} />
+          <Paper
+            variant="outlined"
+            square
+            sx={{ mx: 2, textAlign: 'center' }}
+            onClick={() =>
+              goooApp(
+                `${APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_FRONTEND_URL}/endpoints`
+              )
+            }
+          >
+            <img
+              alt={APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME}
+              src="/data-collection.png"
+              width={70}
+            />
             <Typography variant="caption" display="block" gutterBottom>
               {APP_ENVIRONMENT_VARIABLES.REACT_APP_ENDPOINT_MANAGER_NAME}
             </Typography>
@@ -161,11 +201,7 @@ export default function PrimarySearchAppBar(props: any) {
         <p>Messages</p>
       </MenuItem>
       <MenuItem>
-        <IconButton
-          size="large"
-          aria-label="show 17 new notifications"
-          color="inherit"
-        >
+        <IconButton size="large" aria-label="show 17 new notifications" color="inherit">
           <Badge badgeContent={17} color="error">
             <NotificationsIcon />
           </Badge>
@@ -214,7 +250,10 @@ export default function PrimarySearchAppBar(props: any) {
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page: any) => (
-              <Button key={page.name} variant="outlined" href={page.link}
+              <Button
+                key={page.name}
+                variant="outlined"
+                href={page.link}
                 sx={{ color: 'white', display: 'block' }}
               >
                 {page.uiName}
@@ -226,10 +265,7 @@ export default function PrimarySearchAppBar(props: any) {
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
+            <StyledInputBase placeholder="Search…" inputProps={{ 'aria-label': 'search' }} />
           </Search>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
@@ -240,11 +276,7 @@ export default function PrimarySearchAppBar(props: any) {
                 <MailIcon />
               </Badge>
             </IconButton>
-            <IconButton
-              size="large"
-              aria-label="show 17 new notifications"
-              color="inherit"
-            >
+            <IconButton size="large" aria-label="show 17 new notifications" color="inherit">
               <Badge badgeContent={17} color="error">
                 <NotificationsIcon />
               </Badge>
@@ -288,7 +320,6 @@ export default function PrimarySearchAppBar(props: any) {
       {renderMobileMenu}
       {renderMenu}
       {renderAppSwicherMenu}
-
     </Box>
   );
 }

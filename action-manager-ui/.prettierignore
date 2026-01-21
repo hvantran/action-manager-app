@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+build/
+dist/
+coverage/
+target/
+
+# Generated files
+*.min.js
+*.bundle.js
+env-config.js
+
+# Config files that should not be formatted
+tsconfig.json
+package.json
+
+# Environment files
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+.DS_Store
+*.md
+
+# Git
+.git/
+.gitignore

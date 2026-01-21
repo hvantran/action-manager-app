@@ -9,10 +9,7 @@ export interface ViewModeToggleProps {
 }
 
 export default function ViewModeToggle({ currentMode, onModeChange }: ViewModeToggleProps) {
-  const handleChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newMode: 'board' | 'list' | null
-  ) => {
+  const handleChange = (event: React.MouseEvent<HTMLElement>, newMode: 'board' | 'list' | null) => {
     if (newMode !== null) {
       onModeChange(newMode);
     }

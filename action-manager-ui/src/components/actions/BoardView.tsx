@@ -1,7 +1,9 @@
 import { Box } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { RestClient } from '../GenericConstants';
+
 import BoardColumn, { ActionStatus } from './BoardColumn';
 
 export interface BoardViewProps {
@@ -23,14 +25,14 @@ export default function BoardView({ restClient, refreshTrigger }: BoardViewProps
       sx={{
         p: 3,
         overflowX: 'auto',
-        minHeight: 'calc(100vh - 200px)'
+        minHeight: 'calc(100vh - 200px)',
       }}
     >
       <Box
         sx={{
           display: 'flex',
           gap: 2,
-          minWidth: 'fit-content'
+          minWidth: 'fit-content',
         }}
       >
         {statusOrder.map((status) => (
@@ -41,12 +43,12 @@ export default function BoardView({ restClient, refreshTrigger }: BoardViewProps
               width: {
                 xs: '100%',
                 sm: 'calc(50% - 8px)',
-                md: 'calc(20% - 12.8px)'
+                md: 'calc(20% - 12.8px)',
               },
               minWidth: {
                 xs: '280px',
-                md: '240px'
-              }
+                md: '240px',
+              },
             }}
           >
             <BoardColumn

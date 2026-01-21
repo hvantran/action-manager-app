@@ -1,7 +1,18 @@
-
-
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
 import { Link, Stack, Typography } from '@mui/material';
+import { red } from '@mui/material/colors';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { JobAPI, JobOverview } from '../AppConstants';
+import ConfirmationDialog from '../common/ConfirmationDialog';
+import JobStatus from '../common/JobStatus';
+import ProcessTracking from '../common/ProcessTracking';
+import TextTruncate from '../common/TextTruncate';
 import {
   ColumnMetadata,
   DialogMetadata,
@@ -10,49 +21,43 @@ import {
   PagingOptionMetadata,
   PagingResult,
   RestClient,
-  TableMetadata
+  TableMetadata,
 } from '../GenericConstants';
-
-import JobStatus from '../common/JobStatus';
 import PageEntityRender from '../renders/PageEntityRender';
 
-
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
-import { useNavigate } from 'react-router-dom';
-import { JobAPI, JobOverview } from '../AppConstants';
-import ProcessTracking from '../common/ProcessTracking';
-import TextTruncate from '../common/TextTruncate';
-import ConfirmationDialog from '../common/ConfirmationDialog';
-import { red } from '@mui/material/colors';
-
-const pageIndexStorageKey = "action-manager-job-table-page-index"
-const pageSizeStorageKey = "action-manager-job-table-page-size"
-const orderByStorageKey = "action-manager-job-table-order"
+const pageIndexStorageKey = 'action-manager-job-table-page-index';
+const pageSizeStorageKey = 'action-manager-job-table-page-size';
+const orderByStorageKey = 'action-manager-job-table-order';
 
 export default function JobSummary() {
   const navigate = useNavigate();
-  const selectedJob = React.useRef({ jobName: '', jobId: '' })
-  let initialPagingResult: PagingResult = { totalElements: 0, content: [] };
+  const selectedJob = React.useRef({ jobName: '', jobId: '' });
+  const initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [processTracking, setCircleProcessOpen] = React.useState(false);
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
 
-  const [pageIndex, setPageIndex] = React.useState(parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0)))
-  const [pageSize, setPageSize] = React.useState(parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10)));
-  const [orderBy, setOrderBy] = React.useState(LocalStorageService.getOrDefault(orderByStorageKey, '-updatedAt'));
-  const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
-  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false)
+  const [pageIndex, setPageIndex] = React.useState(
+    parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0))
+  );
+  const [pageSize, setPageSize] = React.useState(
+    parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10))
+  );
+  const [orderBy, setOrderBy] = React.useState(
+    LocalStorageService.getOrDefault(orderByStorageKey, '-updatedAt')
+  );
+  const restClient = React.useMemo(
+    () => new RestClient(setCircleProcessOpen),
+    [setCircleProcessOpen]
+  );
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
 
   const breadcrumbs = [
-    <Link underline="hover" key="1" color="inherit" href='#'>
+    <Link underline="hover" key="1" color="inherit" href="#">
       Jobs
     </Link>,
     <Typography key="3" color="text.primary">
       Summary
-    </Typography>
+    </Typography>,
   ];
 
   const columns: ColumnMetadata[] = [
@@ -61,13 +66,13 @@ export default function JobSummary() {
       label: 'Hash',
       minWidth: 100,
       isHidden: true,
-      isKeyColumn: true
+      isKeyColumn: true,
     },
     {
       id: 'name',
       label: 'Name',
       isSortable: true,
-      minWidth: 100
+      minWidth: 100,
     },
     {
       id: 'status',
@@ -75,7 +80,7 @@ export default function JobSummary() {
       isSortable: true,
       minWidth: 100,
       align: 'left',
-      format: (value: string) => value
+      format: (value: string) => value,
     },
     {
       id: 'state',
@@ -91,7 +96,7 @@ export default function JobSummary() {
       isSortable: true,
       minWidth: 100,
       align: 'left',
-      format: (value: string) => (<JobStatus status={value} />)
+      format: (value: string) => <JobStatus status={value} />,
     },
     {
       id: 'schedule',
@@ -99,7 +104,7 @@ export default function JobSummary() {
       label: 'Type',
       minWidth: 100,
       align: 'left',
-      format: (value: boolean) => value ? (<ScheduleIcon />) : (<TimesOneMobiledataIcon />)
+      format: (value: boolean) => (value ? <ScheduleIcon /> : <TimesOneMobiledataIcon />),
     },
     {
       id: 'startedAt',
@@ -109,12 +114,12 @@ export default function JobSummary() {
       align: 'left',
       format: (value: number) => {
         if (!value) {
-          return "";
+          return '';
         }
 
-        let createdAtDate = new Date(value);
+        const createdAtDate = new Date(value);
         return createdAtDate.toISOString();
-      }
+      },
     },
     {
       id: 'updatedAt',
@@ -124,26 +129,26 @@ export default function JobSummary() {
       align: 'left',
       format: (value: number) => {
         if (!value) {
-          return "";
+          return '';
         }
 
-        let createdAtDate = new Date(value);
+        const createdAtDate = new Date(value);
         return createdAtDate.toISOString();
-      }
+      },
     },
     {
       id: 'elapsedTime',
       label: 'Elapsed Time',
       minWidth: 100,
       align: 'left',
-      format: (value: string) => value
+      format: (value: string) => value,
     },
     {
       id: 'failureNotes',
       label: 'Failure Notes',
       minWidth: 200,
       align: 'left',
-      format: (value: string) => (<TextTruncate text={value} maxTextLength={100} />)
+      format: (value: string) => <TextTruncate text={value} maxTextLength={100} />,
     },
     {
       id: 'actions',
@@ -153,76 +158,84 @@ export default function JobSummary() {
         {
           actionIcon: <DeleteForeverIcon />,
           properties: { sx: { color: red[800] } },
-          actionLabel: "Delete",
-          actionName: "deleteAction",
+          actionLabel: 'Delete',
+          actionName: 'deleteAction',
           onClick: (row: JobOverview) => () => {
-            selectedJob.current = { jobName: row.name, jobId: row.hash }
-            setDeleteConfirmationDialogOpen(true)
-          }
+            selectedJob.current = { jobName: row.name, jobId: row.hash };
+            setDeleteConfirmationDialogOpen(true);
+          },
         },
         {
           actionIcon: <ReadMoreIcon />,
-          actionLabel: "Job details",
-          actionName: "gotoJobDetail",
+          actionLabel: 'Job details',
+          actionName: 'gotoJobDetail',
           onClick: (row: JobOverview) => {
-            return () => navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
-          }
-        }
-      ]
-    }
+            return () =>
+              navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, {
+                state: { name: row.name },
+              });
+          },
+        },
+      ],
+    },
   ];
 
   React.useEffect(() => {
     JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
-  }, [])
+  }, []);
 
-  let pagingOptions: PagingOptionMetadata = {
+  const pagingOptions: PagingOptionMetadata = {
     pageIndex,
     component: 'div',
     orderBy,
     pageSize,
-    searchText: "",
+    searchText: '',
     rowsPerPageOptions: [5, 10, 20],
     onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
       setPageIndex(pageIndex);
       setPageSize(pageSize);
       setOrderBy(orderBy);
-      LocalStorageService.put(pageIndexStorageKey, pageIndex)
-      LocalStorageService.put(pageSizeStorageKey, pageSize)
-      LocalStorageService.put(orderByStorageKey, orderBy)
+      LocalStorageService.put(pageIndexStorageKey, pageIndex);
+      LocalStorageService.put(pageSizeStorageKey, pageSize);
+      LocalStorageService.put(orderByStorageKey, orderBy);
       JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
-    }
-  }
+    },
+  };
 
-  let tableMetadata: TableMetadata = {
+  const tableMetadata: TableMetadata = {
     name: 'Overview',
     columns,
     onRowClickCallback(row) {
-      navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } })
+      navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, { state: { name: row.name } });
     },
     pagingOptions: pagingOptions,
-    pagingResult: pagingResult
-  }
+    pagingResult: pagingResult,
+  };
 
-  let pageEntityMetadata: PageEntityMetadata = {
+  const pageEntityMetadata: PageEntityMetadata = {
     pageName: 'job-summary',
     breadcumbsMeta: breadcrumbs,
     tableMetadata: tableMetadata,
     pageEntityActions: [
       {
         actionIcon: <RefreshIcon />,
-        actionLabel: "Refresh action",
-        actionName: "refreshAction",
-        onClick: () => JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult)
-      }
-    ]
-  }
-  let confirmationDeleteDialogMeta: DialogMetadata = {
+        actionLabel: 'Refresh action',
+        actionName: 'refreshAction',
+        onClick: () =>
+          JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult),
+      },
+    ],
+  };
+  const confirmationDeleteDialogMeta: DialogMetadata = {
     open: deleteConfirmationDialogOpen,
-    title: "Delete Job",
-    content: <p>Are you sure you want to delete <b>{selectedJob.current.jobName}</b> job?</p>,
-    positiveText: "Yes",
-    negativeText: "No",
+    title: 'Delete Job',
+    content: (
+      <p>
+        Are you sure you want to delete <b>{selectedJob.current.jobName}</b> job?
+      </p>
+    ),
+    positiveText: 'Yes',
+    negativeText: 'No',
     negativeAction() {
       setDeleteConfirmationDialogOpen(false);
     },
@@ -231,8 +244,8 @@ export default function JobSummary() {
         JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
       });
       setDeleteConfirmationDialogOpen(false);
-    }
-  }
+    },
+  };
 
   return (
     <Stack spacing={2}>
