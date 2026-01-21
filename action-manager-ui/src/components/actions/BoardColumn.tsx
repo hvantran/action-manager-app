@@ -168,7 +168,7 @@ export default function BoardColumn({ status, onActionClick, restClient, refresh
         <Button
           size="small"
           startIcon={<AddCircleOutlineIcon />}
-          onClick={() => navigate('/actions/new')}
+          onClick={() => navigate(`/actions/new?status=${status}`)}
           sx={{ 
             mt: 2,
             borderColor: 'divider',
