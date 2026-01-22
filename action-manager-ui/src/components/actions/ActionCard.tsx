@@ -1,6 +1,8 @@
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
+import DeleteIcon from '@mui/icons-material/Delete';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import PauseIcon from '@mui/icons-material/Pause';
 import RestoreIcon from '@mui/icons-material/Restore';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
@@ -96,6 +98,28 @@ const ActionCard = React.memo(function ActionCard({
     e.stopPropagation();
     ActionAPI.restore(action.hash, restClient, () => {
       // Trigger refresh after successful restore
+      if (onRefresh) {
+        onRefresh();
+      }
+    });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete "${action.name}"?`)) {
+      ActionAPI.deleteAction(action.hash, restClient, () => {
+        // Trigger refresh after successful delete
+        if (onRefresh) {
+          onRefresh();
+        }
+      });
+    }
+  };
+
+  const handlePause = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    ActionAPI.pauseAction(action.hash, restClient, () => {
+      // Trigger refresh after successful pause
       if (onRefresh) {
         onRefresh();
       }
@@ -322,6 +346,11 @@ const ActionCard = React.memo(function ActionCard({
             <IconButton size="small" onClick={handleExport} sx={{ p: 0.5 }} title="Export">
               <FileDownloadIcon sx={{ fontSize: 18 }} />
             </IconButton>
+            {action.status === 'ACTIVE' && (
+              <IconButton size="small" onClick={handlePause} sx={{ p: 0.5 }} title="Pause">
+                <PauseIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            )}
             {action.status === 'ARCHIVED' ? (
               <IconButton size="small" onClick={handleRestore} sx={{ p: 0.5 }} title="Restore">
                 <RestoreIcon sx={{ fontSize: 18 }} />
@@ -331,6 +360,14 @@ const ActionCard = React.memo(function ActionCard({
                 <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
+            <IconButton 
+              size="small" 
+              onClick={handleDelete} 
+              sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
+              title="Delete"
+            >
+              <DeleteIcon sx={{ fontSize: 18 }} />
+            </IconButton>
           </Box>
         </Box>
       </CardContent>

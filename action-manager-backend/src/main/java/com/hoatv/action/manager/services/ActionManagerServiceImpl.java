@@ -311,6 +311,21 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @Transactional
+    @LoggingMonitor(description = "Pause action by id: {argument0}")
+    public void pause(String actionId) {
+        ActionDocument actionDocument = findActionDocument(actionId);
+        List<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId);
+        jobDocuments.forEach(jobDocument -> jobDocument.setJobStatus(JobStatus.PAUSED));
+        jobDocumentRepository.saveAll(jobDocuments);
+
+        jobDocuments.stream().map(JobDocument::getHash).forEach(jobManagerService::pause);
+
+        actionDocument.setActionStatus(ActionStatus.PAUSED);
+        actionDocumentRepository.save(actionDocument);
+    }
+
+    @Override
+    @Transactional
     @LoggingMonitor(description = "Restore action {argument0}")
     public void restore(String actionId) {
         ActionDocument actionDocument = findActionDocument(actionId);

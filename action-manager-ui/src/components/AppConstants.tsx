@@ -579,6 +579,27 @@ export class ActionAPI {
     });
   };
 
+  static pauseAction = async (
+    actionId: string,
+    restClient: RestClient,
+    successCallback: () => void
+  ) => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+      },
+    };
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/pause`;
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
+      successCallback();
+      return {
+        message: 'Action has been paused successfully',
+        key: new Date().getTime(),
+      } as SnackbarMessage;
+    });
+  };
+
   static replayAction = async (
     actionId: string,
     restClient: RestClient,

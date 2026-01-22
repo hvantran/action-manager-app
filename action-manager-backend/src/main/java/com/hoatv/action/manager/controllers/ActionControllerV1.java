@@ -198,6 +198,12 @@ public class ActionControllerV1 {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping(path = "/{actionId}/pause", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> pause(@PathVariable("actionId") String actionId) {
+        actionManagerService.pause(actionId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping(path = "/{actionId}/restore", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> restore(@PathVariable("actionId") String actionId) {
         actionManagerService.restore(actionId);

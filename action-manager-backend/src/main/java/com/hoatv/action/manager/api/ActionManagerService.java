@@ -27,6 +27,8 @@ public interface ActionManagerService {
 
     void archive(String actionId);
 
+    void pause(String actionId);
+
     void restore(String actionId);
 
     boolean replay(String hash);
