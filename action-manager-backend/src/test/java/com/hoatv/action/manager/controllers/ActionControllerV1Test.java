@@ -294,7 +294,7 @@ class ActionControllerV1Test {
     // --- GET /v1/actions/{actionId}/jobs ---
     @Test
     void testGetJobsFromActionSuccess () throws Exception {
-        Mockito.when(jobManagerService.getJobsFromAction(anyString(), any(PageRequest.class)))
+        Mockito.when(jobManagerService.getJobsFromAction(anyString(), any(PageRequest.class), eq(null)))
                .thenReturn(new PageImpl<>(List.of(new JobOverviewDTO())));
         mockMvc.perform(get("/v1/actions/a1/jobs")
                             .param("pageIndex", "0")
@@ -303,8 +303,19 @@ class ActionControllerV1Test {
     }
 
     @Test
+    void testGetJobsFromActionWithSearchSuccess () throws Exception {
+        Mockito.when(jobManagerService.getJobsFromAction(eq("a1"), any(PageRequest.class), eq("test")))
+               .thenReturn(new PageImpl<>(List.of(new JobOverviewDTO())));
+        mockMvc.perform(get("/v1/actions/a1/jobs")
+                            .param("pageIndex", "0")
+                            .param("pageSize", "10")
+                            .param("searchText", "test"))
+               .andExpect(status().isOk());
+    }
+
+    @Test
     void testGetJobsFromActionFailure () throws Exception {
-        Mockito.when(jobManagerService.getJobsFromAction(anyString(), any(PageRequest.class))).thenThrow(
+        Mockito.when(jobManagerService.getJobsFromAction(anyString(), any(PageRequest.class), any())).thenThrow(
             new RuntimeException());
         mockMvc.perform(get("/v1/actions/a1/jobs")
                             .param("pageIndex", "0")

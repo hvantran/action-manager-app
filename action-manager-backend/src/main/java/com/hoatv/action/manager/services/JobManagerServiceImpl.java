@@ -161,8 +161,13 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     @Override
     @LoggingMonitor(description = "Get jobs from action hash: {argument0}, page info: {argument1}")
-    public Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest) {
-        Page<JobDocument> jobDocuments = jobDocumentRepository.findJobByActionId(actionId, pageRequest);
+    public Page<JobOverviewDTO> getJobsFromAction(String actionId, PageRequest pageRequest, String searchText) {
+        Page<JobDocument> jobDocuments;
+        if (searchText != null && !searchText.trim().isEmpty()) {
+            jobDocuments = jobDocumentRepository.findJobByActionIdAndJobNameContainingIgnoreCase(actionId, searchText.trim(), pageRequest);
+        } else {
+            jobDocuments = jobDocumentRepository.findJobByActionId(actionId, pageRequest);
+        }
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return JobTransformer.getJobOverviewDTOs(jobDocuments, jobResultDocuments);
     }

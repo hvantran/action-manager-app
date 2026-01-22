@@ -445,7 +445,8 @@ export class ActionAPI {
     orderBy: string,
     targetAction: string,
     restClient: RestClient,
-    successCallback: (data: PagingResult) => void
+    successCallback: (data: PagingResult) => void,
+    searchText?: string
   ) => {
     const requestOptions = {
       method: 'GET',
@@ -454,7 +455,10 @@ export class ActionAPI {
       },
     };
 
-    const targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(targetAction)}/jobs?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}&orderBy=${orderBy}`;
+    let targetURL = `${ACTION_MANAGER_API_URL}/${encodeURIComponent(targetAction)}/jobs?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}&orderBy=${orderBy}`;
+    if (searchText && searchText.trim() !== '') {
+      targetURL += `&searchText=${encodeURIComponent(searchText.trim())}`;
+    }
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       const responseJSON = (await response.json()) as PagingResult;
       successCallback(responseJSON);

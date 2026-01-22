@@ -170,11 +170,13 @@ public class ActionControllerV1 {
     @GetMapping(value = "/{actionId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getJobsFromAction(@PathVariable("actionId") String actionId,
                                                     @RequestParam("pageIndex") @Min(0) int pageIndex,
-                                                    @RequestParam("pageSize") @Min(0) int pageSize) {
+                                                    @RequestParam("pageSize") @Min(0) int pageSize,
+                                                    @RequestParam(value = "searchText", required = false, defaultValue = "") String searchText) {
 
         Sort defaultSorting = Sort.by(Sort.Order.desc(ActionDocument.Fields.createdAt));
+        String actualSearchText = searchText.isEmpty() ? null : searchText;
         Page<JobOverviewDTO> actionResults =
-                jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting));
+                jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting), actualSearchText);
         return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
     }
 

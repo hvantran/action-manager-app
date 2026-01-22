@@ -46,7 +46,8 @@ public interface JobManagerService {
     void processBulkJobs(List<ActionExecutionContext> actionExecutionContexts);
 
     Page<JobOverviewDTO> getJobsFromAction(String actionId, 
-                                           PageRequest pageRequest);
+                                           PageRequest pageRequest,
+                                           String searchText);
 
     void processNonePersistenceJob(ImmutableJob immutableJob, ImmutableAction immutableAction);
 

@@ -214,7 +214,7 @@ export default function ActionJobTable(props: any) {
         (p) => p.executionStatus === 'FAILURE'
       ).length;
       setNumberOfFailureJobs(numberOfFailureJobs);
-    });
+    }, searchText);
   }, [replayFlag, internalReload, searchText]);
 
   const pagingOptions: PagingOptionMetadata = {
@@ -233,7 +233,7 @@ export default function ActionJobTable(props: any) {
       LocalStorageService.put(orderByStorageKey, orderBy);
       ActionAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, actionId, restClient, (data) => {
         setPagingResult(data);
-      });
+      }, searchText);
     },
   };
 
@@ -287,7 +287,8 @@ export default function ActionJobTable(props: any) {
               (p) => p.executionStatus === 'FAILURE'
             ).length;
             setNumberOfFailureJobs(numberOfFailureJobs);
-          }
+          },
+          searchText
         );
       });
       setDeleteConfirmationDialogOpen(false);

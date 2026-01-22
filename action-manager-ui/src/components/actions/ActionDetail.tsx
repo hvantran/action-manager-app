@@ -82,7 +82,8 @@ const StatusChip = styled(Chip)(({ theme }) => ({
 
 const StatCard = styled(Card)(({ theme }) => ({
   height: '100%',
-  backgroundColor: 'rgb(248, 250, 252)',
+  backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : 'rgb(248, 250, 252)',
+  border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
   transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
   '&:hover': {
     transform: 'translateY(-2px)',
@@ -511,7 +512,7 @@ export default function ActionDetail() {
                 </Typography>
                 <Grid container spacing={2} sx={{ mb: 3, flex: 1 }}>
                   <Grid item xs={6}>
-                    <StatCard variant="outlined">
+                    <StatCard>
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                           Total Jobs
@@ -523,7 +524,7 @@ export default function ActionDetail() {
                     </StatCard>
                   </Grid>
                   <Grid item xs={6}>
-                    <StatCard variant="outlined">
+                    <StatCard>
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                           Success Rate
@@ -535,7 +536,7 @@ export default function ActionDetail() {
                     </StatCard>
                   </Grid>
                   <Grid item xs={6}>
-                    <StatCard variant="outlined">
+                    <StatCard>
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                           Avg Duration
@@ -547,7 +548,7 @@ export default function ActionDetail() {
                     </StatCard>
                   </Grid>
                   <Grid item xs={6}>
-                    <StatCard variant="outlined">
+                    <StatCard>
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                           Failures (24h)
