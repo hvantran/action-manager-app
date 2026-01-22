@@ -27,8 +27,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Paper,
-  Stack,
   Typography,
 } from '@mui/material';
 import Badge, { BadgeProps } from '@mui/material/Badge';
