@@ -27,6 +27,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import Badge, { BadgeProps } from '@mui/material/Badge';
@@ -328,42 +329,54 @@ export default function ActionDetail() {
           </Box>
 
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <IconButton
-              size="small"
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={handleCopyJSON}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
-              <ContentCopyIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => {
-                ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
-                  Object.keys(actionDetail).forEach((propertyName: string) => {
-                    setPropertyMetadata(
-                      onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
-                    );
+            <Tooltip title="Edit action">
+              <IconButton
+                size="small"
+                aria-label="Edit action"
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Copy JSON">
+              <IconButton
+                size="small"
+                onClick={handleCopyJSON}
+                aria-label="Copy JSON"
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+              >
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Refresh action">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
+                    Object.keys(actionDetail).forEach((propertyName: string) => {
+                      setPropertyMetadata(
+                        onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
+                      );
+                    });
                   });
-                });
-                setReplayActionFlag((prev) => !prev);
-              }}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
+                  setReplayActionFlag((prev) => !prev);
+                }}
+                aria-label="Refresh action"
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="More options">
+              <IconButton
+                size="small"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                aria-label="More options"
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Menu anchorEl={anchorEl} open={menuOpen} onClose={handleMenuClose}>
               <MenuItem onClick={handleArchive}>
                 <ArchiveOutlinedIcon sx={{ mr: 2, color: 'primary.main' }} />
