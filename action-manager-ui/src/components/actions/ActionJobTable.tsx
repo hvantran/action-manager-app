@@ -1,9 +1,9 @@
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import InfoIcon from '@mui/icons-material/Info';
+import OpenInNew from '@mui/icons-material/OpenInNew';
 import PauseCircleOutline from '@mui/icons-material/PauseCircleOutline';
-import PlayCircleIcon from '@mui/icons-material/PlayCircle';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
+import PlayArrow from '@mui/icons-material/PlayArrow';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
 import { Box, Stack } from '@mui/material';
@@ -40,6 +40,7 @@ export default function ActionJobTable(props: any) {
   const actionId = props.actionId;
   const setCircleProcessOpen = props.setCircleProcessOpen;
   const replayFlag = props.replayFlag;
+  const searchText = props.searchText || '';
   const [internalReload, setInternalReload] = React.useState(false);
   const initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
@@ -144,11 +145,12 @@ export default function ActionJobTable(props: any) {
     },
     {
       id: 'actions',
-      label: '',
+      label: 'Actions',
       align: 'right',
+      minWidth: 200,
       actions: [
         {
-          actionIcon: <PlayCircleIcon />,
+          actionIcon: <PlayArrow />,
           visible: (row: any) => row.status === 'PAUSED',
           actionLabelContent: (
             <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
@@ -195,7 +197,7 @@ export default function ActionJobTable(props: any) {
           },
         },
         {
-          actionIcon: <ReadMoreIcon />,
+          actionIcon: <OpenInNew />,
           actionLabel: 'Go to details',
           actionName: 'gotoActionDetail',
           onClick: (row: JobOverview) => () =>
@@ -213,13 +215,13 @@ export default function ActionJobTable(props: any) {
       ).length;
       setNumberOfFailureJobs(numberOfFailureJobs);
     });
-  }, [replayFlag, internalReload]);
+  }, [replayFlag, internalReload, searchText]);
 
   const pagingOptions: PagingOptionMetadata = {
     pageIndex,
     component: 'div',
     orderBy,
-    searchText: '',
+    searchText,
     pageSize,
     rowsPerPageOptions: [5, 10, 20],
     onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
@@ -245,7 +247,9 @@ export default function ActionJobTable(props: any) {
 
   const tableMetadata: TableMetadata = {
     columns,
-    name: 'Job Table',
+    name: '',
+    visibleSearchbar: false,
+    searchPlaceholder: 'Filter jobs...',
     onRowClickCallback,
     onMouseWheelClick,
     pagingOptions: pagingOptions,

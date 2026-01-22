@@ -25,6 +25,7 @@ export const DARK_THEME = createTheme({
   typography: {
     fontSize: 13,
     fontFamily: [
+      'Inter',
       '-apple-system',
       'BlinkMacSystemFont',
       '"Segoe UI"',
@@ -32,9 +33,6 @@ export const DARK_THEME = createTheme({
       '"Helvetica Neue"',
       'Arial',
       'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
     ].join(','),
   },
 });
@@ -46,6 +44,7 @@ export const DEFAULT_THEME = createTheme({
   typography: {
     fontSize: 13,
     fontFamily: [
+      'Inter',
       '-apple-system',
       'BlinkMacSystemFont',
       '"Segoe UI"',
@@ -53,9 +52,6 @@ export const DEFAULT_THEME = createTheme({
       '"Helvetica Neue"',
       'Arial',
       'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
     ].join(','),
   },
 });
@@ -400,6 +396,7 @@ export interface TableMetadata {
   pagingOptions: PagingOptionMetadata;
   tableContainerCssProps?: any;
   visibleSearchbar?: boolean;
+  searchPlaceholder?: string;
   pagingResult: PagingResult;
   onRowClickCallback?: (record: any) => any;
   onMouseWheelClick?: (record: any) => any;
