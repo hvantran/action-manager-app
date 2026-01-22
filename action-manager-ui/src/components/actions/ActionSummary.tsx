@@ -6,6 +6,7 @@ import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import PendingIcon from '@mui/icons-material/Pending';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import RestoreIcon from '@mui/icons-material/Restore';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
@@ -227,9 +228,29 @@ export default function ActionSummary() {
           },
         },
         {
+          actionIcon: <RestoreIcon />,
+          actionLabel: 'Restore',
+          actionName: 'restoreAction',
+          visible: (row: ActionOverview) => row.status === 'ARCHIVED',
+          onClick: (row: ActionOverview) => {
+            return () => {
+              return ActionAPI.restore(row.hash, restClient, () => {
+                ActionAPI.loadActionSummarysAsync(
+                  pageIndex,
+                  pageSize,
+                  orderBy,
+                  restClient,
+                  (actionPagingResult) => setPagingResult(actionPagingResult)
+                );
+              });
+            };
+          },
+        },
+        {
           actionIcon: <ArchiveOutlinedIcon />,
           actionLabel: 'Archive',
           actionName: 'archive',
+          visible: (row: ActionOverview) => row.status !== 'ARCHIVED',
           onClick: (row: ActionOverview) => {
             return () => {
               setConfirmationDialogTitle('Archive');
