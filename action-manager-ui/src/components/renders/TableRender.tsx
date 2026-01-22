@@ -84,7 +84,7 @@ export default function TableRender(props: TableMetadata) {
               <SearchIcon />
             </SearchIconWrapper>
             <StyledInputBase
-              placeholder="Search…"
+              placeholder={props.searchPlaceholder || "Search…"}
               inputProps={{ 'aria-label': 'search' }}
               onChange={handleSearchChange}
               onBlur={handleBlurSearchChange}
@@ -148,6 +148,7 @@ export default function TableRender(props: TableMetadata) {
                                   key={action.actionName}
                                   onClick={action.onClick(row)}
                                   color="primary"
+                                  sx={{ opacity: 0.7 }}
                                   aria-label="Next"
                                   component="label"
                                   {...action.properties}
