@@ -44,7 +44,6 @@ import {
   ROOT_BREADCRUMB,
   isAllDependOnPropsValid,
 } from '../AppConstants';
-import CodeEditor from '../common/CodeEditor';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import { Search, SearchIconWrapper, StyledInputBase } from '../common/GenericComponent';
 import ProcessTracking from '../common/ProcessTracking';
