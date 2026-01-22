@@ -360,14 +360,16 @@ const ActionCard = React.memo(function ActionCard({
                 <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
-            <IconButton 
-              size="small" 
-              onClick={handleDelete} 
-              sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
-              title="Delete"
-            >
-              <DeleteIcon sx={{ fontSize: 18 }} />
-            </IconButton>
+            {action.status !== 'DELETED' && (
+              <IconButton 
+                size="small" 
+                onClick={handleDelete} 
+                sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
+                title="Delete"
+              >
+                <DeleteIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            )}
           </Box>
         </Box>
       </CardContent>
