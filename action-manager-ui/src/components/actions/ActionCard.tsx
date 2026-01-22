@@ -63,7 +63,14 @@ const ActionCard = React.memo(function ActionCard({
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    const newFavoriteState = !isFavorite;
+    ActionAPI.setFavoriteAction(action.hash, newFavoriteState, restClient, () => {
+      setIsFavorite(newFavoriteState);
+      // Trigger refresh after successful favorite toggle
+      if (onRefresh) {
+        onRefresh();
+      }
+    });
   };
 
   const handleMenuClick = (e: React.MouseEvent) => {
