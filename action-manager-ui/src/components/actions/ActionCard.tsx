@@ -1,6 +1,7 @@
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import RestoreIcon from '@mui/icons-material/Restore';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import {
@@ -78,6 +79,16 @@ const ActionCard = React.memo(function ActionCard({
     e.stopPropagation();
     ActionAPI.archive(action.hash, restClient, () => {
       // Trigger refresh after successful archive
+      if (onRefresh) {
+        onRefresh();
+      }
+    });
+  };
+
+  const handleRestore = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    ActionAPI.restore(action.hash, restClient, () => {
+      // Trigger refresh after successful restore
       if (onRefresh) {
         onRefresh();
       }
@@ -304,9 +315,15 @@ const ActionCard = React.memo(function ActionCard({
             <IconButton size="small" onClick={handleExport} sx={{ p: 0.5 }} title="Export">
               <FileDownloadIcon sx={{ fontSize: 18 }} />
             </IconButton>
-            <IconButton size="small" onClick={handleArchive} sx={{ p: 0.5 }} title="Archive">
-              <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
-            </IconButton>
+            {action.status === 'ARCHIVED' ? (
+              <IconButton size="small" onClick={handleRestore} sx={{ p: 0.5 }} title="Restore">
+                <RestoreIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            ) : (
+              <IconButton size="small" onClick={handleArchive} sx={{ p: 0.5 }} title="Archive">
+                <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            )}
           </Box>
         </Box>
       </CardContent>
