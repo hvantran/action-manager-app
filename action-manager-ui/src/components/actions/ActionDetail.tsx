@@ -30,6 +30,7 @@ import {
   MenuItem,
   Select,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import Badge, { BadgeProps } from '@mui/material/Badge';
@@ -232,7 +233,8 @@ export default function ActionDetail() {
       default:
         return {
           color: theme.palette.grey[600],
-          bg: theme.palette.mode === 'dark' ? 'rgba(158, 158, 158, 0.3)' : 'rgba(158, 158, 158, 0.1)',
+          bg:
+            theme.palette.mode === 'dark' ? 'rgba(158, 158, 158, 0.3)' : 'rgba(158, 158, 158, 0.1)',
           border: theme.palette.grey[400],
         };
     }
@@ -389,44 +391,62 @@ export default function ActionDetail() {
           </Box>
 
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleEditAction}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-              title="Edit Action"
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={handleCopyJSON}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
-              <ContentCopyIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => {
-                ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
-                  Object.keys(actionDetail).forEach((propertyName: string) => {
-                    setPropertyMetadata(
-                      onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
-                    );
-                  });
-                });
-                setReplayActionFlag((prev) => !prev);
-              }}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Edit Action">
+              <IconButton
+                size="small"
+                onClick={handleEditAction}
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                aria-label="Edit Action"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Copy JSON">
+              <IconButton
+                size="small"
+                onClick={handleCopyJSON}
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                aria-label="Copy JSON"
+              >
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Refresh">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  ActionAPI.loadActionDetailAsync(
+                    actionId,
+                    restClient,
+                    (actionDetail: ActionDetails) => {
+                      Object.keys(actionDetail).forEach((propertyName: string) => {
+                        setPropertyMetadata(
+                          onChangeProperty(
+                            propertyName,
+                            actionDetail[propertyName as keyof ActionDetails]
+                          )
+                        );
+                      });
+                    }
+                  );
+                  setReplayActionFlag((prev) => !prev);
+                }}
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                aria-label="Refresh"
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="More actions">
+              <IconButton
+                size="small"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                aria-label="More actions"
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Menu anchorEl={anchorEl} open={menuOpen} onClose={handleMenuClose}>
               <MenuItem onClick={handleArchive}>
                 <ArchiveOutlinedIcon sx={{ mr: 2, color: 'primary.main' }} />
@@ -438,7 +458,12 @@ export default function ActionDetail() {
               </MenuItem>
               <MenuItem onClick={handleReplayFailures} disabled={numberOfFailureJobs === 0}>
                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  <StyledBadge color="error" badgeContent={numberOfFailureJobs} showZero sx={{ mr: 2 }}>
+                  <StyledBadge
+                    color="error"
+                    badgeContent={numberOfFailureJobs}
+                    showZero
+                    sx={{ mr: 2 }}
+                  >
                     <ReplayIcon sx={{ color: 'primary.main' }} />
                   </StyledBadge>
                   Replay failures
@@ -449,7 +474,7 @@ export default function ActionDetail() {
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => navigate(`/actions/${actionId}/jobs/new`)}
-              sx={{ 
+              sx={{
                 ml: 1,
                 bgcolor: '#1976d2',
                 '&:hover': {
@@ -469,7 +494,14 @@ export default function ActionDetail() {
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ p: 3 }}>
                 {/* Action Name and Status */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 3 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'start',
+                    mb: 3,
+                  }}
+                >
                   <Box>
                     <Typography
                       variant="caption"
@@ -530,7 +562,14 @@ export default function ActionDetail() {
 
                 {/* Configuration Section */}
                 <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 2,
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SettingsIcon sx={{ color: 'text.secondary', fontSize: '1.25rem' }} />
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -557,7 +596,13 @@ export default function ActionDetail() {
                     </Box>
                   </Box>
                   <CodeBlock>
-                    <pre>{JSON.stringify(JSON.parse(getPropertyValue('actionConfigurations') || '{}'), null, 2)}</pre>
+                    <pre>
+                      {JSON.stringify(
+                        JSON.parse(getPropertyValue('actionConfigurations') || '{}'),
+                        null,
+                        2
+                      )}
+                    </pre>
                   </CodeBlock>
                 </Box>
               </CardContent>
@@ -575,10 +620,21 @@ export default function ActionDetail() {
                   <Grid item xs={6}>
                     <StatCard>
                       <CardContent sx={{ p: 2 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '0.75rem' }}
+                        >
                           Total Jobs
                         </Typography>
-                        <Typography sx={{ fontWeight: 600, mt: 0.5, color: 'text.primary', fontSize: '1.5rem' }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            mt: 0.5,
+                            color: 'text.primary',
+                            fontSize: '1.5rem',
+                          }}
+                        >
                           {actionStats.totalJobs}
                         </Typography>
                       </CardContent>
@@ -587,10 +643,16 @@ export default function ActionDetail() {
                   <Grid item xs={6}>
                     <StatCard>
                       <CardContent sx={{ p: 2 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '0.75rem' }}
+                        >
                           Success Rate
                         </Typography>
-                        <Typography sx={{ fontWeight: 600, mt: 0.5, color: '#4ade80', fontSize: '1.5rem' }}>
+                        <Typography
+                          sx={{ fontWeight: 600, mt: 0.5, color: '#4ade80', fontSize: '1.5rem' }}
+                        >
                           {actionStats.successRate}%
                         </Typography>
                       </CardContent>
@@ -599,10 +661,21 @@ export default function ActionDetail() {
                   <Grid item xs={6}>
                     <StatCard>
                       <CardContent sx={{ p: 2 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '0.75rem' }}
+                        >
                           Avg Duration
                         </Typography>
-                        <Typography sx={{ fontWeight: 600, mt: 0.5, color: 'text.primary', fontSize: '1.5rem' }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            mt: 0.5,
+                            color: 'text.primary',
+                            fontSize: '1.5rem',
+                          }}
+                        >
                           {actionStats.avgDuration}
                         </Typography>
                       </CardContent>
@@ -611,10 +684,16 @@ export default function ActionDetail() {
                   <Grid item xs={6}>
                     <StatCard>
                       <CardContent sx={{ p: 2 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: '0.75rem' }}
+                        >
                           Failures (24h)
                         </Typography>
-                        <Typography sx={{ fontWeight: 600, mt: 0.5, color: '#f87171', fontSize: '1.5rem' }}>
+                        <Typography
+                          sx={{ fontWeight: 600, mt: 0.5, color: '#f87171', fontSize: '1.5rem' }}
+                        >
                           {actionStats.failures24h}
                         </Typography>
                       </CardContent>
@@ -642,8 +721,20 @@ export default function ActionDetail() {
 
         {/* Job Table */}
         <Card>
-          <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              p: 2.5,
+              borderBottom: 1,
+              borderColor: 'divider',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <FormatListBulletedIcon sx={{ color: 'primary.main' }} />
               Job Table
             </Typography>
@@ -693,20 +784,27 @@ export default function ActionDetail() {
                 overflow: 'auto',
               }}
             >
-              <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '0.875rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {JSON.stringify(JSON.parse(getPropertyValue('actionConfigurations') || '{}'), null, 2)}
+              <pre
+                style={{
+                  margin: 0,
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {JSON.stringify(
+                  JSON.parse(getPropertyValue('actionConfigurations') || '{}'),
+                  null,
+                  2
+                )}
               </pre>
             </Box>
           </DialogContent>
         </Dialog>
 
         {/* Edit Action Dialog */}
-        <Dialog
-          open={editDialogOpen}
-          onClose={handleCancelEdit}
-          maxWidth="md"
-          fullWidth
-        >
+        <Dialog open={editDialogOpen} onClose={handleCancelEdit} maxWidth="md" fullWidth>
           <DialogTitle>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="h6">Edit Action</Typography>
@@ -719,7 +817,10 @@ export default function ActionDetail() {
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={2}>
                 {propertyMetadata
-                  .filter((prop) => prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations')
+                  .filter(
+                    (prop) =>
+                      prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations'
+                  )
                   .map((prop) => {
                     if (prop.propName === 'actionStatus') {
                       return (
