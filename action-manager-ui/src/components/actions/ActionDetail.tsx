@@ -23,11 +23,14 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  FormControl,
   Grid,
   IconButton,
   Menu,
   MenuItem,
   Tooltip,
+  Select,
+  TextField,
   Typography,
 } from '@mui/material';
 import Badge, { BadgeProps } from '@mui/material/Badge';
@@ -45,7 +48,6 @@ import {
   ROOT_BREADCRUMB,
   isAllDependOnPropsValid,
 } from '../AppConstants';
-import CodeEditor from '../common/CodeEditor';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import { Search, SearchIconWrapper, StyledInputBase } from '../common/GenericComponent';
 import ProcessTracking from '../common/ProcessTracking';
@@ -126,6 +128,7 @@ export default function ActionDetail() {
   );
   const [replayFlag, setReplayActionFlag] = React.useState(false);
   const [configDialogOpen, setConfigDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
@@ -298,6 +301,64 @@ export default function ActionDetail() {
     }
   };
 
+  const handleEditAction = () => {
+    // Enable editing for configuration and status only
+    setPropertyMetadata((prev) =>
+      prev.map((prop) => {
+        if (prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations') {
+          return { ...prop, disabled: false };
+        }
+        return prop;
+      })
+    );
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveAction = () => {
+    ActionAPI.updateAction(actionId, restClient, propertyMetadata, () => {
+      // Reload action details after save
+      ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
+        actionRef.current = actionDetail;
+        Object.keys(actionDetail).forEach((propertyName: string) => {
+          setPropertyMetadata(
+            onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
+          );
+        });
+      });
+      // Re-disable fields and close dialog
+      setPropertyMetadata((prev) =>
+        prev.map((prop) => {
+          if (prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations') {
+            return { ...prop, disabled: true };
+          }
+          return prop;
+        })
+      );
+      setEditDialogOpen(false);
+      toast.success('Action updated successfully!');
+    });
+  };
+
+  const handleCancelEdit = () => {
+    // Reload original values and re-disable fields
+    ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
+      Object.keys(actionDetail).forEach((propertyName: string) => {
+        setPropertyMetadata(
+          onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
+        );
+      });
+    });
+    setPropertyMetadata((prev) =>
+      prev.map((prop) => {
+        if (prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations') {
+          return { ...prop, disabled: true };
+        }
+        return prop;
+      })
+    );
+    setEditDialogOpen(false);
+  };
+
   const confirmationDeleteDialogMeta: DialogMetadata = {
     open: deleteConfirmationDialogOpen,
     title: confirmationDialogTitle,
@@ -330,34 +391,33 @@ export default function ActionDetail() {
 
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Tooltip title="Edit action">
-              <IconButton
-                size="small"
-                aria-label="Edit action"
-                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
+            <IconButton
+              size="small"
+              onClick={handleEditAction}
+              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+              title="Edit Action"
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
             </Tooltip>
             <Tooltip title="Copy JSON">
-              <IconButton
-                size="small"
-                onClick={handleCopyJSON}
-                aria-label="Copy JSON"
-                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-              >
-                <ContentCopyIcon fontSize="small" />
-              </IconButton>
+            <IconButton
+              size="small"
+              onClick={handleCopyJSON}
+              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+            >
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
             </Tooltip>
             <Tooltip title="Refresh action">
-              <IconButton
-                size="small"
-                onClick={() => {
-                  ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
-                    Object.keys(actionDetail).forEach((propertyName: string) => {
-                      setPropertyMetadata(
-                        onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
-                      );
-                    });
+            <IconButton
+              size="small"
+              onClick={() => {
+                ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
+                  Object.keys(actionDetail).forEach((propertyName: string) => {
+                    setPropertyMetadata(
+                      onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
+                    );
                   });
                   setReplayActionFlag((prev) => !prev);
                 }}
@@ -646,6 +706,93 @@ export default function ActionDetail() {
               <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '0.875rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                 {JSON.stringify(JSON.parse(getPropertyValue('actionConfigurations') || '{}'), null, 2)}
               </pre>
+            </Box>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Action Dialog */}
+        <Dialog
+          open={editDialogOpen}
+          onClose={handleCancelEdit}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Edit Action</Typography>
+              <IconButton onClick={handleCancelEdit} size="small">
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                {propertyMetadata
+                  .filter((prop) => prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations')
+                  .map((prop) => {
+                    if (prop.propName === 'actionStatus') {
+                      return (
+                        <Grid item xs={12} key={prop.propName}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                            Status
+                          </Typography>
+                          <FormControl fullWidth size="small">
+                            <Select
+                              value={prop.propValue || ''}
+                              onChange={(e) => {
+                                setPropertyMetadata(
+                                  onChangeProperty(prop.propName, e.target.value)
+                                );
+                              }}
+                            >
+                              {ACTION_STATUS_SELECTION.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                      );
+                    }
+                    if (prop.propName === 'actionConfigurations') {
+                      return (
+                        <Grid item xs={12} key={prop.propName}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                            Configuration
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            multiline
+                            rows={12}
+                            value={prop.propValue || '{}'}
+                            onChange={(e) => {
+                              setPropertyMetadata(onChangeProperty(prop.propName, e.target.value));
+                            }}
+                            placeholder="Enter JSON configuration"
+                            variant="outlined"
+                            sx={{
+                              '& .MuiInputBase-root': {
+                                fontFamily: 'monospace',
+                                fontSize: '0.875rem',
+                              },
+                            }}
+                          />
+                        </Grid>
+                      );
+                    }
+                    return null;
+                  })}
+              </Grid>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+                <Button onClick={handleCancelEdit} variant="outlined">
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveAction} variant="contained" startIcon={<SaveIcon />}>
+                  Save Changes
+                </Button>
+              </Box>
             </Box>
           </DialogContent>
         </Dialog>
