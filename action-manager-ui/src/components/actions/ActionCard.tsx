@@ -32,6 +32,7 @@ export interface ActionCardProps {
   onClick: () => void;
   restClient: RestClient;
   onRefresh?: () => void;
+  onStatusChange?: () => void;
 }
 
 type HealthStatus = 'Critical' | 'Warning' | 'Healthy';
@@ -62,6 +63,7 @@ const ActionCard = React.memo(function ActionCard({
   onClick,
   restClient,
   onRefresh,
+  onStatusChange,
 }: ActionCardProps) {
   const [isFavorite, setIsFavorite] = React.useState(action.isFavorite || false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -94,8 +96,10 @@ const ActionCard = React.memo(function ActionCard({
   const handleArchive = (e: React.MouseEvent) => {
     e.stopPropagation();
     ActionAPI.archive(action.hash, restClient, () => {
-      // Trigger refresh after successful archive
-      if (onRefresh) {
+      // Trigger refresh of all columns when status changes
+      if (onStatusChange) {
+        onStatusChange();
+      } else if (onRefresh) {
         onRefresh();
       }
     });
@@ -103,9 +107,11 @@ const ActionCard = React.memo(function ActionCard({
 
   const handleRestore = (e: React.MouseEvent) => {
     e.stopPropagation();
-    ActionAPI.restore(action.hash, restClient, () => {
-      // Trigger refresh after successful restore
-      if (onRefresh) {
+    ActionAPI.restoreAction(action.hash, restClient, () => {
+      // Trigger refresh of all columns when status changes
+      if (onStatusChange) {
+        onStatusChange();
+      } else if (onRefresh) {
         onRefresh();
       }
     });
@@ -118,8 +124,26 @@ const ActionCard = React.memo(function ActionCard({
 
   const handleDeleteConfirm = () => {
     setDeleteDialogOpen(false);
-    ActionAPI.deleteAction(action.hash, restClient, () => {
-      // Trigger refresh after successful delete
+    // Use soft delete - move to DELETED status
+    ActionAPI.softDeleteAction(action.hash, restClient, () => {
+      // Trigger refresh of all columns when status changes
+      if (onStatusChange) {
+        onStatusChange();
+      } else if (onRefresh) {
+        onRefresh();
+      }
+    });
+  };
+
+  const handlePermanentDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteDialogOpen(true);
+  };
+
+  const handlePermanentDeleteConfirm = () => {
+    setDeleteDialogOpen(false);
+    ActionAPI.permanentDeleteAction(action.hash, restClient, () => {
+      // Trigger refresh after successful permanent delete
       if (onRefresh) {
         onRefresh();
       }
@@ -133,8 +157,10 @@ const ActionCard = React.memo(function ActionCard({
   const handlePause = (e: React.MouseEvent) => {
     e.stopPropagation();
     ActionAPI.pauseAction(action.hash, restClient, () => {
-      // Trigger refresh after successful pause
-      if (onRefresh) {
+      // Trigger refresh of all columns when status changes
+      if (onStatusChange) {
+        onStatusChange();
+      } else if (onRefresh) {
         onRefresh();
       }
     });
@@ -366,21 +392,36 @@ const ActionCard = React.memo(function ActionCard({
                 <PauseIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
-            {action.status === 'ARCHIVED' ? (
+            {action.status === 'ARCHIVED' && (
               <IconButton size="small" onClick={handleRestore} sx={{ p: 0.5 }} title="Restore">
                 <RestoreIcon sx={{ fontSize: 18 }} />
               </IconButton>
-            ) : (
+            )}
+            {action.status === 'DELETED' && (
+              <IconButton size="small" onClick={handleRestore} sx={{ p: 0.5 }} title="Restore from Trash">
+                <RestoreIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            )}
+            {action.status !== 'DELETED' && action.status !== 'ARCHIVED' && (
               <IconButton size="small" onClick={handleArchive} sx={{ p: 0.5 }} title="Archive">
                 <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
-            {action.status !== 'DELETED' && (
+            {action.status === 'DELETED' ? (
+              <IconButton 
+                size="small" 
+                onClick={handlePermanentDelete} 
+                sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
+                title="Delete Forever"
+              >
+                <DeleteIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            ) : action.status !== 'ARCHIVED' && (
               <IconButton 
                 size="small" 
                 onClick={handleDelete} 
                 sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
-                title="Delete"
+                title="Move to Trash"
               >
                 <DeleteIcon sx={{ fontSize: 18 }} />
               </IconButton>
@@ -398,20 +439,35 @@ const ActionCard = React.memo(function ActionCard({
       aria-describedby="delete-dialog-description"
     >
       <DialogTitle id="delete-dialog-title">
-        Confirm Delete
+        {action.status === 'DELETED' ? 'Permanently Delete Action' : 'Move to Trash'}
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="delete-dialog-description">
-          Are you sure you want to delete action "<strong>{action.name}</strong>"? 
-          This action cannot be undone.
+          {action.status === 'DELETED' ? (
+            <>
+              Are you sure you want to <strong>permanently delete</strong> action "<strong>{action.name}</strong>"?
+              <br /><br />
+              <strong style={{ color: '#dc2626' }}>Warning: This action cannot be undone. All associated jobs and results will be permanently removed.</strong>
+            </>
+          ) : (
+            <>
+              Are you sure you want to move action "<strong>{action.name}</strong>" to trash? 
+              You can restore it later from the DELETED column.
+            </>
+          )}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleDeleteCancel} color="primary">
           Cancel
         </Button>
-        <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
-          Delete
+        <Button 
+          onClick={action.status === 'DELETED' ? handlePermanentDeleteConfirm : handleDeleteConfirm} 
+          color="error" 
+          variant="contained" 
+          autoFocus
+        >
+          {action.status === 'DELETED' ? 'Delete Forever' : 'Move to Trash'}
         </Button>
       </DialogActions>
     </Dialog>

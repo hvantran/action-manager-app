@@ -403,6 +403,117 @@ class ActionControllerV1Test {
                .andExpect(status().isInternalServerError());
     }
 
+    // --- PUT /v1/actions/{actionId}/soft-delete ---
+    @Test
+    void testSoftDeleteActionSuccess() throws Exception {
+        Mockito.doNothing().when(actionManagerService).softDelete("a1");
+        
+        mockMvc.perform(put("/v1/actions/a1/soft-delete"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.actionId").value("a1"))
+               .andExpect(jsonPath("$.actionStatus").value("DELETED"))
+               .andExpect(jsonPath("$.deletedAt").exists())
+               .andExpect(jsonPath("$.message").value("Action moved to trash"));
+    }
+
+    @Test
+    void testSoftDeleteActionAlreadyDeleted() throws Exception {
+        Mockito.doThrow(new com.hoatv.fwk.common.exceptions.InvalidArgumentException("Action already deleted"))
+               .when(actionManagerService).softDelete("a1");
+        
+        mockMvc.perform(put("/v1/actions/a1/soft-delete"))
+               .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testSoftDeleteActionNotFound() throws Exception {
+        Mockito.doThrow(new com.hoatv.fwk.common.exceptions.EntityNotFoundException("Cannot find action ID: a1"))
+               .when(actionManagerService).softDelete("a1");
+        
+        mockMvc.perform(put("/v1/actions/a1/soft-delete"))
+               .andExpect(status().isNotFound());
+    }
+
+    // --- DELETE /v1/actions/{actionId}/permanent ---
+    @Test
+    void testPermanentDeleteActionSuccess() throws Exception {
+        Mockito.doNothing().when(actionManagerService).permanentDelete("a1");
+        
+        mockMvc.perform(delete("/v1/actions/a1/permanent"))
+               .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testPermanentDeleteActionNotInDeletedStatus() throws Exception {
+        Mockito.doThrow(new com.hoatv.fwk.common.exceptions.InvalidArgumentException(
+                "Action must be in DELETED status before permanent deletion. Current status: ACTIVE"))
+               .when(actionManagerService).permanentDelete("a1");
+        
+        mockMvc.perform(delete("/v1/actions/a1/permanent"))
+               .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testPermanentDeleteActionNotFound() throws Exception {
+        Mockito.doThrow(new com.hoatv.fwk.common.exceptions.EntityNotFoundException("Cannot find action ID: a1"))
+               .when(actionManagerService).permanentDelete("a1");
+        
+        mockMvc.perform(delete("/v1/actions/a1/permanent"))
+               .andExpect(status().isNotFound());
+    }
+
+    // --- PUT /v1/actions/{actionId}/restore (Enhanced) ---
+    @Test
+    void testRestoreActionWithTargetStatusSuccess() throws Exception {
+        com.hoatv.action.manager.dtos.RestoreResponse response = com.hoatv.action.manager.dtos.RestoreResponse.builder()
+                .actionId("a1")
+                .actionStatus(com.hoatv.action.manager.collections.ActionStatus.ACTIVE)
+                .restoredAt(System.currentTimeMillis() / 1000)
+                .message("Action restored successfully")
+                .build();
+        
+        Mockito.when(actionManagerService.restore(eq("a1"), eq(com.hoatv.action.manager.collections.ActionStatus.ACTIVE)))
+               .thenReturn(response);
+        
+        String requestBody = "{\"targetStatus\":\"ACTIVE\"}";
+        mockMvc.perform(put("/v1/actions/a1/restore")
+                       .contentType(MediaType.APPLICATION_JSON)
+                       .content(requestBody))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.actionId").value("a1"))
+               .andExpect(jsonPath("$.actionStatus").value("ACTIVE"))
+               .andExpect(jsonPath("$.restoredAt").exists())
+               .andExpect(jsonPath("$.message").value("Action restored successfully"));
+    }
+
+    @Test
+    void testRestoreActionWithoutTargetStatusSuccess() throws Exception {
+        com.hoatv.action.manager.dtos.RestoreResponse response = com.hoatv.action.manager.dtos.RestoreResponse.builder()
+                .actionId("a1")
+                .actionStatus(com.hoatv.action.manager.collections.ActionStatus.ACTIVE)
+                .restoredAt(System.currentTimeMillis() / 1000)
+                .message("Action restored successfully")
+                .build();
+        
+        Mockito.when(actionManagerService.restore(eq("a1"), eq(null)))
+               .thenReturn(response);
+        
+        mockMvc.perform(put("/v1/actions/a1/restore"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.actionId").value("a1"))
+               .andExpect(jsonPath("$.actionStatus").value("ACTIVE"));
+    }
+
+    @Test
+    void testRestoreActionNotInDeletedOrArchivedStatus() throws Exception {
+        Mockito.when(actionManagerService.restore(eq("a1"), any()))
+               .thenThrow(new com.hoatv.fwk.common.exceptions.InvalidArgumentException(
+                       "Action must be in DELETED or ARCHIVED status to restore. Current status: ACTIVE"));
+        
+        mockMvc.perform(put("/v1/actions/a1/restore"))
+               .andExpect(status().isBadRequest());
+    }
+
     // --- PUT /v1/actions/{actionId}/jobs/{jobHash}/resume ---
     @Test
     void testResumeJobSuccess () throws Exception {

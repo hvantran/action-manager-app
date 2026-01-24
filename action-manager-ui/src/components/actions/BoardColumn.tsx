@@ -22,6 +22,7 @@ export interface BoardColumnProps {
   onActionClick: (actionHash: string) => void;
   restClient: RestClient;
   refreshTrigger?: number;
+  onStatusChange?: () => void;
 }
 
 const statusConfig = {
@@ -39,6 +40,7 @@ export default function BoardColumn({
   onActionClick,
   restClient,
   refreshTrigger,
+  onStatusChange,
 }: BoardColumnProps) {
   const navigate = useNavigate();
   const config = statusConfig[status];
@@ -160,6 +162,7 @@ export default function BoardColumn({
                 onClick={() => onActionClick(action.hash)}
                 restClient={restClient}
                 onRefresh={loadData}
+                onStatusChange={onStatusChange}
               />
             ))}
 

@@ -5,6 +5,7 @@ import com.hoatv.action.manager.collections.ActionStatus;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
+import com.hoatv.action.manager.dtos.RestoreResponse;
 import com.hoatv.fwk.common.ultilities.Pair;
 import jakarta.servlet.ServletOutputStream;
 import org.springframework.data.domain.Page;
@@ -21,7 +22,16 @@ public interface ActionManagerService {
 
     void update(String actionId, ActionDefinitionDTO actionDefinitionDTO);
 
+    /**
+     * @deprecated Use {@link #softDelete(String)} followed by {@link #permanentDelete(String)} instead.
+     * This method will be removed in version 2.0 (6 months grace period).
+     */
+    @Deprecated(since = "1.5.0", forRemoval = true)
     void delete(String hash);
+
+    void softDelete(String actionId);
+
+    void permanentDelete(String actionId);
 
     void resume(String jobHash);
 
@@ -29,7 +39,13 @@ public interface ActionManagerService {
 
     void pause(String actionId);
 
+    /**
+     * @deprecated Use {@link #restore(String, ActionStatus)} instead.
+     */
+    @Deprecated(since = "1.5.0")
     void restore(String actionId);
+
+    RestoreResponse restore(String actionId, ActionStatus targetStatus);
 
     boolean replay(String hash);
 

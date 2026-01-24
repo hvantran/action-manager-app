@@ -27,5 +27,9 @@ public class ActionDocument implements ImmutableAction {
     private String configurations;
     private ActionStatus actionStatus;
     private long createdAt;
+    
+    // Soft delete fields
+    private Long deletedAt;  // Timestamp in seconds when action was soft deleted
+    private ActionStatus previousStatus;  // Status before deletion for restoration
 
 }
