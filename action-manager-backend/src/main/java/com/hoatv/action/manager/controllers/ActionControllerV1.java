@@ -10,6 +10,9 @@ import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.dtos.PageResponseDTO;
+import com.hoatv.action.manager.dtos.RestoreRequest;
+import com.hoatv.action.manager.dtos.RestoreResponse;
+import com.hoatv.action.manager.dtos.SoftDeleteResponse;
 import com.hoatv.fwk.common.exceptions.EntityNotFoundException;
 import com.hoatv.fwk.common.ultilities.Pair;
 import jakarta.servlet.http.HttpServletResponse;
@@ -205,8 +208,27 @@ public class ActionControllerV1 {
     }
 
     @PutMapping(path = "/{actionId}/restore", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> restore(@PathVariable("actionId") String actionId) {
-        actionManagerService.restore(actionId);
+    public ResponseEntity<Object> restore(@PathVariable("actionId") String actionId, 
+                                         @RequestBody(required = false) RestoreRequest request) {
+        ActionStatus targetStatus = request != null ? request.getTargetStatus() : null;
+        RestoreResponse response = actionManagerService.restore(actionId, targetStatus);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(path = "/{actionId}/soft-delete", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> softDeleteAction(@PathVariable("actionId") String actionId) {
+        actionManagerService.softDelete(actionId);
+        return ResponseEntity.ok(SoftDeleteResponse.builder()
+            .actionId(actionId)
+            .actionStatus(ActionStatus.DELETED)
+            .deletedAt(System.currentTimeMillis() / 1000)
+            .message("Action moved to trash")
+            .build());
+    }
+
+    @DeleteMapping(path = "/{actionId}/permanent", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> permanentDeleteAction(@PathVariable("actionId") String actionId) {
+        actionManagerService.permanentDelete(actionId);
         return ResponseEntity.noContent().build();
     }
 

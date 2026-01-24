@@ -10,6 +10,7 @@ import com.hoatv.action.manager.document.transformers.JobTransformer;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
 import com.hoatv.action.manager.dtos.ActionOverviewDTO;
 import com.hoatv.action.manager.dtos.JobDefinitionDTO;
+import com.hoatv.action.manager.dtos.RestoreResponse;
 import com.hoatv.fwk.common.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.repositories.ActionDocumentRepository;
 import com.hoatv.action.manager.repositories.JobDocumentRepository;
@@ -287,8 +288,55 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @Transactional
+    @Deprecated
     @LoggingMonitor(description = "Delete action {argument0}")
     public void delete(String actionId) {
+        actionDocumentRepository.deleteById(actionId);
+        jobManagerService.deleteJobsByActionId(actionId);
+        actionManagerStatistics.removeActionStats(actionId);
+    }
+
+    @Override
+    @Transactional
+    @LoggingMonitor(description = "Soft delete action {argument0}")
+    public void softDelete(String actionId) {
+        ActionDocument action = findActionDocument(actionId);
+        
+        // Validate: Cannot soft delete if already deleted
+        if (action.getActionStatus() == ActionStatus.DELETED) {
+            throw new InvalidArgumentException("Action already deleted");
+        }
+        
+        // Store previous status for restoration
+        action.setPreviousStatus(action.getActionStatus());
+        action.setActionStatus(ActionStatus.DELETED);
+        action.setDeletedAt(System.currentTimeMillis() / 1000);
+        
+        // Pause all jobs
+        List<JobDocument> jobs = jobDocumentRepository.findJobByActionId(actionId);
+        jobs.forEach(job -> job.setJobStatus(JobStatus.PAUSED));
+        jobDocumentRepository.saveAll(jobs);
+        jobs.stream()
+            .map(JobDocument::getHash)
+            .forEach(jobManagerService::pause);
+        
+        actionDocumentRepository.save(action);
+    }
+
+    @Override
+    @Transactional
+    @LoggingMonitor(description = "Permanent delete action {argument0}")
+    public void permanentDelete(String actionId) {
+        ActionDocument action = findActionDocument(actionId);
+        
+        // Validate: Can only permanently delete if in DELETED status
+        if (action.getActionStatus() != ActionStatus.DELETED) {
+            throw new InvalidArgumentException(
+                "Action must be in DELETED status before permanent deletion. Current status: " + action.getActionStatus()
+            );
+        }
+        
+        // Perform hard delete (existing logic)
         actionDocumentRepository.deleteById(actionId);
         jobManagerService.deleteJobsByActionId(actionId);
         actionManagerStatistics.removeActionStats(actionId);
@@ -305,6 +353,8 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
         jobDocuments.stream().map(JobDocument::getHash).forEach(jobManagerService::pause);
 
+        // Store previous status for restoration (similar to soft delete)
+        actionDocument.setPreviousStatus(actionDocument.getActionStatus());
         actionDocument.setActionStatus(ActionStatus.ARCHIVED);
         actionDocumentRepository.save(actionDocument);
     }
@@ -326,6 +376,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
     @Override
     @Transactional
+    @Deprecated
     @LoggingMonitor(description = "Restore action {argument0}")
     public void restore(String actionId) {
         ActionDocument actionDocument = findActionDocument(actionId);
@@ -334,6 +385,51 @@ public class ActionManagerServiceImpl implements ActionManagerService {
 
         actionDocument.setActionStatus(ActionStatus.ACTIVE);
         actionDocumentRepository.save(actionDocument);
+    }
+
+    @Override
+    @Transactional
+    @LoggingMonitor(description = "Restore action {argument0} to target status {argument1}")
+    public RestoreResponse restore(String actionId, ActionStatus targetStatus) {
+        ActionDocument action = findActionDocument(actionId);
+        
+        // Validate: Can only restore from DELETED or ARCHIVED status
+        if (action.getActionStatus() != ActionStatus.DELETED && action.getActionStatus() != ActionStatus.ARCHIVED) {
+            throw new InvalidArgumentException("Action must be in DELETED or ARCHIVED status to restore. Current status: " + action.getActionStatus());
+        }
+        
+        // Determine target status
+        ActionStatus newStatus = targetStatus != null ? targetStatus : action.getPreviousStatus();
+        
+        if (newStatus == null || newStatus == ActionStatus.DELETED) {
+            newStatus = ActionStatus.ACTIVE; // Default fallback
+        }
+        
+        // Restore action
+        action.setActionStatus(newStatus);
+        action.setDeletedAt(null);
+        action.setPreviousStatus(null);
+        
+        // Resume scheduled jobs if returning to ACTIVE
+        if (newStatus == ActionStatus.ACTIVE) {
+            List<JobDocument> jobs = jobDocumentRepository.findJobByActionId(actionId);
+            jobs.stream()
+                .filter(JobDocument::isScheduled)
+                .forEach(job -> {
+                    job.setJobStatus(JobStatus.ACTIVE);
+                    resume(job.getHash());  // Use this.resume() instead of jobManagerService
+                });
+            jobDocumentRepository.saveAll(jobs);
+        }
+        
+        actionDocumentRepository.save(action);
+        
+        return RestoreResponse.builder()
+            .actionId(actionId)
+            .actionStatus(newStatus)
+            .restoredAt(System.currentTimeMillis() / 1000)
+            .message("Action restored successfully")
+            .build();
     }
 
     @Override

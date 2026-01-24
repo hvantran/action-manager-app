@@ -231,10 +231,10 @@ export default function ActionSummary() {
           actionIcon: <RestoreIcon />,
           actionLabel: 'Restore',
           actionName: 'restoreAction',
-          visible: (row: ActionOverview) => row.status === 'ARCHIVED',
+          visible: (row: ActionOverview) => row.status === 'ARCHIVED' || row.status === 'DELETED',
           onClick: (row: ActionOverview) => {
             return () => {
-              return ActionAPI.restore(row.hash, restClient, () => {
+              return ActionAPI.restoreAction(row.hash, restClient, () => {
                 ActionAPI.loadActionSummarysAsync(
                   pageIndex,
                   pageSize,
@@ -471,7 +471,11 @@ export default function ActionSummary() {
               ))}
             </Box>
           </Box>
-          <BoardView restClient={restClient} refreshTrigger={refreshTrigger} />
+          <BoardView 
+            restClient={restClient} 
+            refreshTrigger={refreshTrigger}
+            onStatusChange={() => setRefreshTrigger((prev) => prev + 1)}
+          />
         </>
       ) : (
         <PageEntityRender {...pageEntityMetadata}></PageEntityRender>

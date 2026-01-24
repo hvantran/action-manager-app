@@ -484,6 +484,63 @@ export class ActionAPI {
     });
   };
 
+  static softDeleteAction = async (
+    actionId: string,
+    restClient: RestClient,
+    successCallback: () => void
+  ) => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+      },
+    };
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/soft-delete`;
+    await restClient.sendRequest(requestOptions, targetURL, () => {
+      successCallback();
+      return undefined;
+    });
+  };
+
+  static permanentDeleteAction = async (
+    actionId: string,
+    restClient: RestClient,
+    successCallback: () => void
+  ) => {
+    const requestOptions = {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+      },
+    };
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/permanent`;
+    await restClient.sendRequest(requestOptions, targetURL, () => {
+      successCallback();
+      return undefined;
+    });
+  };
+
+  static restoreAction = async (
+    actionId: string,
+    restClient: RestClient,
+    successCallback: () => void,
+    targetStatus?: string
+  ) => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: targetStatus ? JSON.stringify({ targetStatus }) : undefined,
+    };
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/restore`;
+    await restClient.sendRequest(requestOptions, targetURL, () => {
+      successCallback();
+      return undefined;
+    });
+  };
+
   static updateAction = async (
     actionId: string,
     restClient: RestClient,
