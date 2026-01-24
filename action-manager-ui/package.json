@@ -54,6 +54,10 @@
       "last 1 safari version"
     ]
   },
+  "resolutions": {
+    "@codemirror/state": "6.5.4",
+    "@codemirror/view": "6.39.11"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",

@@ -1,14 +1,22 @@
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
+import DeleteIcon from '@mui/icons-material/Delete';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import PauseIcon from '@mui/icons-material/Pause';
 import RestoreIcon from '@mui/icons-material/Restore';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   LinearProgress,
   Link,
@@ -56,6 +64,7 @@ const ActionCard = React.memo(function ActionCard({
   onRefresh,
 }: ActionCardProps) {
   const [isFavorite, setIsFavorite] = React.useState(action.isFavorite || false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const healthStatus = getHealthStatus(action);
   const successRate = calculateSuccessRate(action);
   const total = action.numberOfJobs || 0;
@@ -102,6 +111,35 @@ const ActionCard = React.memo(function ActionCard({
     });
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setDeleteDialogOpen(false);
+    ActionAPI.deleteAction(action.hash, restClient, () => {
+      // Trigger refresh after successful delete
+      if (onRefresh) {
+        onRefresh();
+      }
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  const handlePause = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    ActionAPI.pauseAction(action.hash, restClient, () => {
+      // Trigger refresh after successful pause
+      if (onRefresh) {
+        onRefresh();
+      }
+    });
+  };
+
   const getHealthColor = (status: HealthStatus) => {
     switch (status) {
       case 'Critical':
@@ -129,12 +167,13 @@ const ActionCard = React.memo(function ActionCard({
   const statusColors = getStatusColor(action.status);
 
   return (
-    <Card
-      sx={{
-        mb: 2,
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        border: '1px solid #e5e7eb',
+    <>
+      <Card
+        sx={{
+          mb: 2,
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          border: '1px solid #e5e7eb',
         '&:hover': {
           boxShadow: 3,
           borderColor: '#d1d5db',
@@ -322,6 +361,11 @@ const ActionCard = React.memo(function ActionCard({
             <IconButton size="small" onClick={handleExport} sx={{ p: 0.5 }} title="Export">
               <FileDownloadIcon sx={{ fontSize: 18 }} />
             </IconButton>
+            {action.status === 'ACTIVE' && (
+              <IconButton size="small" onClick={handlePause} sx={{ p: 0.5 }} title="Pause">
+                <PauseIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            )}
             {action.status === 'ARCHIVED' ? (
               <IconButton size="small" onClick={handleRestore} sx={{ p: 0.5 }} title="Restore">
                 <RestoreIcon sx={{ fontSize: 18 }} />
@@ -331,10 +375,47 @@ const ActionCard = React.memo(function ActionCard({
                 <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
+            {action.status !== 'DELETED' && (
+              <IconButton 
+                size="small" 
+                onClick={handleDelete} 
+                sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
+                title="Delete"
+              >
+                <DeleteIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            )}
           </Box>
         </Box>
       </CardContent>
     </Card>
+
+    {/* Delete Confirmation Dialog */}
+    <Dialog
+      open={deleteDialogOpen}
+      onClose={handleDeleteCancel}
+      aria-labelledby="delete-dialog-title"
+      aria-describedby="delete-dialog-description"
+    >
+      <DialogTitle id="delete-dialog-title">
+        Confirm Delete
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText id="delete-dialog-description">
+          Are you sure you want to delete action "<strong>{action.name}</strong>"? 
+          This action cannot be undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleDeleteCancel} color="primary">
+          Cancel
+        </Button>
+        <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 });
 
