@@ -307,6 +307,11 @@ public class ActionManagerServiceImpl implements ActionManagerService {
             throw new InvalidArgumentException("Action already deleted");
         }
         
+        // Validate: Cannot soft delete if archived; archived actions should be restored instead
+        if (action.getActionStatus() == ActionStatus.ARCHIVED) {
+            throw new InvalidArgumentException("Cannot soft delete an archived action. Restore it instead.");
+        }
+        
         // Store previous status for restoration
         action.setPreviousStatus(action.getActionStatus());
         action.setActionStatus(ActionStatus.DELETED);
