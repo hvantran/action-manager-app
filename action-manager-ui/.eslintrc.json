@@ -1,42 +1,18 @@
 {
-  "root": true,
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true
-    },
-    "project": "./tsconfig.json"
-  },
-  "env": {
-    "browser": true,
-    "es2020": true,
-    "node": true,
-    "jest": true
-  },
-  "settings": {
-    "react": {
-      "version": "detect"
-    },
-    "import/resolver": {
-      "node": {
-        "extensions": [".js", ".jsx", ".ts", ".tsx"]
-      }
     }
   },
-  "extends": [
-    "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:jsx-a11y/recommended",
-    "prettier"
-  ],
   "plugins": [
     "@typescript-eslint",
-    "react",
-    "react-hooks",
-    "jsx-a11y",
     "import",
     "prettier"
   ],
@@ -51,12 +27,6 @@
         "varsIgnorePattern": "^_"
       }
     ],
-    "react/react-in-jsx-scope": "off",
-    "react/prop-types": "off",
-    "react/jsx-uses-react": "off",
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
-    "jsx-a11y/anchor-is-valid": "warn",
     "import/order": [
       "error",
       {
