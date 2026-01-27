@@ -36,7 +36,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/actions" />} errorElement={<ErrorPage />}></Route>
             <Route path="/actions" element={<ActionSummary />}></Route>
-            <Route path="/actions/archive" element={<ActionArchive />}></Route>
             <Route path="/actions/:actionId" element={<ActionDetail />}></Route>
             <Route path="/actions/:actionId/jobs/new" element={<JobCreation />}></Route>
             <Route path="/actions/:actionId/jobs/:jobId" element={<JobDetail />}></Route>
