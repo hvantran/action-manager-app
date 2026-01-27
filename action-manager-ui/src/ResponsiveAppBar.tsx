@@ -16,15 +16,19 @@ import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import DarkModeToggle from './components/common/DarkModeToggle';
 import { Search, SearchIconWrapper, StyledInputBase } from './components/common/GenericComponent';
+import { useFailureStatistics } from './hooks/useFailureStatistics';
 
 const APP_ENVIRONMENT_VARIABLES = window._env_;
 
 const pages = JSON.parse(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_PAGES}`);
 
 export default function PrimarySearchAppBar(props: any) {
+  const navigate = useNavigate();
+  const { failureCount } = useFailureStatistics();
   const setToggleDarkMode = props.setToggleDarkMode;
   const toggleDarkMode = props.toggleDarkMode;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -57,6 +61,10 @@ export default function PrimarySearchAppBar(props: any) {
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationClick = () => {
+    navigate('/jobs?status=FAILURE');
   };
 
   const menuId = 'primary-search-account-menu';
@@ -192,21 +200,13 @@ export default function PrimarySearchAppBar(props: any) {
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
     >
-      <MenuItem>
-        <IconButton size="large" aria-label="show 4 new mails" color="inherit">
-          <Badge badgeContent={4} color="error">
-            <MailIcon />
-          </Badge>
-        </IconButton>
-        <p>Messages</p>
-      </MenuItem>
-      <MenuItem>
-        <IconButton size="large" aria-label="show 17 new notifications" color="inherit">
-          <Badge badgeContent={17} color="error">
+      <MenuItem onClick={handleNotificationClick}>
+        <IconButton size="large" aria-label={`show ${failureCount} failed jobs`} color="inherit">
+          <Badge badgeContent={failureCount} color="error">
             <NotificationsIcon />
           </Badge>
         </IconButton>
-        <p>Notifications</p>
+        <p>Failed Jobs</p>
       </MenuItem>
       <MenuItem onClick={handleProfileMenuOpen}>
         <IconButton
@@ -271,13 +271,13 @@ export default function PrimarySearchAppBar(props: any) {
             <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
           </Box>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-            <IconButton size="large" aria-label="show 4 new mails" color="inherit">
-              <Badge badgeContent={4} color="error">
-                <MailIcon />
-              </Badge>
-            </IconButton>
-            <IconButton size="large" aria-label="show 17 new notifications" color="inherit">
-              <Badge badgeContent={17} color="error">
+            <IconButton 
+              size="large" 
+              aria-label={`show ${failureCount} failed jobs`}
+              color="inherit"
+              onClick={handleNotificationClick}
+            >
+              <Badge badgeContent={failureCount} color="error">
                 <NotificationsIcon />
               </Badge>
             </IconButton>

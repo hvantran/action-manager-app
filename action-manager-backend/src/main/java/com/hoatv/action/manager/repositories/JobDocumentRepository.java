@@ -21,6 +21,7 @@ public interface JobDocumentRepository extends MongoRepository<JobDocument, Stri
     Page<JobDocument> findJobByActionId(String actionId, Pageable pageable);
     Page<JobDocument> findJobByActionIdAndJobNameContainingIgnoreCase(String actionId, String searchText, Pageable pageable);
     List<JobIdImmutable> findJobsByActionId(String actionId);
+    Page<JobDocument> findByHashIn(List<String> hashes, Pageable pageable);
 
     interface JobIdImmutable {
         String getHash();

@@ -33,6 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.util.Predicates;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,6 +83,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private final ScheduleTaskMgmtService scheduleTaskMgmtService;
 
+    private final MongoTemplate mongoTemplate;
+
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
 
     private final GenericKeyedLock<String> jobExecutionLock = new GenericKeyedLock<>();
@@ -88,11 +93,13 @@ public class JobManagerServiceImpl implements JobManagerService {
     public JobManagerServiceImpl(ScriptEngineService scriptEngineService,
                                  JobDocumentRepository jobDocumentRepository,
                                  JobManagerStatistics jobManagerStatistics,
-                                 JobExecutionResultDocumentRepository jobResultDocumentRepository) {
+                                 JobExecutionResultDocumentRepository jobResultDocumentRepository,
+                                 MongoTemplate mongoTemplate) {
         this.scriptEngineService = scriptEngineService;
         this.jobDocumentRepository = jobDocumentRepository;
         this.jobResultDocumentRepository = jobResultDocumentRepository;
         this.jobManagerStatistics = jobManagerStatistics;
+        this.mongoTemplate = mongoTemplate;
         this.metricService = new MetricService();
         this.ioTaskMgmtService = TaskFactory.INSTANCE.getTaskMgmtServiceV1(
                 NUMBER_OF_JOB_THREADS,
@@ -152,9 +159,40 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     @Override
-    @LoggingMonitor(description = "Get job summary with page info: {argument1}")
+    @LoggingMonitor(description = "Get job summary with page info: {argument0}")
     public Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest) {
-        Page<JobDocument> jobDocuments = jobDocumentRepository.findAll(pageRequest);
+        return getOverviewJobs(pageRequest, null);
+    }
+
+    @Override
+    @LoggingMonitor(description = "Get job summary with page info: {argument0}, status filter: {argument1}")
+    public Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest, JobExecutionStatus statusFilter) {
+        Page<JobDocument> jobDocuments;
+        
+        if (statusFilter != null) {
+            // Get filtered job IDs from JobResultDocument
+            Query query = new Query(Criteria
+                .where(JobResultDocument.Fields.jobExecutionStatus)
+                .is(statusFilter));
+            
+            List<JobResultDocument> filteredResults = mongoTemplate
+                .find(query, JobResultDocument.class);
+            
+            List<String> filteredJobIds = filteredResults.stream()
+                .map(JobResultDocument::getJobId)
+                .toList();
+            
+            if (filteredJobIds.isEmpty()) {
+                return Page.empty(pageRequest);
+            }
+            
+            // Get job documents for those IDs with pagination
+            jobDocuments = jobDocumentRepository.findByHashIn(filteredJobIds, pageRequest);
+        } else {
+            // Existing logic for all jobs
+            jobDocuments = jobDocumentRepository.findAll(pageRequest);
+        }
+        
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
         return JobTransformer.getJobOverviewDTOs(jobDocuments, jobResultDocuments);
     }

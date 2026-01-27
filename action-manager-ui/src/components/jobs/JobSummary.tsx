@@ -3,10 +3,11 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
-import { Link, Stack, Typography } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Link, Stack, Typography, Alert, IconButton, Chip } from '@mui/material';
 import { red } from '@mui/material/colors';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { JobAPI, JobOverview } from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
@@ -31,6 +32,8 @@ const orderByStorageKey = 'action-manager-job-table-order';
 
 export default function JobSummary() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status');
   const selectedJob = React.useRef({ jobName: '', jobId: '' });
   const initialPagingResult: PagingResult = { totalElements: 0, content: [] };
   const [processTracking, setCircleProcessOpen] = React.useState(false);
@@ -50,6 +53,11 @@ export default function JobSummary() {
     [setCircleProcessOpen]
   );
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
+
+  const clearFilter = () => {
+    searchParams.delete('status');
+    setSearchParams(searchParams);
+  };
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href="#">
@@ -181,8 +189,8 @@ export default function JobSummary() {
   ];
 
   React.useEffect(() => {
-    JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
-  }, []);
+    JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult, statusFilter);
+  }, [pageIndex, pageSize, orderBy, statusFilter, restClient]);
 
   const pagingOptions: PagingOptionMetadata = {
     pageIndex,
@@ -222,7 +230,7 @@ export default function JobSummary() {
         actionLabel: 'Refresh action',
         actionName: 'refreshAction',
         onClick: () =>
-          JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult),
+          JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult, statusFilter),
       },
     ],
   };
@@ -241,7 +249,7 @@ export default function JobSummary() {
     },
     positiveAction() {
       JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
-        JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult);
+        JobAPI.loadRelatedJobsAsync(pageIndex, pageSize, orderBy, restClient, setPagingResult, statusFilter);
       });
       setDeleteConfirmationDialogOpen(false);
     },
@@ -249,6 +257,24 @@ export default function JobSummary() {
 
   return (
     <Stack spacing={2}>
+      {statusFilter && (
+        <Alert
+          severity="info"
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={clearFilter}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+        >
+          Showing only jobs with status: <strong>{statusFilter}</strong>
+          {statusFilter === 'FAILURE' && ` (${pagingResult.totalElements} failed jobs)`}
+        </Alert>
+      )}
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
