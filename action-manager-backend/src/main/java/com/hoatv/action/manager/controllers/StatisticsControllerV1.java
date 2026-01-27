@@ -23,12 +23,29 @@ public class StatisticsControllerV1 {
     }
 
     @GetMapping(value = "/failures", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> getFailureStatistics() {
+    public ResponseEntity<FailureStatisticsDTO> getFailureStatistics() {
         long totalFailedJobs = actionManagerStatistics.getTotalFailedJobs();
-        
-        return ResponseEntity.ok(Map.of(
-            "totalFailedJobs", totalFailedJobs,
-            "timestamp", Instant.now().toString()
-        ));
+
+        FailureStatisticsDTO responseBody = new FailureStatisticsDTO(totalFailedJobs, Instant.now());
+        return ResponseEntity.ok(responseBody);
+    }
+
+    public static class FailureStatisticsDTO {
+
+        private long totalFailedJobs;
+        private Instant timestamp;
+
+        public FailureStatisticsDTO(long totalFailedJobs, Instant timestamp) {
+            this.totalFailedJobs = totalFailedJobs;
+            this.timestamp = timestamp;
+        }
+
+        public long getTotalFailedJobs() {
+            return totalFailedJobs;
+        }
+
+        public Instant getTimestamp() {
+            return timestamp;
+        }
     }
 }
