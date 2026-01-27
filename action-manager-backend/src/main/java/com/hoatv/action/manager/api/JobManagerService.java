@@ -33,6 +33,8 @@ public interface JobManagerService {
 
     Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest);
 
+    Page<JobOverviewDTO> getOverviewJobs(PageRequest pageRequest, JobExecutionStatus statusFilter);
+
     void deleteJobsByActionId(String actionId);
 
     void processJob(ImmutableJob immutableJob, 

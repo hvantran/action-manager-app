@@ -41,6 +41,9 @@ class JobManagerServiceImplTest {
     @Mock
     private JobManagerStatistics jobManagerStatistics;
 
+    @Mock
+    private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
+
     private JobManagerServiceImpl jobManagerService;
 
     @BeforeEach
@@ -49,7 +52,8 @@ class JobManagerServiceImplTest {
             scriptEngineService,
             jobDocumentRepository,
             jobManagerStatistics,
-            jobExecutionResultDocumentRepository
+            jobExecutionResultDocumentRepository,
+            mongoTemplate
         );
     }
 

@@ -53,6 +53,7 @@ export const CHIP_RANDOM_COLOR = [
 ];
 export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/actions`;
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/jobs`;
+export const STATISTICS_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/statistics`;
 export const TEMPLATE_BACKEND_URL: string = `${process.env.REACT_APP_TEMPLATE_MANAGER_BACKEND_URL}/template-manager-backend/templates`;
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
 let Collectors = Java.type('java.util.stream.Collectors');
@@ -841,7 +842,8 @@ export class JobAPI {
     pageSize: number,
     orderBy: string,
     restClient: RestClient,
-    successCallback: (data: any) => void
+    successCallback: (data: any) => void,
+    status?: string | null
   ) => {
     const requestOptions = {
       method: 'GET',
@@ -850,7 +852,10 @@ export class JobAPI {
       },
     };
 
-    const targetURL = `${JOB_MANAGER_API_URL}?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}&orderBy=${orderBy}`;
+    let targetURL = `${JOB_MANAGER_API_URL}?pageIndex=${encodeURIComponent(pageIndex)}&pageSize=${encodeURIComponent(pageSize)}&orderBy=${orderBy}`;
+    if (status) {
+      targetURL += `&status=${encodeURIComponent(status)}`;
+    }
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       const responseJSON = (await response.json()) as PagingResult;
       successCallback(responseJSON);

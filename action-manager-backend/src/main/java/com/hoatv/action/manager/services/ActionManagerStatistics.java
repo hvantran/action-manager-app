@@ -105,6 +105,14 @@ public class ActionManagerStatistics {
     }
 
 
+    @Metric(name = "action-manager-total-failed-jobs")
+    public long getTotalFailedJobs() {
+        return actionStatisticsMapping.values()
+                .stream()
+                .mapToLong(stats -> stats.getNumberOfFailureJobs().get())
+                .sum();
+    }
+
     @Builder
     @Getter
     @Setter

@@ -1,0 +1,34 @@
+package com.hoatv.action.manager.controllers;
+
+import com.hoatv.action.manager.services.ActionManagerStatistics;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
+import java.util.Map;
+
+@RestController
+@RequestMapping(value = "/v1/statistics", produces = MediaType.APPLICATION_JSON_VALUE)
+public class StatisticsControllerV1 {
+
+    private final ActionManagerStatistics actionManagerStatistics;
+
+    @Autowired
+    public StatisticsControllerV1(ActionManagerStatistics actionManagerStatistics) {
+        this.actionManagerStatistics = actionManagerStatistics;
+    }
+
+    @GetMapping(value = "/failures", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> getFailureStatistics() {
+        long totalFailedJobs = actionManagerStatistics.getTotalFailedJobs();
+        
+        return ResponseEntity.ok(Map.of(
+            "totalFailedJobs", totalFailedJobs,
+            "timestamp", Instant.now().toString()
+        ));
+    }
+}
