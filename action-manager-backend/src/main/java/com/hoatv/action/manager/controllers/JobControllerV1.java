@@ -10,6 +10,7 @@ import com.hoatv.action.manager.dtos.JobDefinitionDTO;
 import com.hoatv.action.manager.dtos.JobDetailDTO;
 import com.hoatv.action.manager.dtos.JobOverviewDTO;
 import com.hoatv.action.manager.dtos.PageResponseDTO;
+import com.hoatv.springboot.common.validation.ValueOfEnum;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,20 +40,14 @@ public class JobControllerV1 {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getJobs(@RequestParam("pageIndex") @Min(0) int pageIndex,
                                      @RequestParam("pageSize") @Min(0) int pageSize,
-                                     @RequestParam(value = "status", required = false) String status) {
+                                     @RequestParam(value = "status", required = false) 
+                                     @ValueOfEnum(JobExecutionStatus.class) String status) {
         Sort defaultSorting = Sort.by(Sort.Order.desc(JobDocument.Fields.createdAt));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, defaultSorting);
         
-        // Parse status filter
-        JobExecutionStatus statusFilter = null;
-        if (status != null) {
-            try {
-                statusFilter = JobExecutionStatus.valueOf(status.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Invalid status: " + status));
-            }
-        }
+        JobExecutionStatus statusFilter = status != null 
+            ? JobExecutionStatus.valueOf(status.toUpperCase()) 
+            : null;
         
         Page<JobOverviewDTO> actionResults = jobManagerService.getOverviewJobs(pageRequest, statusFilter);
         return ResponseEntity.ok(new PageResponseDTO<>(actionResults));

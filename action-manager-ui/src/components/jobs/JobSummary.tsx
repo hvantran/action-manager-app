@@ -57,7 +57,15 @@ export default function JobSummary() {
   const clearFilter = () => {
     searchParams.delete('status');
     setSearchParams(searchParams);
+    setPageIndex(0);
+    LocalStorageService.put(pageIndexStorageKey, 0);
   };
+
+  React.useEffect(() => {
+    // Reset page index when status filter changes
+    setPageIndex(0);
+    LocalStorageService.put(pageIndexStorageKey, 0);
+  }, [statusFilter]);
 
   const breadcrumbs = [
     <Link underline="hover" key="1" color="inherit" href="#">
@@ -226,6 +234,31 @@ export default function JobSummary() {
     tableMetadata: tableMetadata,
     pageEntityActions: [
       {
+        actionIcon: statusFilter ? (
+          <Alert
+            severity="info"
+            sx={{ mr: 2 }}
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={clearFilter}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+          >
+            Showing only jobs with status: <strong>{statusFilter}</strong>
+            {statusFilter === 'FAILURE' && ` (${pagingResult.totalElements} failed jobs)`}
+          </Alert>
+        ) : <></>,
+        actionLabel: '',
+        actionName: 'filterAlert',
+        onClick: () => {},
+        visible: !!statusFilter,
+      },
+      {
         actionIcon: <RefreshIcon />,
         actionLabel: 'Refresh action',
         actionName: 'refreshAction',
@@ -256,28 +289,10 @@ export default function JobSummary() {
   };
 
   return (
-    <Stack spacing={2}>
-      {statusFilter && (
-        <Alert
-          severity="info"
-          action={
-            <IconButton
-              aria-label="close"
-              color="inherit"
-              size="small"
-              onClick={clearFilter}
-            >
-              <CloseIcon fontSize="inherit" />
-            </IconButton>
-          }
-        >
-          Showing only jobs with status: <strong>{statusFilter}</strong>
-          {statusFilter === 'FAILURE' && ` (${pagingResult.totalElements} failed jobs)`}
-        </Alert>
-      )}
+    <>
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
-    </Stack>
+    </>
   );
 }
