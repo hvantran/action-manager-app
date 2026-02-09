@@ -62,7 +62,11 @@ export default function ActionSummary() {
   const [orderBy, setOrderBy] = React.useState(
     LocalStorageService.getOrDefault(orderByStorageKey, '-name')
   );
-  const restClient = React.useMemo(
+  const boardRestClient = React.useMemo(
+    () => new RestClient(() => {}), // no-op callback
+    []
+  );
+  const listRestClient = React.useMemo(
     () => new RestClient(setCircleProcessOpen),
     [setCircleProcessOpen]
   );
@@ -197,12 +201,12 @@ export default function ActionSummary() {
           actionName: 'favoriteAction',
           onClick: (row: ActionOverview) => {
             return () =>
-              ActionAPI.setFavoriteAction(row.hash, true, restClient, () => {
+              ActionAPI.setFavoriteAction(row.hash, true, listRestClient, () => {
                 ActionAPI.loadActionSummarysAsync(
                   pageIndex,
                   pageSize,
                   orderBy,
-                  restClient,
+                  listRestClient,
                   (actionPagingResult) => setPagingResult(actionPagingResult)
                 );
               });
@@ -216,12 +220,12 @@ export default function ActionSummary() {
           actionName: 'unFavoriteAction',
           onClick: (row: ActionOverview) => {
             return () =>
-              ActionAPI.setFavoriteAction(row.hash, false, restClient, () => {
+              ActionAPI.setFavoriteAction(row.hash, false, listRestClient, () => {
                 ActionAPI.loadActionSummarysAsync(
                   pageIndex,
                   pageSize,
                   orderBy,
-                  restClient,
+                  listRestClient,
                   (actionPagingResult) => setPagingResult(actionPagingResult)
                 );
               });
@@ -234,12 +238,12 @@ export default function ActionSummary() {
           visible: (row: ActionOverview) => row.status === 'ARCHIVED' || row.status === 'DELETED',
           onClick: (row: ActionOverview) => {
             return () => {
-              return ActionAPI.restoreAction(row.hash, restClient, () => {
+              return ActionAPI.restoreAction(row.hash, listRestClient, () => {
                 ActionAPI.loadActionSummarysAsync(
                   pageIndex,
                   pageSize,
                   orderBy,
-                  restClient,
+                  listRestClient,
                   (actionPagingResult) => setPagingResult(actionPagingResult)
                 );
               });
@@ -261,12 +265,12 @@ export default function ActionSummary() {
               ));
               setConfirmationDialogPositiveAction(
                 (previous) => () =>
-                  ActionAPI.archive(row.hash, restClient, () => {
+                  ActionAPI.archive(row.hash, listRestClient, () => {
                     ActionAPI.loadActionSummarysAsync(
                       pageIndex,
                       pageSize,
                       orderBy,
-                      restClient,
+                      listRestClient,
                       (actionPagingResult) => setPagingResult(actionPagingResult)
                     );
                     setDeleteConfirmationDialogOpen((previous) => !previous);
@@ -282,7 +286,7 @@ export default function ActionSummary() {
           actionName: 'export',
           onClick: (row: ActionOverview) => {
             return () => {
-              return ActionAPI.export(row.hash, row.name, restClient);
+              return ActionAPI.export(row.hash, row.name, listRestClient);
             };
           },
         },
@@ -305,11 +309,11 @@ export default function ActionSummary() {
         pageIndex,
         pageSize,
         orderBy,
-        restClient,
+        listRestClient,
         (actionPagingResult) => setPagingResult(actionPagingResult)
       );
     }
-  }, [pageIndex, pageSize, orderBy, restClient, viewMode]);
+  }, [pageIndex, pageSize, orderBy, listRestClient, viewMode]);
 
   const actions: Array<SpeedDialActionMetadata> = [
     {
@@ -345,7 +349,7 @@ export default function ActionSummary() {
         pageIndex,
         pageSize,
         orderBy,
-        restClient,
+        listRestClient,
         (actionPagingResult) => setPagingResult(actionPagingResult)
       );
     },
@@ -365,12 +369,12 @@ export default function ActionSummary() {
     }
     const uploadFormData = new FormData();
     uploadFormData.append('file', importAction.files[0]);
-    ActionAPI.importFromFile(uploadFormData, restClient, (actionName) => {
+    ActionAPI.importFromFile(uploadFormData, listRestClient, (actionName) => {
       ActionAPI.loadActionSummarysAsync(
         pageIndex,
         pageSize,
         orderBy,
-        restClient,
+        listRestClient,
         (actionPagingResult) => setPagingResult(actionPagingResult)
       );
     });
@@ -429,7 +433,7 @@ export default function ActionSummary() {
               pageIndex,
               pageSize,
               orderBy,
-              restClient,
+              listRestClient,
               (actionPagingResult) => setPagingResult(actionPagingResult)
             );
           }
@@ -471,16 +475,12 @@ export default function ActionSummary() {
               ))}
             </Box>
           </Box>
-          <BoardView 
-            restClient={restClient} 
-            refreshTrigger={refreshTrigger}
-            onStatusChange={() => setRefreshTrigger((prev) => prev + 1)}
-          />
+          <BoardView restClient={boardRestClient} refreshTrigger={refreshTrigger} onStatusChange={() => setRefreshTrigger((prev) => prev + 1)} />
         </>
       ) : (
         <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       )}
-      <ProcessTracking isLoading={processTracking}></ProcessTracking>
+      {viewMode === 'list' && <ProcessTracking isLoading={processTracking}></ProcessTracking>}
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
     </Stack>
   );

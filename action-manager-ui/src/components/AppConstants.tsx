@@ -218,6 +218,7 @@ export interface JobOverview {
   elapsedTime: number;
   updatedAt: number;
   schedule: boolean;
+  hasActiveConsumer?: boolean;
 }
 
 export interface JobDetailMetadata {
