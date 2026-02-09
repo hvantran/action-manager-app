@@ -197,6 +197,9 @@ class ActionManagerServiceSoftDeleteTest {
         
         when(actionDocumentRepository.findById("action-id-1")).thenReturn(Optional.of(testAction));
         when(jobDocumentRepository.findJobByActionId("action-id-1")).thenReturn(testJobs);
+        // Mock getJobDocument for each scheduled job
+        when(jobManagerService.getJobDocument("job-1")).thenReturn(testJobs.get(0));
+        when(jobResultDocumentRepository.findByJobId("job-1")).thenReturn(null);
 
         RestoreResponse response = actionManagerService.restore("action-id-1", null);
 
@@ -215,7 +218,6 @@ class ActionManagerServiceSoftDeleteTest {
         testAction.setPreviousStatus(ActionStatus.PAUSED);
         
         when(actionDocumentRepository.findById("action-id-1")).thenReturn(Optional.of(testAction));
-        when(jobDocumentRepository.findJobByActionId("action-id-1")).thenReturn(testJobs);
 
         RestoreResponse response = actionManagerService.restore("action-id-1", null);
 
@@ -231,7 +233,6 @@ class ActionManagerServiceSoftDeleteTest {
         testAction.setPreviousStatus(ActionStatus.ACTIVE);
         
         when(actionDocumentRepository.findById("action-id-1")).thenReturn(Optional.of(testAction));
-        when(jobDocumentRepository.findJobByActionId("action-id-1")).thenReturn(testJobs);
 
         RestoreResponse response = actionManagerService.restore("action-id-1", ActionStatus.PAUSED);
 
@@ -259,6 +260,9 @@ class ActionManagerServiceSoftDeleteTest {
         
         when(actionDocumentRepository.findById("action-id-1")).thenReturn(Optional.of(testAction));
         when(jobDocumentRepository.findJobByActionId("action-id-1")).thenReturn(testJobs);
+        // Mock getJobDocument for scheduled jobs
+        when(jobManagerService.getJobDocument("job-1")).thenReturn(testJobs.get(0));
+        when(jobResultDocumentRepository.findByJobId("job-1")).thenReturn(null);
 
         RestoreResponse response = actionManagerService.restore("action-id-1", null);
 
@@ -273,6 +277,9 @@ class ActionManagerServiceSoftDeleteTest {
         
         when(actionDocumentRepository.findById("action-id-1")).thenReturn(Optional.of(testAction));
         when(jobDocumentRepository.findJobByActionId("action-id-1")).thenReturn(testJobs);
+        // Mock getJobDocument for scheduled job
+        when(jobManagerService.getJobDocument("job-1")).thenReturn(testJobs.get(0));
+        when(jobResultDocumentRepository.findByJobId("job-1")).thenReturn(null);
 
         actionManagerService.restore("action-id-1", ActionStatus.ACTIVE);
 
@@ -293,7 +300,6 @@ class ActionManagerServiceSoftDeleteTest {
         testAction.setPreviousStatus(ActionStatus.PAUSED);
         
         when(actionDocumentRepository.findById("action-id-1")).thenReturn(Optional.of(testAction));
-        when(jobDocumentRepository.findJobByActionId("action-id-1")).thenReturn(testJobs);
 
         actionManagerService.restore("action-id-1", ActionStatus.PAUSED);
 
