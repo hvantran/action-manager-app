@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Getter
+@Setter
 @Builder
 @ToString
 @NoArgsConstructor
@@ -47,4 +48,7 @@ public class JobOverviewDTO {
 
     @JsonProperty("status")
     private String status;
+
+    @JsonProperty("hasActiveConsumer")
+    private Boolean hasActiveConsumer;
 }

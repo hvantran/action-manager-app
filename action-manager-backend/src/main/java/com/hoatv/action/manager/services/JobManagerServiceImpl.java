@@ -85,6 +85,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private final MongoTemplate mongoTemplate;
 
+    private final KafkaConsumerStatusService kafkaConsumerStatusService;
+
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
 
     private final GenericKeyedLock<String> jobExecutionLock = new GenericKeyedLock<>();
@@ -94,12 +96,14 @@ public class JobManagerServiceImpl implements JobManagerService {
                                  JobDocumentRepository jobDocumentRepository,
                                  JobManagerStatistics jobManagerStatistics,
                                  JobExecutionResultDocumentRepository jobResultDocumentRepository,
-                                 MongoTemplate mongoTemplate) {
+                                 MongoTemplate mongoTemplate,
+                                 KafkaConsumerStatusService kafkaConsumerStatusService) {
         this.scriptEngineService = scriptEngineService;
         this.jobDocumentRepository = jobDocumentRepository;
         this.jobResultDocumentRepository = jobResultDocumentRepository;
         this.jobManagerStatistics = jobManagerStatistics;
         this.mongoTemplate = mongoTemplate;
+        this.kafkaConsumerStatusService = kafkaConsumerStatusService;
         this.metricService = new MetricService();
         this.ioTaskMgmtService = TaskFactory.INSTANCE.getTaskMgmtServiceV1(
                 NUMBER_OF_JOB_THREADS,
@@ -207,7 +211,25 @@ public class JobManagerServiceImpl implements JobManagerService {
             jobDocuments = jobDocumentRepository.findJobByActionId(actionId, pageRequest);
         }
         List<JobResultDocument> jobResultDocuments = getJobResultDocuments(jobDocuments);
-        return JobTransformer.getJobOverviewDTOs(jobDocuments, jobResultDocuments);
+        Page<JobOverviewDTO> jobOverviewDTOs = JobTransformer.getJobOverviewDTOs(jobDocuments, jobResultDocuments);
+        return enrichWithConsumerStatus(jobOverviewDTOs);
+    }
+
+    /**
+     * Enrich JobOverviewDTOs with Kafka consumer status information
+     */
+    private Page<JobOverviewDTO> enrichWithConsumerStatus(Page<JobOverviewDTO> jobOverviewDTOs) {
+        return jobOverviewDTOs.map(jobOverviewDTO -> {
+            try {
+                boolean hasConsumer = kafkaConsumerStatusService.hasActiveConsumer(jobOverviewDTO.getName());
+                jobOverviewDTO.setHasActiveConsumer(hasConsumer);
+            } catch (Exception e) {
+                LOGGER.debug("Failed to check consumer status for job '{}': {}", 
+                        jobOverviewDTO.getName(), e.getMessage());
+                jobOverviewDTO.setHasActiveConsumer(false);
+            }
+            return jobOverviewDTO;
+        });
     }
 
     @Override

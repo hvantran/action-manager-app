@@ -6,8 +6,10 @@ import PauseCircleOutline from '@mui/icons-material/PauseCircleOutline';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
-import { Box, Stack } from '@mui/material';
-import { red } from '@mui/material/colors';
+import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import { Box, Stack, Tooltip } from '@mui/material';
+import { red, green, grey } from '@mui/material/colors';
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -98,6 +100,26 @@ export default function ActionJobTable(props: any) {
       minWidth: 100,
       align: 'left',
       format: (value: boolean) => (value ? <ScheduleIcon /> : <TimesOneMobiledataIcon />),
+    },
+    {
+      id: 'hasActiveConsumer',
+      label: 'Consumer',
+      minWidth: 100,
+      align: 'left',
+      format: (value: boolean | undefined, row: any) => {
+        if (value === true) {
+          return (
+            <Tooltip title="Active Kafka consumer detected">
+              <RadioButtonCheckedIcon sx={{ color: green[500] }} />
+            </Tooltip>
+          );
+        }
+        return (
+          <Tooltip title="No active Kafka consumer">
+            <RadioButtonUncheckedIcon sx={{ color: grey[400] }} />
+          </Tooltip>
+        );
+      },
     },
     {
       id: 'startedAt',
