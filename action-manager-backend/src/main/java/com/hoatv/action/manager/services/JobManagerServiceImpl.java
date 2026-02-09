@@ -358,7 +358,8 @@ public class JobManagerServiceImpl implements JobManagerService {
                            BiConsumer<JobExecutionStatus, JobExecutionStatus> callback, boolean isRelayAction) {
         jobManagerStatistics.increaseNumberOfJobs();
         if (immutableJob.isScheduled() && !isRelayAction) {
-            ScheduledFuture<?> scheduledFuture = processScheduleJob(immutableJob, jobResultDocument, immutableAction, callback);
+            String jobResultDocumentHash = jobResultDocument.getHash();
+            ScheduledFuture<?> scheduledFuture = processScheduleJob(immutableJob, jobResultDocumentHash, immutableAction, callback);
             scheduledJobRegistry.put(immutableJob.getHash(), scheduledFuture);
             return;
         }
@@ -540,7 +541,7 @@ public class JobManagerServiceImpl implements JobManagerService {
     }
 
     private ScheduledFuture<?> processScheduleJob(ImmutableJob jobDocument,
-                                                  JobResultDocument jobResultDocument,
+                                                  String jobResultDocumentHash,
                                                   ImmutableAction immutableAction,
                                                   BiConsumer<JobExecutionStatus, JobExecutionStatus> callback) {
         String jobName = jobDocument.getJobName();
@@ -549,6 +550,8 @@ public class JobManagerServiceImpl implements JobManagerService {
             // Make sure the job data is up-to-date for each running time
             Optional<JobDocument> jobDocument1 = jobDocumentRepository.findById(jobDocument.getHash());
             ImmutableJob immutableJob = jobDocument1.map(ImmutableJob.class::cast).orElse(jobDocument);
+            Optional<JobResultDocument> resultDocumentOptional = jobResultDocumentRepository.findById(jobResultDocumentHash);
+            JobResultDocument jobResultDocument = resultDocumentOptional.orElseThrow();
             processPersistenceJob(immutableJob, jobResultDocument, immutableAction, callback);
             return null;
         };
