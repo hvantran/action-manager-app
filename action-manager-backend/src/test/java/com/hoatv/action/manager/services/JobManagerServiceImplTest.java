@@ -42,6 +42,9 @@ class JobManagerServiceImplTest {
     private JobManagerStatistics jobManagerStatistics;
 
     @Mock
+    private KafkaConsumerStatusService kafkaConsumerStatusService;
+
+    @Mock
     private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
 
     private JobManagerServiceImpl jobManagerService;
@@ -53,7 +56,8 @@ class JobManagerServiceImplTest {
             jobDocumentRepository,
             jobManagerStatistics,
             jobExecutionResultDocumentRepository,
-            mongoTemplate
+            mongoTemplate,
+            kafkaConsumerStatusService
         );
     }
 
