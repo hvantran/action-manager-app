@@ -33,6 +33,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hoatv.fwk.common.exceptions.EntityNotFoundException;
 import com.hoatv.action.manager.api.ActionManagerService;
 import com.hoatv.action.manager.api.JobManagerService;
 import com.hoatv.action.manager.dtos.ActionDefinitionDTO;
@@ -393,14 +394,14 @@ class ActionControllerV1Test {
     @Test
     void testRestoreSuccess () throws Exception {
         mockMvc.perform(put("/v1/actions/a1/restore"))
-               .andExpect(status().isNoContent());
+               .andExpect(status().isOk());
     }
 
     @Test
     void testRestoreFailure () throws Exception {
-        Mockito.doThrow(new RuntimeException()).when(actionManagerService).restore(any());
+        Mockito.doThrow(new EntityNotFoundException("Action not found")).when(actionManagerService).restore(any(), any());
         mockMvc.perform(put("/v1/actions/a1/restore"))
-               .andExpect(status().isInternalServerError());
+               .andExpect(status().isNotFound());
     }
 
     // --- PUT /v1/actions/{actionId}/soft-delete ---
