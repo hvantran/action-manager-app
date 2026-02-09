@@ -76,7 +76,7 @@ class JobControllerV1Test {
     @Test
     void testGetJobsReturnsOkWhenSuccess() throws Exception {
         Page<JobOverviewDTO> page = new PageImpl<>(List.of(new JobOverviewDTO()));
-        Mockito.when(jobManagerService.getOverviewJobs(Mockito.any()))
+        Mockito.when(jobManagerService.getOverviewJobs(Mockito.any(), Mockito.any()))
                .thenReturn(page);
 
         mockMvc.perform(get("/v1/jobs")
