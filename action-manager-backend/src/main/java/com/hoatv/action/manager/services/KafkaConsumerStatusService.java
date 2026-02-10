@@ -13,6 +13,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+import static com.hoatv.action.manager.utils.JobManagerConstants.JOB_MANAGER_METRIC_NAME_PREFIX;
+
 /**
  * Service to check Kafka consumer status for jobs
  */
@@ -42,9 +44,9 @@ public class KafkaConsumerStatusService {
         }
 
         try {
-            String url = String.format("%s/api/v1/kafka/subscriptions/%s", 
-                    kafkaNotifierBaseUrl, 
-                    topicName.toLowerCase().replace(" ", "-"));
+            String jobNameFormalize = topicName.toLowerCase().replace(" ", "-");
+            String topic = JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobNameFormalize;
+            String url = String.format("%s/api/v1/kafka/subscriptions/%s",  kafkaNotifierBaseUrl, topic);
             
             HttpClientService.RequestParams requestParams = HttpClientService.RequestParams
                     .builder(url, httpClient)
