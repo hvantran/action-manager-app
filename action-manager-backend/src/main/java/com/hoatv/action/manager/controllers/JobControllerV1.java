@@ -66,8 +66,8 @@ public class JobControllerV1 {
         return ResponseEntity.ok(jobDetailDTO);
     }
 
-    @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> dryRun(@RequestBody @Valid JobDefinitionDTO jobDefinitionDTO,
+    @PostMapping(path = "/validations", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> validate(@RequestBody @Valid JobDefinitionDTO jobDefinitionDTO,
                                          @RequestParam("actionId") String actionId) {
         Optional<ActionDefinitionDTO> actionOptional = actionManagerService.getActionById(actionId);
         jobManagerService.processNonePersistenceJob(jobDefinitionDTO, actionOptional.orElseThrow());

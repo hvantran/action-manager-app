@@ -224,8 +224,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                 boolean hasConsumer = kafkaConsumerStatusService.hasActiveConsumer(jobOverviewDTO.getName());
                 jobOverviewDTO.setHasActiveConsumer(hasConsumer);
             } catch (Exception e) {
-                LOGGER.debug("Failed to check consumer status for job '{}': {}", 
-                        jobOverviewDTO.getName(), e.getMessage());
+                LOGGER.error("Failed to check consumer status for job '{}': {}", jobOverviewDTO.getName(), e.getMessage());
                 jobOverviewDTO.setHasActiveConsumer(false);
             }
             return jobOverviewDTO;

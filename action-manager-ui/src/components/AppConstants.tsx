@@ -55,6 +55,7 @@ export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MA
 export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/jobs`;
 export const STATISTICS_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/statistics`;
 export const TEMPLATE_BACKEND_URL: string = `${process.env.REACT_APP_TEMPLATE_MANAGER_BACKEND_URL}/template-manager-backend/templates`;
+export const KAFKA_NOTIFIER_BASE_URL: string = process.env.REACT_APP_KAFKA_NOTIFIER_URL || 'http://kafkanotifier.local:6089';
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
 let Collectors = Java.type('java.util.stream.Collectors');
 let StreamSupport = Java.type('java.util.stream.StreamSupport');
@@ -492,12 +493,12 @@ export class ActionAPI {
     successCallback: () => void
   ) => {
     const requestOptions = {
-      method: 'PUT',
+      method: 'DELETE',
       headers: {
         Accept: 'application/json',
       },
     };
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/soft-delete`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}?permanent=false`;
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
@@ -515,7 +516,7 @@ export class ActionAPI {
         Accept: 'application/json',
       },
     };
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/permanent`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}?permanent=true`;
     await restClient.sendRequest(requestOptions, targetURL, () => {
       successCallback();
       return undefined;
@@ -665,12 +666,12 @@ export class ActionAPI {
     successCallback: () => void
   ) => {
     const requestOptions = {
-      method: 'GET',
+      method: 'POST',
       headers: {
         Accept: 'application/json',
       },
     };
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/replay`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/replays`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       successCallback();
       return undefined;
@@ -683,12 +684,12 @@ export class ActionAPI {
     successCallback: () => void
   ) => {
     const requestOptions = {
-      method: 'GET',
+      method: 'POST',
       headers: {
         Accept: 'application/json',
       },
     };
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/replay-failures`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/failure-replays`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       successCallback();
       return undefined;
@@ -697,12 +698,12 @@ export class ActionAPI {
 
   static replayJob = async (actionId: string, jobId: string, restClient: RestClient) => {
     const requestOptions = {
-      method: 'GET',
+      method: 'POST',
       headers: {
         Accept: 'application/json',
       },
     };
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/replay`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/${jobId}/replays`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       return undefined;
     });
@@ -781,7 +782,7 @@ export class JobAPI {
       body: JSON.stringify(jobDefinitions),
     };
 
-    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs/new`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/${actionId}/jobs`;
     await restClient.sendRequest(requestOptions, targetURL, async (response) => {
       successCallback();
       return undefined;
@@ -878,7 +879,7 @@ export class JobAPI {
       body: JSON.stringify(jobDefinition),
     };
 
-    const targetURL = `${JOB_MANAGER_API_URL}/dryRun?actionId=${actionId}`;
+    const targetURL = `${JOB_MANAGER_API_URL}/validations?actionId=${actionId}`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       return {
         message: 'Dry run action successfully',

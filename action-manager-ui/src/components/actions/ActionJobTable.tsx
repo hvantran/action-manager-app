@@ -71,6 +71,34 @@ export default function ActionJobTable(props: any) {
       label: 'Name',
       isSortable: true,
       minWidth: 100,
+      format: (value: string, row: any) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {row.hasActiveConsumer ? (
+            <Tooltip title="Active Kafka consumer detected - Click to view configuration">
+              <RadioButtonCheckedIcon 
+                sx={{ 
+                  color: green[500], 
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  '&:hover': { opacity: 0.7 }
+                }} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const kafkaNotifierUrl = process.env.REACT_APP_KAFKA_NOTIFIER_URL || 'http://kafkanotifier.local:6089';
+                  const jobNameFormalized = row.name.toLowerCase().replace(/ /g, '-');
+                  const topic = `job-manager-for-${jobNameFormalized}`;
+                  window.open(`${kafkaNotifierUrl}/spring-kafka-notifier/api/v1/notifier-configurations/topics/${encodeURIComponent(topic)}`, '_blank');
+                }}
+              />
+            </Tooltip>
+          ) : (
+            <Tooltip title="No active Kafka consumer">
+              <RadioButtonUncheckedIcon sx={{ color: red[500], fontSize: '1rem' }} />
+            </Tooltip>
+          )}
+          <span>{value}</span>
+        </Box>
+      ),
     },
     {
       id: 'status',
@@ -100,26 +128,6 @@ export default function ActionJobTable(props: any) {
       minWidth: 100,
       align: 'left',
       format: (value: boolean) => (value ? <ScheduleIcon /> : <TimesOneMobiledataIcon />),
-    },
-    {
-      id: 'hasActiveConsumer',
-      label: 'Consumer',
-      minWidth: 100,
-      align: 'left',
-      format: (value: boolean | undefined, row: any) => {
-        if (value === true) {
-          return (
-            <Tooltip title="Active Kafka consumer detected">
-              <RadioButtonCheckedIcon sx={{ color: green[500] }} />
-            </Tooltip>
-          );
-        }
-        return (
-          <Tooltip title="No active Kafka consumer">
-            <RadioButtonUncheckedIcon sx={{ color: grey[400] }} />
-          </Tooltip>
-        );
-      },
     },
     {
       id: 'startedAt',

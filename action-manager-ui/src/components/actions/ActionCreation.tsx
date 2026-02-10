@@ -781,7 +781,7 @@ export default function ActionCreation() {
       body: JSON.stringify(action),
     };
 
-    const targetURL = `${ACTION_MANAGER_API_URL}/dryRun`;
+    const targetURL = `${ACTION_MANAGER_API_URL}/validations`;
     await restClient.sendRequest(requestOptions, targetURL, async () => {
       return {
         message: 'Dry run action successfully',

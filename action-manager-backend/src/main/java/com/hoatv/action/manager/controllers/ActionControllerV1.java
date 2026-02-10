@@ -53,7 +53,7 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
-    @PostMapping(value = "/{actionId}/jobs/new", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{actionId}/jobs", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addNewJobs(@PathVariable("actionId") String hash,
                                              @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
         String actionId = actionManagerService.addJobsToAction(hash, jobDefinitionDTOs);
@@ -128,19 +128,19 @@ public class ActionControllerV1 {
         return ResponseEntity.ok(actionResult);
     }
 
-    @GetMapping(value = "/{actionId}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{actionId}/replays", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> replayAction(@PathVariable("actionId") String hash) {
         boolean isReplaySuccess = actionManagerService.replay(hash);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
 
-    @GetMapping(value = "/{actionId}/replay-failures", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{actionId}/failure-replays", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> replayFailures(@PathVariable("actionId") String hash) {
         boolean isReplaySuccess = actionManagerService.replayFailure(hash);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
 
-    @GetMapping(value = "/{actionId}/jobs/{jobId}/replay", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{actionId}/jobs/{jobId}/replays", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> replayJob(@PathVariable("actionId") String actionId,
                                             @PathVariable("jobId") String jobId) {
         boolean isReplaySuccess = actionManagerService.replayJob(actionId, jobId);
@@ -148,11 +148,13 @@ public class ActionControllerV1 {
     }
 
     @DeleteMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> deleteAction(@PathVariable("actionId") String hash) {
-        Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
-        ActionDefinitionDTO actionDefinitionDTO = actionResult
-                .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
-        actionManagerService.delete(actionDefinitionDTO.getHash());
+    public ResponseEntity<Object> deleteAction(@PathVariable("actionId") String hash,
+                                              @RequestParam(value = "permanent", required = false, defaultValue = "false") boolean permanent) {
+        if (permanent) {
+            actionManagerService.permanentDelete(hash);
+        } else {
+            actionManagerService.softDelete(hash);
+        }
         return ResponseEntity.noContent().build();
     }
 
@@ -189,8 +191,8 @@ public class ActionControllerV1 {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(path = "/dryRun", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> dryRun(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
+    @PostMapping(path = "/validations", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> validate(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
         actionManagerService.dryRun(actionDefinition);
         return ResponseEntity.noContent().build();
     }
@@ -213,23 +215,6 @@ public class ActionControllerV1 {
         ActionStatus targetStatus = request != null ? request.getTargetStatus() : null;
         RestoreResponse response = actionManagerService.restore(actionId, targetStatus);
         return ResponseEntity.ok(response);
-    }
-
-    @PutMapping(path = "/{actionId}/soft-delete", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> softDeleteAction(@PathVariable("actionId") String actionId) {
-        actionManagerService.softDelete(actionId);
-        return ResponseEntity.ok(SoftDeleteResponse.builder()
-            .actionId(actionId)
-            .actionStatus(ActionStatus.DELETED)
-            .deletedAt(System.currentTimeMillis() / 1000)
-            .message("Action moved to trash")
-            .build());
-    }
-
-    @DeleteMapping(path = "/{actionId}/permanent", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> permanentDeleteAction(@PathVariable("actionId") String actionId) {
-        actionManagerService.permanentDelete(actionId);
-        return ResponseEntity.noContent().build();
     }
 
     @PutMapping(path = "/{actionId}/jobs/{jobHash}/resume", produces = MediaType.APPLICATION_JSON_VALUE)
