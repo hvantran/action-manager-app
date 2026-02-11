@@ -8,14 +8,16 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimesOneMobiledataIcon from '@mui/icons-material/TimesOneMobiledata';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Box, Stack, Tooltip } from '@mui/material';
-import { red, green, grey } from '@mui/material/colors';
+import { red, green, grey, orange } from '@mui/material/colors';
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ActionAPI, JobAPI, JobOverview } from '../AppConstants';
 import ConfirmationDialog from '../common/ConfirmationDialog';
 import JobStatus from '../common/JobStatus';
+import CreateNotifierDialog from './CreateNotifierDialog';
 import TextTruncate from '../common/TextTruncate';
 import {
   ColumnMetadata,
@@ -57,6 +59,8 @@ export default function ActionJobTable(props: any) {
   );
   const restClient = new RestClient(setCircleProcessOpen);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
+  const [createNotifierDialogOpen, setCreateNotifierDialogOpen] = React.useState(false);
+  const [selectedJobForNotifier, setSelectedJobForNotifier] = React.useState('');
 
   const columns: ColumnMetadata[] = [
     {
@@ -91,9 +95,25 @@ export default function ActionJobTable(props: any) {
                 }}
               />
             </Tooltip>
+          ) : row.status === 'ACTIVE' ? (
+            <Tooltip title="No active Kafka consumer - Click to create notifier">
+              <AddCircleOutlineIcon 
+                sx={{ 
+                  color: orange[600], 
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  '&:hover': { opacity: 0.7 }
+                }} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedJobForNotifier(row.name);
+                  setCreateNotifierDialogOpen(true);
+                }}
+              />
+            </Tooltip>
           ) : (
             <Tooltip title="No active Kafka consumer">
-              <RadioButtonUncheckedIcon sx={{ color: red[500], fontSize: '1rem' }} />
+              <RadioButtonUncheckedIcon sx={{ color: grey[400], fontSize: '1rem' }} />
             </Tooltip>
           )}
           <span>{value}</span>
@@ -329,6 +349,31 @@ export default function ActionJobTable(props: any) {
     <Stack spacing={2}>
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
+      <CreateNotifierDialog
+        open={createNotifierDialogOpen}
+        jobName={selectedJobForNotifier}
+        actionId={actionId}
+        onClose={() => setCreateNotifierDialogOpen(false)}
+        onSuccess={() => {
+          // Refresh job list to update hasActiveConsumer status
+          ActionAPI.loadRelatedJobsAsync(
+            pageIndex,
+            pageSize,
+            orderBy,
+            actionId,
+            restClient,
+            (data) => {
+              setPagingResult(data);
+              const numberOfFailureJobs = data.content.filter(
+                (p) => p.executionStatus === 'FAILURE'
+              ).length;
+              setNumberOfFailureJobs(numberOfFailureJobs);
+            },
+            searchText
+          );
+        }}
+        setCircleProcessOpen={setCircleProcessOpen}
+      />
     </Stack>
   );
 }
