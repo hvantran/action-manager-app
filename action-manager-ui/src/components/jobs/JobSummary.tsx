@@ -115,7 +115,7 @@ export default function JobSummary() {
       format: (value: string) => <JobStatus status={value} />,
     },
     {
-      id: 'schedule',
+      id: 'isSchedule',
       isSortable: true,
       label: 'Type',
       minWidth: 100,

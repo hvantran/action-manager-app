@@ -143,7 +143,7 @@ export default function ActionJobTable(props: any) {
       format: (value: string) => <JobStatus status={value} />,
     },
     {
-      id: 'schedule',
+      id: 'isSchedule',
       label: 'Type',
       minWidth: 100,
       align: 'left',
