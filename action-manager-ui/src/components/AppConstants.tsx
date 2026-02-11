@@ -56,6 +56,7 @@ export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAG
 export const STATISTICS_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/statistics`;
 export const TEMPLATE_BACKEND_URL: string = `${process.env.REACT_APP_TEMPLATE_MANAGER_BACKEND_URL}/template-manager-backend/templates`;
 export const KAFKA_NOTIFIER_BASE_URL: string = process.env.REACT_APP_KAFKA_NOTIFIER_URL || 'http://kafkanotifier.local:6089';
+export const DEFAULT_SLACK_WEBHOOK: string = process.env.REACT_APP_DEFAULT_SLACK_WEBHOOK || '';
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
 let Collectors = Java.type('java.util.stream.Collectors');
 let StreamSupport = Java.type('java.util.stream.StreamSupport');
@@ -235,6 +236,38 @@ export interface JobDetailMetadata {
   createdAt?: number;
   status?: string;
   templates: string;
+}
+
+export interface NotificationAction {
+  type: 'call';
+  params: {
+    provider: 'SLACK';
+    webhookURL: string;
+    message: string;
+  };
+}
+
+export interface NotifierConfigurationRequest {
+  notifier: string;
+  topic: string;
+  rules: object;
+  actions: NotificationAction[];
+  enabled: boolean;
+  description?: string;
+  throttlePeriodMinutes?: number;
+  throttlePermitsPerPeriod?: number;
+}
+
+export interface NotifierConfigurationResponse {
+  id: string;
+  notifier: string;
+  topic: string;
+  rules: object;
+  actions: NotificationAction[];
+  enabled: boolean;
+  description?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export const isAllDependOnPropsValid = (
@@ -887,4 +920,57 @@ export class JobAPI {
       } as SnackbarMessage;
     });
   }
+}
+
+export class KafkaNotifierAPI {
+  /**
+   * Format job name to topic name
+   * Must match backend logic in KafkaConsumerStatusService.java:
+   * String jobNameFormalize = topicName.toLowerCase().replace(" ", "-");
+   * String topic = JOB_MANAGER_METRIC_NAME_PREFIX + "-for-" + jobNameFormalize;
+   * 
+   * @param jobName - The job name to format
+   * @returns Formatted topic name: "job-manager-for-{normalized-job-name}"
+   * @example formatTopicName("My Job Name") => "job-manager-for-my-job-name"
+   */
+  static formatTopicName(jobName: string): string {
+    const normalized = jobName.toLowerCase().replace(/\s+/g, '-');
+    return `job-manager-for-${normalized}`;
+  }
+
+  /**
+   * Create a new notifier configuration in Spring Kafka Notifier
+   * 
+   * @param request - The notifier configuration request
+   * @param restClient - RestClient instance for making HTTP requests
+   * @param successCallback - Callback function to handle successful response
+   */
+  static createNotifierConfiguration = async (
+    request: NotifierConfigurationRequest,
+    restClient: RestClient,
+    successCallback: (response: NotifierConfigurationResponse) => void
+  ) => {
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    };
+
+    const targetURL = `${KAFKA_NOTIFIER_BASE_URL}/spring-kafka-notifier/api/v1/notifier-configurations`;
+    
+    await restClient.sendRequest(
+      requestOptions,
+      targetURL,
+      async (httpResponse) => {
+        const responseData = (await httpResponse.json()) as NotifierConfigurationResponse;
+        successCallback(responseData);
+        return {
+          message: 'Notifier configuration created successfully!',
+          key: new Date().getTime(),
+        } as SnackbarMessage;
+      }
+    );
+  };
 }
