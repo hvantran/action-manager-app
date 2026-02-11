@@ -214,8 +214,9 @@ export default function ActionJobTable(props: any) {
           actionLabel: 'Resume',
           actionName: 'resumeAction',
           onClick: (row: JobOverview) => () => {
-            JobAPI.resume(actionId, row.hash, row.name, restClient);
-            setInternalReload((previous: boolean) => !previous);
+            JobAPI.resume(actionId, row.hash, row.name, restClient).then(() => {
+              setInternalReload((previous: boolean) => !previous);
+            });
           },
         },
         {
@@ -224,8 +225,9 @@ export default function ActionJobTable(props: any) {
           actionLabel: 'Pause',
           actionName: 'pauseAction',
           onClick: (row: JobOverview) => () => {
-            JobAPI.pause(row.hash, row.name, restClient);
-            setInternalReload((previous: boolean) => !previous);
+            JobAPI.pause(row.hash, row.name, restClient).then(() => {
+              setInternalReload((previous: boolean) => !previous);
+            });
           },
         },
         {
