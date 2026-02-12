@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import DarkModeToggle from './components/common/DarkModeToggle';
 import { Search, SearchIconWrapper, StyledInputBase } from './components/common/GenericComponent';
 import { useFailureStatistics } from './hooks/useFailureStatistics';
+import { useUserInfo } from './hooks/useUserInfo';
 
 const APP_ENVIRONMENT_VARIABLES = window._env_;
 
@@ -29,6 +30,7 @@ const pages = JSON.parse(`${APP_ENVIRONMENT_VARIABLES.REACT_APP_PAGES}`);
 export default function PrimarySearchAppBar(props: any) {
   const navigate = useNavigate();
   const { failureCount } = useFailureStatistics();
+  const { userInfo, getDisplayName } = useUserInfo();
   const setToggleDarkMode = props.setToggleDarkMode;
   const toggleDarkMode = props.toggleDarkMode;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -67,6 +69,12 @@ export default function PrimarySearchAppBar(props: any) {
     navigate('/jobs?status=FAILURE');
   };
 
+  const handleLogout = () => {
+    // Redirect to Gateway logout endpoint which handles Keycloak SSO logout
+    const gatewayBaseUrl = APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') || 'http://localhost:6081';
+    window.location.href = `${gatewayBaseUrl}/logout`;
+  };
+
   const menuId = 'primary-search-account-menu';
   const renderMenu = (
     <Menu
@@ -84,8 +92,26 @@ export default function PrimarySearchAppBar(props: any) {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      <MenuItem disabled>
+        <Box>
+          <Typography variant="subtitle2" fontWeight="bold">
+            {getDisplayName()}
+          </Typography>
+          {userInfo.email && (
+            <Typography variant="caption" color="text.secondary" display="block">
+              {userInfo.email}
+            </Typography>
+          )}
+        </Box>
+      </MenuItem>
+      <MenuItem disabled>
+        <Box>
+          <Typography variant="caption" color="text.secondary">
+            Roles: {userInfo.roles.map(r => r.replace('ROLE_', '')).join(', ') || 'None'}
+          </Typography>
+        </Box>
+      </MenuItem>
+      <MenuItem onClick={handleLogout}>Logout</MenuItem>
     </Menu>
   );
 
@@ -218,7 +244,14 @@ export default function PrimarySearchAppBar(props: any) {
         >
           <AccountCircle />
         </IconButton>
-        <p>Profile</p>
+        <Box>
+          <Typography variant="body2">{getDisplayName()}</Typography>
+          {userInfo.email && (
+            <Typography variant="caption" color="text.secondary" display="block">
+              {userInfo.email}
+            </Typography>
+          )}
+        </Box>
       </MenuItem>
       <MenuItem onClick={setToggleDarkMode}>
         <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
