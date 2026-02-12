@@ -10,6 +10,13 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
+  # OAuth2 Resource Server configuration for JWT validation
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:6080/realms/pman-realm}
+          jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:6080/realms/pman-realm}/protocol/openid-connect/certs
 
 # Server configuration
 server:

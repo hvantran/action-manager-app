@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,12 +49,14 @@ public class ActionControllerV1 {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
     public ResponseEntity<Object> executeAction(@RequestBody @Valid ActionDefinitionDTO actionDefinition) {
         String actionId = actionManagerService.create(actionDefinition);
         return ResponseEntity.ok(Map.of("actionId", actionId));
     }
 
     @PostMapping(value = "/{actionId}/jobs", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
     public ResponseEntity<Object> addNewJobs(@PathVariable("actionId") String hash,
                                              @RequestBody @Valid List<JobDefinitionDTO> jobDefinitionDTOs) {
         String actionId = actionManagerService.addJobsToAction(hash, jobDefinitionDTOs);
@@ -61,6 +64,7 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
     public ResponseEntity<Object> getActions(
             @RequestParam("pageIndex") @Min(0) int pageIndex,
             @RequestParam("pageSize") @Min(0) int pageSize,
@@ -111,6 +115,7 @@ public class ActionControllerV1 {
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
+    @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
     }
 
     @GetMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -118,6 +123,7 @@ public class ActionControllerV1 {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
+    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
         return ResponseEntity.ok(actionDefinitionDTO);
     }
 
@@ -146,7 +152,8 @@ public class ActionControllerV1 {
         boolean isReplaySuccess = actionManagerService.replayJob(actionId, jobId);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
-
+@PreAuthorize("hasRole('ADMIN')")
+    
     @DeleteMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> deleteAction(@PathVariable("actionId") String hash,
                                               @RequestParam(value = "permanent", required = false, defaultValue = "false") boolean permanent) {
@@ -183,6 +190,7 @@ public class ActionControllerV1 {
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting), actualSearchText);
         return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
+    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
     }
 
     @PutMapping(path = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)

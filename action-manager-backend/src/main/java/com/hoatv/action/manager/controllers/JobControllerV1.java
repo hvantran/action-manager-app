@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -38,6 +39,7 @@ public class JobControllerV1 {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
     public ResponseEntity<Object> getJobs(@RequestParam("pageIndex") @Min(0) int pageIndex,
                                      @RequestParam("pageSize") @Min(0) int pageSize,
                                      @RequestParam(value = "status", required = false) 
@@ -54,6 +56,7 @@ public class JobControllerV1 {
     }
 
     @PutMapping(path = "/{jobId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
     public ResponseEntity<Object> updateJob(@PathVariable("jobId") String hash,
                                        @RequestBody @Valid JobDefinitionDTO jobDefinitionDTO) {
         jobManagerService.update(hash, jobDefinitionDTO);
@@ -61,6 +64,7 @@ public class JobControllerV1 {
     }
 
     @GetMapping(path = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
     public ResponseEntity<Object> getJobById(@PathVariable("jobId") String jobId) {
         JobDetailDTO jobDetailDTO = jobManagerService.getJobDetails(jobId);
         return ResponseEntity.ok(jobDetailDTO);
@@ -81,6 +85,7 @@ public class JobControllerV1 {
     }
 
     @DeleteMapping(path = "/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> delete(@PathVariable("jobId") String jobId) {
         jobManagerService.delete(jobId);
         return ResponseEntity.noContent().build();
