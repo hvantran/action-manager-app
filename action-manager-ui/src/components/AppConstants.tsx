@@ -51,12 +51,15 @@ export const CHIP_RANDOM_COLOR = [
   '#990011',
   '#00246B',
 ];
-export const ACTION_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/actions`;
-export const JOB_MANAGER_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/jobs`;
-export const STATISTICS_API_URL: string = `${process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL}/action-manager-backend/v1/statistics`;
-export const TEMPLATE_BACKEND_URL: string = `${process.env.REACT_APP_TEMPLATE_MANAGER_BACKEND_URL}/template-manager-backend/templates`;
-export const KAFKA_NOTIFIER_BASE_URL: string = process.env.REACT_APP_KAFKA_NOTIFIER_URL || 'http://kafkanotifier.local:6089';
-export const DEFAULT_SLACK_WEBHOOK: string = process.env.REACT_APP_DEFAULT_SLACK_WEBHOOK || '';
+
+// Use window._env_ for runtime configuration (Docker-compatible)
+// Gateway routes directly to backend services, no need for service name in path
+export const ACTION_MANAGER_API_URL: string = `${(window as any)._env_.REACT_APP_ACTION_MANAGER_BACKEND_URL}/v1/actions`;
+export const JOB_MANAGER_API_URL: string = `${(window as any)._env_.REACT_APP_ACTION_MANAGER_BACKEND_URL}/v1/jobs`;
+export const STATISTICS_API_URL: string = `${(window as any)._env_.REACT_APP_ACTION_MANAGER_BACKEND_URL}/v1/statistics`;
+export const TEMPLATE_BACKEND_URL: string = `${(window as any)._env_.REACT_APP_TEMPLATE_MANAGER_BACKEND_URL}/templates`;
+export const KAFKA_NOTIFIER_BASE_URL: string = (window as any)._env_.REACT_APP_KAFKA_NOTIFIER_URL || 'http://kafkanotifier.local:6089';
+export const DEFAULT_SLACK_WEBHOOK: string = (window as any)._env_.REACT_APP_DEFAULT_SLACK_WEBHOOK || '';
 export const DEFAULT_JOB_CONTENT: string = `let Collections = Java.type('java.util.Collections');
 let Collectors = Java.type('java.util.stream.Collectors');
 let StreamSupport = Java.type('java.util.stream.StreamSupport');
