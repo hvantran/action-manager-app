@@ -115,18 +115,18 @@ public class ActionControllerV1 {
         Page<ActionOverviewDTO> actionResults =
                 actionManagerService.getActions(statuses, PageRequest.of(pageIndex, pageSize, defaultSorting));
         return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
-    @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
     }
 
+    @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
     @GetMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getActionDetail(@PathVariable("actionId") String hash) {
         Optional<ActionDefinitionDTO> actionResult = actionManagerService.getActionById(hash);
         ActionDefinitionDTO actionDefinitionDTO = actionResult
                 .orElseThrow(() -> new EntityNotFoundException("Cannot find action ID: " + hash));
-    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
         return ResponseEntity.ok(actionDefinitionDTO);
     }
 
+    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
     @PatchMapping(value = "/{actionId}/favorite", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> setFavoriteActionValue(@PathVariable("actionId") String hash,
                                                          @RequestParam("isFavorite") boolean isFavorite) {
@@ -190,9 +190,9 @@ public class ActionControllerV1 {
         Page<JobOverviewDTO> actionResults =
                 jobManagerService.getJobsFromAction(actionId, PageRequest.of(pageIndex, pageSize, defaultSorting), actualSearchText);
         return ResponseEntity.ok(new PageResponseDTO<>(actionResults));
-    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
     }
 
+    @PreAuthorize("hasAnyRole('ACTION_MANAGER', 'ADMIN')")
     @PutMapping(path = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> update(@PathVariable("actionId") String actionId, @RequestBody ActionDefinitionDTO actionDefinitionDTO) {
         actionManagerService.update(actionId, actionDefinitionDTO);
