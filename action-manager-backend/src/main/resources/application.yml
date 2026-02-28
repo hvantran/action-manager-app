@@ -15,8 +15,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+          # For dev: http://localhost:6080/realms/pman-realm
+          # For prod (Docker): http://keycloak:8080/realms/pman-realm (set via KEYCLOAK_ISSUER_URI env var)
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:6080/realms/pman-realm}
-          jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:6080/realms/pman-realm}/protocol/openid-connect/certs
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:${KEYCLOAK_ISSUER_URI:http://localhost:6080/realms/pman-realm}/protocol/openid-connect/certs}
 
 # Server configuration
 server:
