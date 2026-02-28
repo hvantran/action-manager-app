@@ -1,4 +1,4 @@
-import { Box, Stack, ThemeProvider, CssBaseline } from '@mui/material';
+import { Box, Stack, ThemeProvider, CssBaseline, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -13,19 +13,55 @@ import JobCreation from './components/jobs/JobCreation';
 import JobDetail from './components/jobs/JobDetail';
 import JobSummary from './components/jobs/JobSummary';
 import PrimarySearchAppBar from './ResponsiveAppBar';
+import { useUserInfo } from './hooks/useUserInfo';
 
 const selectThemeStorageKey = 'action-manager-enable-dark-theme';
+
+const GATEWAY_BASE_URL = process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') || window._env_?.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') || 'http://localhost:6081';
 
 function App() {
   const [toggleDarkMode, setToggleDarkMode] = React.useState(
     LocalStorageService.getOrDefault(selectThemeStorageKey, false) === 'true'
   );
+  const { userInfo, loading } = useUserInfo();
+
   const switchTheme = () => {
     setToggleDarkMode((previous) => {
       LocalStorageService.put(selectThemeStorageKey, !previous);
       return !previous;
     });
   };
+
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return (
+      <ThemeProvider theme={!toggleDarkMode ? DEFAULT_THEME : DARK_THEME}>
+        <CssBaseline />
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            gap: 2,
+          }}
+        >
+          <CircularProgress size={60} />
+          <Typography variant="h6" color="text.secondary">
+            Loading...
+          </Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  // Redirect to Gateway login if not authenticated
+  if (!userInfo.authenticated) {
+    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorization/keycloak`;
+    return null;
+  }
+
   return (
     <ThemeProvider theme={!toggleDarkMode ? DEFAULT_THEME : DARK_THEME}>
       <CssBaseline />
