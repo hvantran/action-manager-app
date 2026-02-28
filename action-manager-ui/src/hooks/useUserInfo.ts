@@ -8,7 +8,16 @@ export interface UserInfo {
   authenticated: boolean;
 }
 
-const GATEWAY_BASE_URL = process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') || 'http://localhost:6081';
+// Get Gateway base URL from runtime environment or fallback to localhost
+// Remove /api/action-manager path segment to get the base Gateway URL
+const getGatewayBaseUrl = (): string => {
+  const actionManagerUrl = (window as any)._env_?.REACT_APP_ACTION_MANAGER_BACKEND_URL || 
+                          process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL || 
+                          'http://localhost:6081/api/action-manager';
+  return actionManagerUrl.replace('/api/action-manager', '');
+};
+
+const GATEWAY_BASE_URL = getGatewayBaseUrl();
 
 /**
  * React hook to fetch and manage authenticated user information
