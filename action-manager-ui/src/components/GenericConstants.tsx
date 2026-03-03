@@ -210,7 +210,14 @@ export class RestClient {
   ): Promise<string | undefined> {
     try {
       this.setCircleProcessOpen(true);
-      const response = await fetch(targetURL, requestOptions);
+      
+      // Ensure credentials are included for cross-origin requests (OAuth2 session cookies)
+      const optionsWithCredentials = {
+        ...requestOptions,
+        credentials: 'include' as RequestCredentials
+      };
+      
+      const response = await fetch(targetURL, optionsWithCredentials);
       if (response.status >= 400) {
         if (!errorCallback) {
           errorCallback = this.defaultErrorCallback;
