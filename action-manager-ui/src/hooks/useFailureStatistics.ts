@@ -20,6 +20,7 @@ export const useFailureStatistics = (pollInterval = 30000) => {
           headers: {
             Accept: 'application/json',
           },
+          credentials: 'include', // Include cookies for authentication
         });
 
         if (!response.ok) {
