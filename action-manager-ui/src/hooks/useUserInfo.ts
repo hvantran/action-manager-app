@@ -44,7 +44,7 @@ export const useUserInfo = () => {
           method: 'GET',
           credentials: 'include', // Important: include cookies for authentication
           headers: {
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
         });
 
