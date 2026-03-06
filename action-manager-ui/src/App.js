@@ -32,6 +32,13 @@ function App() {
     });
   };
 
+  // Redirect to Gateway login if not authenticated (after loading completes)
+  React.useEffect(() => {
+    if (!loading && !userInfo.authenticated) {
+      window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorization/keycloak`;
+    }
+  }, [loading, userInfo.authenticated]);
+
   // Show loading spinner while checking authentication
   if (loading) {
     return (
@@ -56,9 +63,8 @@ function App() {
     );
   }
 
-  // Redirect to Gateway login if not authenticated
+  // Render nothing while redirect is pending
   if (!userInfo.authenticated) {
-    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorization/keycloak`;
     return null;
   }
 
