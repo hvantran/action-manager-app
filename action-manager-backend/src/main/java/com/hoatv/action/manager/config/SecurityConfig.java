@@ -54,7 +54,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/v1/actions/**").hasAnyRole("ACTION_MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/v1/actions/**").hasRole("ADMIN")
                 
-                // Job endpoints - require action manager or admin role
+                // Job endpoints - read-only GET for viewer+, write for manager/admin
+                .requestMatchers(HttpMethod.GET, "/v1/jobs/**").hasAnyRole("ACTION_VIEWER", "ACTION_MANAGER", "ADMIN")
                 .requestMatchers("/v1/jobs/**").hasAnyRole("ACTION_MANAGER", "ADMIN")
                 
                 // Statistics endpoints - read-only, require viewer or higher
