@@ -48,8 +48,7 @@ public class SecurityConfig {
                 
                 // Action endpoints - role-based access
                 .requestMatchers(HttpMethod.GET, "/v1/actions/**").hasAnyRole("ACTION_VIEWER", "ACTION_MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/v1/actions").hasAnyRole("ACTION_MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/v1/actions/*/jobs").hasAnyRole("ACTION_MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/v1/actions/**").hasAnyRole("ACTION_MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/v1/actions/**").hasAnyRole("ACTION_MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/v1/actions/**").hasAnyRole("ACTION_MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/v1/actions/**").hasRole("ADMIN")
