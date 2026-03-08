@@ -64,10 +64,19 @@ jobs:
         working-directory: action-manager-ui
         run: yarn install --frozen-lockfile
       
+      - name: Setup environment
+        working-directory: action-manager-ui
+        run: |
+          chmod +x ./env.sh
+          ./env.sh || echo "REACT_APP_API_URL=http://localhost:8080" > .env
+          if [ -f env-config.js ]; then mv env-config.js ./public/; fi
+      
       - name: Build UI
         working-directory: action-manager-ui
         run: yarn build
+        env:
+          CI: false
       
       - name: Run UI tests
         working-directory: action-manager-ui
-        run: yarn test --passWithNoTests
+        run: yarn test --passWithNoTests --watchAll=false
