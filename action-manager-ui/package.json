@@ -50,7 +50,8 @@
   },
   "resolutions": {
     "@codemirror/state": "6.5.4",
-    "@codemirror/view": "6.39.11"
+    "@codemirror/view": "6.39.11",
+    "@babel/core": "^7.22.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.53.1",
@@ -63,5 +64,10 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "prettier": "^3.8.1"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@codemirror|@lezer|@uiw|@marijn|w3c-keyname|style-mod)/)"
+    ]
   }
 }
