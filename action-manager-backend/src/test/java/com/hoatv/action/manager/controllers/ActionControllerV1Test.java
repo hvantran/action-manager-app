@@ -98,12 +98,12 @@ class ActionControllerV1Test {
                .andExpect(status().isInternalServerError());
     }
 
-    // --- POST /v1/actions/{actionId}/jobs/new ---
+    // --- POST /v1/actions/{actionId}/jobs ---
     @Test
     void testAddNewJobsSuccess () throws Exception {
         Mockito.when(actionManagerService.addJobsToAction(eq("a1"), anyList())).thenReturn("a1");
 
-        mockMvc.perform(post("/v1/actions/a1/jobs/new")
+        mockMvc.perform(post("/v1/actions/a1/jobs")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(List.of(getJobDefinitionDTO()))))
                .andExpect(status().isOk())
@@ -114,7 +114,7 @@ class ActionControllerV1Test {
     void testAddNewJobsFailure () throws Exception {
         Mockito.when(actionManagerService.addJobsToAction(anyString(), anyList()))
                .thenThrow(new RuntimeException("Unexpected error"));
-        mockMvc.perform(post("/v1/actions/a1/jobs/new")
+        mockMvc.perform(post("/v1/actions/a1/jobs")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(List.of(new JobDefinitionDTO()))))
                .andExpect(status().isInternalServerError());
@@ -198,11 +198,11 @@ class ActionControllerV1Test {
                .andExpect(status().isInternalServerError());
     }
 
-    // --- GET /v1/actions/{actionId}/replay ---
+    // --- POST /v1/actions/{actionId}/replays ---
     @Test
     void testReplayActionSuccess () throws Exception {
         Mockito.when(actionManagerService.replay("a1")).thenReturn(true);
-        mockMvc.perform(get("/v1/actions/a1/replay"))
+        mockMvc.perform(post("/v1/actions/a1/replays"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.status").value(true));
     }
@@ -210,15 +210,15 @@ class ActionControllerV1Test {
     @Test
     void testReplayActionFailure () throws Exception {
         Mockito.when(actionManagerService.replay(anyString())).thenThrow(new RuntimeException());
-        mockMvc.perform(get("/v1/actions/a1/replay"))
+        mockMvc.perform(post("/v1/actions/a1/replays"))
                .andExpect(status().isInternalServerError());
     }
 
-    // --- GET /v1/actions/{actionId}/replay-failures ---
+    // --- POST /v1/actions/{actionId}/failure-replays ---
     @Test
     void testReplayFailuresSuccess () throws Exception {
         Mockito.when(actionManagerService.replayFailure("a1")).thenReturn(false);
-        mockMvc.perform(get("/v1/actions/a1/replay-failures"))
+        mockMvc.perform(post("/v1/actions/a1/failure-replays"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.status").value(false));
     }
@@ -226,15 +226,15 @@ class ActionControllerV1Test {
     @Test
     void testReplayFailuresFailure () throws Exception {
         Mockito.when(actionManagerService.replayFailure(anyString())).thenThrow(new RuntimeException());
-        mockMvc.perform(get("/v1/actions/a1/replay-failures"))
+        mockMvc.perform(post("/v1/actions/a1/failure-replays"))
                .andExpect(status().isInternalServerError());
     }
 
-    // --- GET /v1/actions/{actionId}/jobs/{jobId}/replay ---
+    // --- POST /v1/actions/{actionId}/jobs/{jobId}/replays ---
     @Test
     void testReplayJobSuccess () throws Exception {
         Mockito.when(actionManagerService.replayJob(anyString(), anyString())).thenReturn(true);
-        mockMvc.perform(get("/v1/actions/a1/jobs/j1/replay"))
+        mockMvc.perform(post("/v1/actions/a1/jobs/j1/replays"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.status").value(true));
     }
@@ -242,7 +242,7 @@ class ActionControllerV1Test {
     @Test
     void testReplayJobFailure () throws Exception {
         Mockito.when(actionManagerService.replayJob(anyString(), anyString())).thenThrow(new RuntimeException());
-        mockMvc.perform(get("/v1/actions/a1/jobs/j1/replay"))
+        mockMvc.perform(post("/v1/actions/a1/jobs/j1/replays"))
                .andExpect(status().isInternalServerError());
     }
 
@@ -341,10 +341,10 @@ class ActionControllerV1Test {
                .andExpect(status().isInternalServerError());
     }
 
-    // --- POST /v1/actions/dryRun ---
+    // --- POST /v1/actions/validations ---
     @Test
     void testDryRunSuccess () throws Exception {
-        mockMvc.perform(post("/v1/actions/dryRun")
+        mockMvc.perform(post("/v1/actions/validations")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(getActionDefinitionDTO())))
                .andExpect(status().isNoContent());
@@ -370,7 +370,7 @@ class ActionControllerV1Test {
     @Test
     void testDryRunFailure () throws Exception {
         Mockito.doThrow(new RuntimeException()).when(actionManagerService).dryRun(any());
-        mockMvc.perform(post("/v1/actions/dryRun")
+        mockMvc.perform(post("/v1/actions/validations")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(getActionDefinitionDTO())))
                .andExpect(status().isInternalServerError());
@@ -404,17 +404,13 @@ class ActionControllerV1Test {
                .andExpect(status().isNotFound());
     }
 
-    // --- PUT /v1/actions/{actionId}/soft-delete ---
+    // --- DELETE /v1/actions/{actionId} (soft delete) ---
     @Test
     void testSoftDeleteActionSuccess() throws Exception {
         Mockito.doNothing().when(actionManagerService).softDelete("a1");
         
-        mockMvc.perform(put("/v1/actions/a1/soft-delete"))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$.actionId").value("a1"))
-               .andExpect(jsonPath("$.actionStatus").value("DELETED"))
-               .andExpect(jsonPath("$.deletedAt").exists())
-               .andExpect(jsonPath("$.message").value("Action moved to trash"));
+        mockMvc.perform(delete("/v1/actions/a1"))
+               .andExpect(status().isNoContent());
     }
 
     @Test
@@ -422,7 +418,7 @@ class ActionControllerV1Test {
         Mockito.doThrow(new com.hoatv.fwk.common.exceptions.InvalidArgumentException("Action already deleted"))
                .when(actionManagerService).softDelete("a1");
         
-        mockMvc.perform(put("/v1/actions/a1/soft-delete"))
+        mockMvc.perform(delete("/v1/actions/a1"))
                .andExpect(status().isBadRequest());
     }
 
@@ -431,16 +427,16 @@ class ActionControllerV1Test {
         Mockito.doThrow(new com.hoatv.fwk.common.exceptions.EntityNotFoundException("Cannot find action ID: a1"))
                .when(actionManagerService).softDelete("a1");
         
-        mockMvc.perform(put("/v1/actions/a1/soft-delete"))
+        mockMvc.perform(delete("/v1/actions/a1"))
                .andExpect(status().isNotFound());
     }
 
-    // --- DELETE /v1/actions/{actionId}/permanent ---
+    // --- DELETE /v1/actions/{actionId}?permanent=true ---
     @Test
     void testPermanentDeleteActionSuccess() throws Exception {
         Mockito.doNothing().when(actionManagerService).permanentDelete("a1");
         
-        mockMvc.perform(delete("/v1/actions/a1/permanent"))
+        mockMvc.perform(delete("/v1/actions/a1").param("permanent", "true"))
                .andExpect(status().isNoContent());
     }
 
@@ -450,7 +446,7 @@ class ActionControllerV1Test {
                 "Action must be in DELETED status before permanent deletion. Current status: ACTIVE"))
                .when(actionManagerService).permanentDelete("a1");
         
-        mockMvc.perform(delete("/v1/actions/a1/permanent"))
+        mockMvc.perform(delete("/v1/actions/a1").param("permanent", "true"))
                .andExpect(status().isBadRequest());
     }
 
@@ -459,7 +455,7 @@ class ActionControllerV1Test {
         Mockito.doThrow(new com.hoatv.fwk.common.exceptions.EntityNotFoundException("Cannot find action ID: a1"))
                .when(actionManagerService).permanentDelete("a1");
         
-        mockMvc.perform(delete("/v1/actions/a1/permanent"))
+        mockMvc.perform(delete("/v1/actions/a1").param("permanent", "true"))
                .andExpect(status().isNotFound());
     }
 
