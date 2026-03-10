@@ -91,6 +91,3 @@ jobs:
       - name: Run UI tests
         working-directory: action-manager-ui
         run: yarn test --passWithNoTests --watchAll=false
-        # TODO: Fix flaky UI tests and remove continue-on-error
-        # Related to hvantran/project-management#191
-        continue-on-error: false
