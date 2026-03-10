@@ -247,25 +247,26 @@ class ActionControllerV1Test {
     }
 
     // --- DELETE /v1/actions/{actionId} ---
+    // --- DELETE /v1/actions/{actionId} ---
     @Test
     void testDeleteActionSuccess () throws Exception {
-        ActionDefinitionDTO dto = Mockito.mock(ActionDefinitionDTO.class);
-        Mockito.when(actionManagerService.getActionById("a1")).thenReturn(Optional.of(dto));
-        Mockito.when(dto.getHash()).thenReturn("a1");
+        Mockito.doNothing().when(actionManagerService).softDelete("a1");
         mockMvc.perform(delete("/v1/actions/a1"))
                .andExpect(status().isNoContent());
     }
 
     @Test
     void testDeleteActionNotFound () throws Exception {
-        Mockito.when(actionManagerService.getActionById("a1")).thenReturn(Optional.empty());
+        Mockito.doThrow(new EntityNotFoundException("Cannot find action ID: a1"))
+               .when(actionManagerService).softDelete("a1");
         mockMvc.perform(delete("/v1/actions/a1"))
                .andExpect(status().isNotFound());
     }
 
     @Test
     void testDeleteActionFailure () throws Exception {
-        Mockito.when(actionManagerService.getActionById("a1")).thenThrow(new RuntimeException());
+        Mockito.doThrow(new RuntimeException("Unexpected error"))
+               .when(actionManagerService).softDelete("a1");
         mockMvc.perform(delete("/v1/actions/a1"))
                .andExpect(status().isInternalServerError());
     }
