@@ -137,7 +137,7 @@ class JobControllerV1Test {
         ActionDefinitionDTO action = new ActionDefinitionDTO();
         Mockito.when(actionManagerService.getActionById(actionId)).thenReturn(Optional.of(action));
 
-        mockMvc.perform(post("/v1/jobs/dryRun")
+        mockMvc.perform(post("/v1/jobs/validations")
                             .param("actionId", actionId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(job)))
@@ -152,7 +152,7 @@ class JobControllerV1Test {
         String actionId = "action1";
         Mockito.when(actionManagerService.getActionById(actionId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(post("/v1/jobs/dryRun")
+        mockMvc.perform(post("/v1/jobs/validations")
                             .param("actionId", actionId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(job)))
@@ -165,7 +165,7 @@ class JobControllerV1Test {
         String actionId = "action1";
         Mockito.when(actionManagerService.getActionById(actionId)).thenReturn(Optional.of(new ActionDefinitionDTO()));
 
-        mockMvc.perform(post("/v1/jobs/dryRun")
+        mockMvc.perform(post("/v1/jobs/validations")
                             .param("actionId", actionId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(job)))
