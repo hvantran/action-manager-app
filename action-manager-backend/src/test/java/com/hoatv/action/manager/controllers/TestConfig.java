@@ -8,8 +8,12 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableAutoConfiguration(exclude = {
@@ -24,4 +28,17 @@ public class TestConfig {
 
     @MockBean
     private ActionManagerStatistics actionManagerStatistics;
+
+    @Configuration
+    @EnableWebSecurity
+    public static class TestSecurityConfig {
+        
+        @Bean
+        public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+            http
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable());
+            return http.build();
+        }
+    }
 }
