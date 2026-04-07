@@ -15,6 +15,11 @@ import com.hoatv.action.manager.dtos.RestoreResponse;
 import com.hoatv.action.manager.dtos.SoftDeleteResponse;
 import com.hoatv.fwk.common.exceptions.EntityNotFoundException;
 import com.hoatv.fwk.common.ultilities.Pair;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -37,6 +42,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/v1/actions", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "Actions", description = "APIs for managing actions and action search")
 public class ActionControllerV1 {
 
     
@@ -153,7 +159,7 @@ public class ActionControllerV1 {
         boolean isReplaySuccess = actionManagerService.replayJob(actionId, jobId);
         return ResponseEntity.ok(Map.of("status", isReplaySuccess));
     }
-@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     
     @DeleteMapping(value = "/{actionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> deleteAction(@PathVariable("actionId") String hash,
@@ -168,11 +174,20 @@ public class ActionControllerV1 {
 
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
+        @Operation(summary = "Search actions by name or description")
+        @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Search results returned successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid search request"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+        })
     public ResponseEntity<Object> getActions(
+            @Parameter(description = "Search query between 2 and 255 characters")
             @RequestParam("search") 
             @Size(min = 2, max = 255, message = "Search query must be between 2 and 255 characters") 
             String search,
+            @Parameter(description = "Zero-based page index")
             @RequestParam("pageIndex") @Min(0) int pageIndex,
+            @Parameter(description = "Page size")
             @RequestParam("pageSize") @Min(0) int pageSize) {
 
         Sort defaultSorting = Sort.by(

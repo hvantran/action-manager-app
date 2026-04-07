@@ -17,6 +17,7 @@ export default function EmptyState({
 
   return (
     <Box
+      className="flex flex-col items-center justify-center px-3 py-10 text-center"
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -33,6 +34,7 @@ export default function EmptyState({
       </Typography>
       {showAddButton && (
         <Button
+          className="rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
           size="small"
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => navigate('/actions/new')}

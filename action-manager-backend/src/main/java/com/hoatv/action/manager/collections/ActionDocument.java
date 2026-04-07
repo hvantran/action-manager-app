@@ -4,6 +4,7 @@ import com.hoatv.action.manager.api.ImmutableAction;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.UUID;
@@ -21,8 +22,10 @@ public class ActionDocument implements ImmutableAction {
     @Builder.Default
     private String hash = UUID.randomUUID().toString();
 
+    @TextIndexed(weight = 2)
     private String actionName;
     private boolean isFavorite;
+    @TextIndexed
     private String actionDescription;
     private String configurations;
     private ActionStatus actionStatus;

@@ -79,6 +79,8 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
         }}
       >
         <ListItemText
+          primaryTypographyProps={{ component: 'div' }}
+          secondaryTypographyProps={{ component: 'div' }}
           primary={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography 

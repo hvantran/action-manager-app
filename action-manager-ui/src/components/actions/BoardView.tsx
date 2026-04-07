@@ -23,6 +23,7 @@ export default function BoardView({ restClient, refreshTrigger, onStatusChange }
 
   return (
     <Box
+      className="min-h-[calc(100vh-200px)] overflow-x-auto px-4 pb-6 pt-4 md:px-6"
       sx={{
         p: 3,
         overflowX: 'auto',
@@ -30,6 +31,7 @@ export default function BoardView({ restClient, refreshTrigger, onStatusChange }
       }}
     >
       <Box
+        className="flex min-w-max gap-4"
         sx={{
           display: 'flex',
           gap: 2,
@@ -39,6 +41,7 @@ export default function BoardView({ restClient, refreshTrigger, onStatusChange }
         {statusOrder.map((status) => (
           <Box
             key={status}
+            className="w-full min-w-[280px] md:min-w-[240px]"
             sx={{
               flex: '0 0 auto',
               width: {

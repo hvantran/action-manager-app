@@ -447,6 +447,7 @@ export default function ActionSummary() {
       {viewMode === 'board' ? (
         <>
           <Box
+            className="flex flex-col gap-4 px-4 pt-4 md:flex-row md:items-center md:justify-between md:px-6"
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -457,11 +458,11 @@ export default function ActionSummary() {
           >
             <Box>
               <BreadcrumbsComponent breadcrumbs={breadcrumbs} />
-              <Typography variant="h5" sx={{ fontWeight: 600, mt: 1 }}>
+              <Typography variant="h5" className="text-slate-900" sx={{ fontWeight: 600, mt: 1 }}>
                 Action Status Monitor
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box className="flex flex-wrap gap-2" sx={{ display: 'flex', gap: 1 }}>
               {pageEntityMetadata.pageEntityActions?.map((action, index) => (
                 <Box key={index}>
                   {action.onClick ? (
