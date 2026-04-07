@@ -289,10 +289,18 @@ export default function JobSummary() {
   };
 
   return (
-    <>
+    <Stack 
+      className="space-y-4 p-4 bg-slate-50 min-h-screen" 
+      sx={{
+        gap: 2,
+        padding: 2,
+        backgroundColor: '#f8fafc',
+        minHeight: '100vh',
+      }}
+    >
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
-    </>
+    </Stack>
   );
 }
