@@ -1,10 +1,8 @@
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import AppsIcon from '@mui/icons-material/Apps';
-import MailIcon from '@mui/icons-material/Mail';
 import MenuIcon from '@mui/icons-material/Menu';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import SearchIcon from '@mui/icons-material/Search';
 import { Grid, Paper } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import Badge from '@mui/material/Badge';
@@ -19,7 +17,8 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import DarkModeToggle from './components/common/DarkModeToggle';
-import { Search, SearchIconWrapper, StyledInputBase } from './components/common/GenericComponent';
+import SearchBar from './components/search/SearchBar';
+import { RestClient } from './components/GenericConstants';
 import { useFailureStatistics } from './hooks/useFailureStatistics';
 import { useUserInfo } from './hooks/useUserInfo';
 
@@ -226,6 +225,12 @@ export default function PrimarySearchAppBar(props: any) {
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
     >
+      {/* Search Bar - Mobile */}
+      <MenuItem sx={{ display: { xs: 'block', md: 'none' } }}>
+        <Box sx={{ width: '100%', px: 1, py: 1 }}>
+          <SearchBar restClient={new RestClient()} />
+        </Box>
+      </MenuItem>
       <MenuItem onClick={handleNotificationClick}>
         <IconButton size="large" aria-label={`show ${failureCount} failed jobs`} color="inherit">
           <Badge badgeContent={failureCount} color="error">
@@ -294,12 +299,18 @@ export default function PrimarySearchAppBar(props: any) {
             ))}
           </Box>
           <Box sx={{ flexGrow: 1 }} />
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase placeholder="Search…" inputProps={{ 'aria-label': 'search' }} />
-          </Search>
+          {/* Search Bar - Desktop */}
+          <Box 
+            sx={{ 
+              display: { xs: 'none', md: 'flex' }, 
+              justifyContent: 'center',
+              maxWidth: 600,
+              minWidth: 400,
+              mx: 2 
+            }}
+          >
+            <SearchBar restClient={new RestClient()} />
+          </Box>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
           </Box>
