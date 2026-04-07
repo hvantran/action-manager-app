@@ -247,7 +247,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }, []);
 
   return (
-    <Box sx={{ position: 'relative', width: '100%', maxWidth: 600 }}>
+    <Box sx={{ 
+      position: 'relative', 
+      width: '100%', 
+      maxWidth: { xs: '100%', md: 600 } // Full width on mobile, 600px on desktop
+    }}>
       <TextField
         ref={inputRef}
         fullWidth
@@ -259,7 +263,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon />
+              <SearchIcon sx={{ fontSize: { xs: 20, md: 24 } }} />
             </InputAdornment>
           ),
           endAdornment: (
@@ -278,6 +282,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           '& .MuiOutlinedInput-root': {
             borderRadius: 2,
             backgroundColor: 'background.paper',
+            fontSize: { xs: '0.875rem', md: '1rem' }, // Smaller font on mobile
           },
         }}
       />

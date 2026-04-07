@@ -69,6 +69,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
         onClick={onClick}
         onMouseEnter={onMouseEnter}
         sx={{
+          py: { xs: 1.5, md: 1 }, // More padding on mobile for touch targets
           '&.Mui-selected': {
             backgroundColor: 'action.selected',
           },
@@ -80,7 +81,11 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
         <ListItemText
           primary={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body1" fontWeight={500}>
+              <Typography 
+                variant="body1" 
+                fontWeight={500}
+                sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+              >
                 {result.name}
               </Typography>
               {result.isFavorite && (
@@ -104,6 +109,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    fontSize: { xs: '0.75rem', md: '0.875rem' },
                   }}
                 >
                   {result.description}
@@ -149,9 +155,10 @@ const SearchDropdown = React.forwardRef<HTMLDivElement, SearchDropdownProps>(
             left: 0,
             right: 0,
             mt: 1,
-            maxHeight: 400,
+            maxHeight: { xs: 300, md: 400 },
             overflow: 'auto',
             zIndex: 1300,
+            maxWidth: { xs: '100vw', md: 'none' },
           }}
         >
           <Box
@@ -182,9 +189,10 @@ const SearchDropdown = React.forwardRef<HTMLDivElement, SearchDropdownProps>(
             left: 0,
             right: 0,
             mt: 1,
-            maxHeight: 400,
+            maxHeight: { xs: 300, md: 400 },
             overflow: 'auto',
             zIndex: 1300,
+            maxWidth: { xs: '100vw', md: 'none' },
           }}
         >
           <Box
@@ -219,9 +227,10 @@ const SearchDropdown = React.forwardRef<HTMLDivElement, SearchDropdownProps>(
             left: 0,
             right: 0,
             mt: 1,
-            maxHeight: 400,
+            maxHeight: { xs: 300, md: 400 },
             overflow: 'auto',
             zIndex: 1300,
+            maxWidth: { xs: '100vw', md: 'none' },
           }}
         >
           <Box
@@ -255,9 +264,10 @@ const SearchDropdown = React.forwardRef<HTMLDivElement, SearchDropdownProps>(
           left: 0,
           right: 0,
           mt: 1,
-          maxHeight: 400,
+          maxHeight: { xs: 300, md: 400 },
           overflow: 'auto',
           zIndex: 1300,
+          maxWidth: { xs: '100vw', md: 'none' },
         }}
       >
         <List disablePadding>

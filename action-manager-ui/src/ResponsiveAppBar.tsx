@@ -30,6 +30,7 @@ export default function PrimarySearchAppBar(props: any) {
   const navigate = useNavigate();
   const { failureCount } = useFailureStatistics();
   const { userInfo, getDisplayName } = useUserInfo();
+  const searchRestClient = React.useMemo(() => new RestClient(() => {}), []);
   const setToggleDarkMode = props.setToggleDarkMode;
   const toggleDarkMode = props.toggleDarkMode;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -228,7 +229,7 @@ export default function PrimarySearchAppBar(props: any) {
       {/* Search Bar - Mobile */}
       <MenuItem sx={{ display: { xs: 'block', md: 'none' } }}>
         <Box sx={{ width: '100%', px: 1, py: 1 }}>
-          <SearchBar restClient={new RestClient()} />
+          <SearchBar restClient={searchRestClient} />
         </Box>
       </MenuItem>
       <MenuItem onClick={handleNotificationClick}>
@@ -309,7 +310,7 @@ export default function PrimarySearchAppBar(props: any) {
               mx: 2 
             }}
           >
-            <SearchBar restClient={new RestClient()} />
+            <SearchBar restClient={searchRestClient} />
           </Box>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <DarkModeToggle checked={toggleDarkMode} onClick={setToggleDarkMode}></DarkModeToggle>
