@@ -20,7 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
     KafkaAutoConfiguration.class,
     MongoDataAutoConfiguration.class
 })
-@ComponentScan(basePackages = {"com.hoatv.action.manager.controllers", "com.hoatv.springboot.common.advices"})
+@ComponentScan(basePackages = {"com.hoatv.action.manager.controllers"})
 @EnableWebSecurity
 @EnableMethodSecurity  // Enable @PreAuthorize
 public class SecurityTestConfig {
