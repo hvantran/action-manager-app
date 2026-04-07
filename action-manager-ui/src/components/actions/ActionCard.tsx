@@ -195,6 +195,7 @@ const ActionCard = React.memo(function ActionCard({
   return (
     <>
       <Card
+        className="mb-2 rounded-[1.4rem] border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
         sx={{
           mb: 2,
           cursor: 'pointer',
@@ -207,9 +208,10 @@ const ActionCard = React.memo(function ActionCard({
       }}
       onClick={onClick}
     >
-      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+      <CardContent className="p-4" sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         {/* Header: Title with Star and Menu */}
         <Box
+          className="mb-1 flex items-start justify-between gap-2"
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
         >
           <Typography
@@ -225,22 +227,32 @@ const ActionCard = React.memo(function ActionCard({
           >
             {action.name}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" onClick={handleFavoriteClick} sx={{ p: 0.5 }}>
+          <Box className="flex gap-1" sx={{ display: 'flex', gap: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={handleFavoriteClick}
+              className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
+              sx={{ p: 0.5 }}
+            >
               {isFavorite ? (
                 <StarIcon sx={{ fontSize: 20, color: '#eab308' }} />
               ) : (
                 <StarBorderIcon sx={{ fontSize: 20 }} />
               )}
             </IconButton>
-            <IconButton size="small" onClick={handleMenuClick} sx={{ p: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={handleMenuClick}
+              className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
+              sx={{ p: 0.5 }}
+            >
               <MoreHorizIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Box>
         </Box>
 
         {/* Status and Date */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Box className="mb-2 flex flex-wrap items-center gap-2" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <Chip
             label={action.status.toUpperCase()}
             size="small"
@@ -251,6 +263,7 @@ const ActionCard = React.memo(function ActionCard({
               fontSize: '0.75rem',
               height: 24,
             }}
+            className="rounded-full"
           />
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
             • {formatDate(action.createdAt)}
@@ -258,7 +271,7 @@ const ActionCard = React.memo(function ActionCard({
         </Box>
 
         {/* Metrics Grid: Total Jobs and Health */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+        <Box className="mb-2 grid grid-cols-2 gap-3" sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
           <Box>
             <Typography
               variant="caption"
@@ -299,7 +312,7 @@ const ActionCard = React.memo(function ActionCard({
         </Box>
 
         {/* Status Breakdown */}
-        <Box sx={{ mb: 2 }}>
+        <Box className="mb-2" sx={{ mb: 2 }}>
           <Box
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
           >
@@ -328,7 +341,7 @@ const ActionCard = React.memo(function ActionCard({
             }}
           />
           {/* Legend */}
-          <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+          <Box className="mt-1 flex flex-wrap gap-3" sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#f97316' }} />
               <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
@@ -358,6 +371,7 @@ const ActionCard = React.memo(function ActionCard({
 
         {/* Footer: View Details and Actions */}
         <Box
+          className="flex items-center justify-between border-t border-slate-100 pt-2"
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -369,6 +383,7 @@ const ActionCard = React.memo(function ActionCard({
           <Link
             href="#"
             underline="hover"
+            className="text-xs font-bold uppercase tracking-[0.16em]"
             sx={{
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -383,27 +398,57 @@ const ActionCard = React.memo(function ActionCard({
           >
             View Details
           </Link>
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" onClick={handleExport} sx={{ p: 0.5 }} title="Export">
+          <Box className="flex gap-1" sx={{ display: 'flex', gap: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={handleExport}
+              className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
+              sx={{ p: 0.5 }}
+              title="Export"
+            >
               <FileDownloadIcon sx={{ fontSize: 18 }} />
             </IconButton>
             {action.status === 'ACTIVE' && (
-              <IconButton size="small" onClick={handlePause} sx={{ p: 0.5 }} title="Pause">
+              <IconButton
+                size="small"
+                onClick={handlePause}
+                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
+                sx={{ p: 0.5 }}
+                title="Pause"
+              >
                 <PauseIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
             {action.status === 'ARCHIVED' && (
-              <IconButton size="small" onClick={handleRestore} sx={{ p: 0.5 }} title="Restore">
+              <IconButton
+                size="small"
+                onClick={handleRestore}
+                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
+                sx={{ p: 0.5 }}
+                title="Restore"
+              >
                 <RestoreIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
             {action.status === 'DELETED' && (
-              <IconButton size="small" onClick={handleRestore} sx={{ p: 0.5 }} title="Restore from Trash">
+              <IconButton
+                size="small"
+                onClick={handleRestore}
+                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
+                sx={{ p: 0.5 }}
+                title="Restore from Trash"
+              >
                 <RestoreIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
             {action.status !== 'DELETED' && action.status !== 'ARCHIVED' && (
-              <IconButton size="small" onClick={handleArchive} sx={{ p: 0.5 }} title="Archive">
+              <IconButton
+                size="small"
+                onClick={handleArchive}
+                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
+                sx={{ p: 0.5 }}
+                title="Archive"
+              >
                 <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             )}
@@ -411,6 +456,7 @@ const ActionCard = React.memo(function ActionCard({
               <IconButton 
                 size="small" 
                 onClick={handlePermanentDelete} 
+                className="rounded-full border border-red-200 bg-red-50 p-1"
                 sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
                 title="Delete Forever"
               >
@@ -420,6 +466,7 @@ const ActionCard = React.memo(function ActionCard({
               <IconButton 
                 size="small" 
                 onClick={handleDelete} 
+                className="rounded-full border border-red-200 bg-red-50 p-1"
                 sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
                 title="Move to Trash"
               >
@@ -437,12 +484,15 @@ const ActionCard = React.memo(function ActionCard({
       onClose={handleDeleteCancel}
       aria-labelledby="delete-dialog-title"
       aria-describedby="delete-dialog-description"
+      PaperProps={{
+        className: 'rounded-3xl border border-slate-200 bg-white shadow-2xl',
+      }}
     >
-      <DialogTitle id="delete-dialog-title">
+      <DialogTitle id="delete-dialog-title" className="px-6 pt-6 text-xl font-semibold text-slate-900">
         {action.status === 'DELETED' ? 'Permanently Delete Action' : 'Move to Trash'}
       </DialogTitle>
-      <DialogContent>
-        <DialogContentText id="delete-dialog-description">
+      <DialogContent className="px-6 pb-2">
+        <DialogContentText id="delete-dialog-description" className="text-sm leading-6 text-slate-600">
           {action.status === 'DELETED' ? (
             <>
               Are you sure you want to <strong>permanently delete</strong> action "<strong>{action.name}</strong>"?
@@ -457,14 +507,15 @@ const ActionCard = React.memo(function ActionCard({
           )}
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleDeleteCancel} color="primary">
+      <DialogActions className="px-6 pb-6 pt-2">
+        <Button onClick={handleDeleteCancel} color="primary" className="rounded-full px-5 py-2 text-xs font-semibold tracking-[0.16em] text-slate-600">
           Cancel
         </Button>
         <Button 
           onClick={action.status === 'DELETED' ? handlePermanentDeleteConfirm : handleDeleteConfirm} 
           color="error" 
           variant="contained" 
+          className="rounded-full bg-red-600 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-white hover:bg-red-700"
           autoFocus
         >
           {action.status === 'DELETED' ? 'Delete Forever' : 'Move to Trash'}

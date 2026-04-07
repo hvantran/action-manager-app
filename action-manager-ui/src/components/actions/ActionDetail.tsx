@@ -377,10 +377,16 @@ export default function ActionDetail() {
 
   return (
     <ActionProvider setNumberOfFailureJobs={setNumberOfFailureJobs}>
-      <Box sx={{ maxWidth: 1600, mx: 'auto', p: 3 }}>
+      <Box
+        className="mx-auto max-w-[1600px] bg-gradient-to-b from-slate-50 via-white to-amber-50/30 p-3 md:p-6"
+        sx={{ maxWidth: 1600, mx: 'auto', p: 3 }}
+      >
         {/* Breadcrumb and Actions Bar */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+        <Box
+          className="mb-2 flex flex-col justify-between gap-3 rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center"
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+        >
+          <Box className="flex items-center gap-1 text-slate-500" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
             <Link underline="hover" color="inherit" href="/actions" sx={{ fontSize: '0.875rem' }}>
               {ROOT_BREADCRUMB}
             </Link>
@@ -390,11 +396,12 @@ export default function ActionDetail() {
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box className="flex flex-wrap gap-1" sx={{ display: 'flex', gap: 1 }}>
             <Tooltip title="Edit Action">
               <IconButton
                 size="small"
                 onClick={handleEditAction}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
                 aria-label="Edit Action"
               >
@@ -405,6 +412,7 @@ export default function ActionDetail() {
               <IconButton
                 size="small"
                 onClick={handleCopyJSON}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
                 aria-label="Copy JSON"
               >
@@ -431,6 +439,7 @@ export default function ActionDetail() {
                   );
                   setReplayActionFlag((prev) => !prev);
                 }}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
                 aria-label="Refresh"
               >
@@ -441,13 +450,19 @@ export default function ActionDetail() {
               <IconButton
                 size="small"
                 onClick={(e) => setAnchorEl(e.currentTarget)}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
                 aria-label="More actions"
               >
                 <MoreVertIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Menu anchorEl={anchorEl} open={menuOpen} onClose={handleMenuClose}>
+            <Menu
+              anchorEl={anchorEl}
+              open={menuOpen}
+              onClose={handleMenuClose}
+              PaperProps={{ className: 'rounded-2xl border border-slate-200 bg-white shadow-xl' }}
+            >
               <MenuItem onClick={handleArchive}>
                 <ArchiveOutlinedIcon sx={{ mr: 2, color: 'primary.main' }} />
                 Archive
@@ -474,6 +489,7 @@ export default function ActionDetail() {
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => navigate(`/actions/${actionId}/jobs/new`)}
+              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-white hover:bg-slate-800"
               sx={{
                 ml: 1,
                 bgcolor: '#1976d2',
@@ -720,8 +736,9 @@ export default function ActionDetail() {
         </Grid>
 
         {/* Job Table */}
-        <Card>
+        <Card className="overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-sm">
           <Box
+            className="flex flex-col items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 p-4 md:flex-row md:items-center"
             sx={{
               p: 2.5,
               borderBottom: 1,
@@ -764,16 +781,21 @@ export default function ActionDetail() {
           onClose={() => setConfigDialogOpen(false)}
           maxWidth="md"
           fullWidth
+          PaperProps={{ className: 'rounded-3xl border border-slate-200 bg-white shadow-2xl' }}
         >
-          <DialogTitle>
+          <DialogTitle className="px-6 pt-6">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="h6">Action Configuration</Typography>
-              <IconButton onClick={() => setConfigDialogOpen(false)} size="small">
+              <IconButton
+                onClick={() => setConfigDialogOpen(false)}
+                size="small"
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              >
                 <CloseIcon />
               </IconButton>
             </Box>
           </DialogTitle>
-          <DialogContent>
+          <DialogContent className="px-6 pb-6">
             <Box
               sx={{
                 backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
@@ -804,16 +826,26 @@ export default function ActionDetail() {
         </Dialog>
 
         {/* Edit Action Dialog */}
-        <Dialog open={editDialogOpen} onClose={handleCancelEdit} maxWidth="md" fullWidth>
-          <DialogTitle>
+        <Dialog
+          open={editDialogOpen}
+          onClose={handleCancelEdit}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ className: 'rounded-3xl border border-slate-200 bg-white shadow-2xl' }}
+        >
+          <DialogTitle className="px-6 pt-6">
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="h6">Edit Action</Typography>
-              <IconButton onClick={handleCancelEdit} size="small">
+              <IconButton
+                onClick={handleCancelEdit}
+                size="small"
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              >
                 <CloseIcon />
               </IconButton>
             </Box>
           </DialogTitle>
-          <DialogContent>
+          <DialogContent className="px-6 pb-6">
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={2}>
                 {propertyMetadata
@@ -877,10 +909,19 @@ export default function ActionDetail() {
                   })}
               </Grid>
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-                <Button onClick={handleCancelEdit} variant="outlined">
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="outlined"
+                  className="rounded-full border-slate-300 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-slate-600"
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleSaveAction} variant="contained" startIcon={<SaveIcon />}>
+                <Button
+                  onClick={handleSaveAction}
+                  variant="contained"
+                  startIcon={<SaveIcon />}
+                  className="rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-white hover:bg-slate-800"
+                >
                   Save Changes
                 </Button>
               </Box>

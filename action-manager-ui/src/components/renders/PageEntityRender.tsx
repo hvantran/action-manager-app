@@ -39,7 +39,7 @@ function CustomTabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box className="px-1 py-5 md:px-2" sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -50,8 +50,8 @@ const renderProperties = (
   tabId = ''
 ): React.ReactNode => {
   return (
-    <Box key={pageName + tabId + '-properties'}>
-      <Grid container spacing={2} sx={{ py: 1 }}>
+    <Box key={pageName + tabId + '-properties'} className="rounded-[2rem] bg-white/80 shadow-sm ring-1 ring-slate-200/70">
+      <Grid container spacing={2} sx={{ py: 1 }} className="px-2 md:px-4">
         {propertiesMetadata.map((propertyMeta, index) => {
           return (
             <PropertyRender key={`${propertyMeta.propName}-${index}`} property={propertyMeta} />
@@ -86,13 +86,18 @@ export default function PageEntityRender(props: PageEntityMetadata) {
     const secondaryActions = pageEntityActions.filter((p) => p.isSecondary);
     const primaryActions = pageEntityActions.filter((p) => !p.isSecondary);
     gridItems.push(
-      <Grid item key="grid-breadcrumbs" xs={6} sx={{ marginTop: 2, px: 3 }}>
+      <Grid item key="grid-breadcrumbs" xs={12} md={6} sx={{ marginTop: 2, px: 3 }}>
         <BreadcrumbsComponent breadcrumbs={breadcrumbsMetadata} />
       </Grid>
     );
     gridItems.push(
-      <Grid item key="grid-actions" xs={6} sx={{ marginTop: 2, px: 3 }}>
-        <Box display="flex" key={pageName + '-box-actions'} justifyContent="flex-end">
+      <Grid item key="grid-actions" xs={12} md={6} sx={{ marginTop: 2, px: 3 }}>
+        <Box
+          display="flex"
+          key={pageName + '-box-actions'}
+          justifyContent="flex-end"
+          className="flex-wrap gap-2"
+        >
           {primaryActions.map((action) => {
             return (
               ((action.visible === true || action.visible === undefined) && (
@@ -104,6 +109,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
                   component="label"
                   {...action.properties}
                   disabled={action.disable}
+                  className="rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
                 >
                   <Tooltip
                     title={
@@ -128,6 +134,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
                 aria-expanded={open ? 'true' : undefined}
                 aria-haspopup="true"
                 onClick={(event) => setAnchorEl(event.currentTarget)}
+                className="rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
               >
                 <MoreVertIcon />
               </IconButton>
@@ -139,17 +146,25 @@ export default function PageEntityRender(props: PageEntityMetadata) {
                 anchorEl={anchorEl}
                 open={open}
                 onClose={() => setAnchorEl(null)}
+                PaperProps={{
+                  className: 'rounded-2xl border border-slate-200 bg-white shadow-xl',
+                }}
               >
                 {secondaryActions.map((action) => (
                   <MenuItem
                     key={action.actionName}
                     disabled={action.disable}
+                    className="gap-2"
                     onClick={() => {
                       action.onClick && action.onClick();
                       setAnchorEl(null);
                     }}
                   >
-                    <Box sx={{ backgroundColor: 'background.default' }} paddingRight={5}>
+                    <Box
+                      sx={{ backgroundColor: 'background.default' }}
+                      paddingRight={5}
+                      className="flex items-center gap-2 bg-transparent"
+                    >
                       <IconButton
                         sx={{ paddingRight: 4 }}
                         key={action.actionName}
@@ -159,6 +174,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
                         component="label"
                         {...action.properties}
                         disabled={action.disable}
+                        className="rounded-full text-slate-700"
                       >
                         <Tooltip
                           title={
@@ -222,7 +238,12 @@ export default function PageEntityRender(props: PageEntityMetadata) {
   } else if (pageEntityActions) {
     gridItems.push(
       <Grid item xs={12} key="grid-actions" justifyContent="flex-end">
-        <Box display="flex" key={pageName + '-box-actions'} justifyContent="flex-end">
+        <Box
+          display="flex"
+          key={pageName + '-box-actions'}
+          justifyContent="flex-end"
+          className="flex-wrap gap-2"
+        >
           {pageEntityActions.map((action) => {
             return (
               ((action.visible === true || action.visible === undefined) && (
@@ -234,6 +255,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
                   component="label"
                   {...action.properties}
                   disabled={action.disable}
+                  className="rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
                 >
                   <Tooltip title={action.actionLabel}>{action.actionIcon}</Tooltip>
                 </IconButton>
@@ -251,16 +273,20 @@ export default function PageEntityRender(props: PageEntityMetadata) {
   }
   if (gridItems.length > 1) {
     nodes.push(
-      <Grid container key={pageName} spacing={2}>
+      <Grid container key={pageName} spacing={2} className="rounded-[2rem] bg-slate-50/90 pb-4 shadow-sm ring-1 ring-slate-200/70">
         {gridItems}
       </Grid>
     );
   }
   if (tabMetadatas) {
     nodes.push(
-      <Box sx={{ backgroundColor: 'background.default', width: '100%' }}>
+      <Box
+        sx={{ backgroundColor: 'background.default', width: '100%' }}
+        className="overflow-hidden rounded-[2rem] bg-white shadow-sm ring-1 ring-slate-200/70"
+      >
         <Box
           sx={{ borderBottom: 1, backgroundColor: 'background.default', borderColor: 'divider' }}
+          className="border-b border-slate-200 bg-slate-50"
         >
           <Tabs
             value={currentTabIndex}
@@ -268,10 +294,30 @@ export default function PageEntityRender(props: PageEntityMetadata) {
             textColor="primary"
             indicatorColor="primary"
             aria-label="primary tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            className="px-2 md:px-4"
+            sx={{
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: 9999,
+                backgroundColor: '#f59e0b',
+              },
+              '& .MuiTab-root': {
+                minHeight: 64,
+                textTransform: 'none',
+                fontWeight: 600,
+                color: '#64748b',
+              },
+              '& .Mui-selected': {
+                color: '#0f172a',
+              },
+            }}
           >
             {tabMetadatas.map((tabMetadata, index) => {
               return (
                 <Tab
+                  key={tabMetadata.name}
                   label={tabMetadata.name}
                   {...{
                     id: `simple-tab-${index}`,
@@ -287,7 +333,7 @@ export default function PageEntityRender(props: PageEntityMetadata) {
           const tableMetadata: TableMetadata | undefined = tabMetadata.tableMetadata;
           const propertyMetadata: Array<PropertyMetadata> | undefined = tabMetadata.properties;
           return (
-            <CustomTabPanel value={currentTabIndex} index={index}>
+            <CustomTabPanel key={tabMetadata.name} value={currentTabIndex} index={index}>
               {tableMetadata ? (
                 <TableRender key={pageName + tabMetadata.name + '-table'} {...tableMetadata} />
               ) : (
@@ -324,7 +370,11 @@ export default function PageEntityRender(props: PageEntityMetadata) {
   }
 
   return (
-    <Stack spacing={1} sx={{ backgroundColor: 'background.default', px: 2 }}>
+    <Stack
+      spacing={3}
+      sx={{ backgroundColor: 'background.default', px: 2, py: 2 }}
+      className="bg-gradient-to-b from-slate-50 via-white to-amber-50/40"
+    >
       {nodes}
     </Stack>
   );

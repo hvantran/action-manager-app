@@ -9,7 +9,25 @@ export default function BreadcrumbsComponent(props: any) {
     <Breadcrumbs
       separator={<NavigateNextIcon fontSize="small" />}
       aria-label="breadcrumb"
-      sx={{ fontWeight: 'bold' }}
+      className="text-sm font-semibold text-slate-500"
+      sx={{
+        fontWeight: 'bold',
+        '& .MuiBreadcrumbs-ol': {
+          alignItems: 'center',
+          gap: 0.5,
+          flexWrap: 'wrap',
+        },
+        '& .MuiBreadcrumbs-separator': {
+          color: '#94a3b8',
+          marginInline: 6,
+        },
+        '& .MuiTypography-root, & .MuiLink-root': {
+          color: '#475569',
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          textDecoration: 'none',
+        },
+      }}
     >
       {breadcrumbs1}
     </Breadcrumbs>
