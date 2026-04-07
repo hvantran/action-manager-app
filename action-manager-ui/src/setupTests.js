@@ -7,6 +7,7 @@ import '@testing-library/jest-dom';
 // Mock window._env_ for tests
 window._env_ = {
   REACT_APP_API_URL: 'http://localhost:8080',
+  REACT_APP_ACTION_MANAGER_BACKEND_URL: 'http://localhost:8082/action-manager',
   REACT_APP_PAGES: JSON.stringify([
     { name: 'Home', path: '/' },
     { name: 'Test', path: '/test' }

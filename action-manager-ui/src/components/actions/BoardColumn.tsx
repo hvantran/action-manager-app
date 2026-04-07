@@ -100,6 +100,7 @@ export default function BoardColumn({
   return (
     <Paper
       elevation={0}
+      className="flex min-h-[500px] flex-col rounded-2xl border border-slate-200 bg-slate-50/70 shadow-sm"
       sx={{
         p: 2,
         bgcolor: 'background.default',
@@ -113,6 +114,7 @@ export default function BoardColumn({
     >
       {/* Column Header */}
       <Box
+        className="mb-2 flex items-center border-b border-slate-200 pb-4"
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -138,6 +140,7 @@ export default function BoardColumn({
         </Box>
         <Typography
           variant="subtitle2"
+          className="tracking-[0.12em] text-slate-700"
           sx={{ textTransform: 'uppercase', fontWeight: 600, flex: 1 }}
         >
           {status}
@@ -170,6 +173,7 @@ export default function BoardColumn({
             {hasMore && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                 <Button
+                  className="rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
                   size="small"
                   startIcon={loading ? <CircularProgress size={16} /> : <ExpandMoreIcon />}
                   onClick={handleLoadMore}
@@ -188,6 +192,7 @@ export default function BoardColumn({
       {/* Add Action Button */}
       {status !== 'PAUSED' && status !== 'DELETED' && status !== 'ARCHIVED' && (
         <Button
+          className="rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
           size="small"
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => navigate(`/actions/new?status=${status}`)}
