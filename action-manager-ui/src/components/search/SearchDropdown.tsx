@@ -1,17 +1,24 @@
-import React, { forwardRef } from 'react';
+import React from 'react';
 import {
   Paper,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Typography,
-  CircularProgress,
   Box,
   Divider,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
-import { SearchResult } from './types';
-import SearchResultItem from './SearchResultItem';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
+import StarIcon from '@mui/icons-material/Star';
+import { SearchResult } from './SearchBar';
 
+/**
+ * SearchDropdown component props
+ */
 interface SearchDropdownProps {
   results: SearchResult[];
   loading: boolean;
@@ -20,79 +27,260 @@ interface SearchDropdownProps {
   totalResults: number;
   query: string;
   onResultClick: (actionHash: string) => void;
+  onMouseEnter?: (index: number) => void;
 }
 
 /**
- * SearchDropdown component
- * Displays search results in a dropdown below the search bar
+ * SearchResultItem component
  */
-const SearchDropdown = forwardRef<HTMLDivElement, SearchDropdownProps>(
-  ({ results, loading, error, selectedIndex, totalResults, query, onResultClick }, ref) => {
+interface SearchResultItemProps {
+  result: SearchResult;
+  isSelected: boolean;
+  onClick: () => void;
+  onMouseEnter?: () => void;
+}
+
+/**
+ * Get status color based on action status
+ */
+const getStatusColor = (status: string): "success" | "warning" | "error" | "default" => {
+  switch (status) {
+    case 'ACTIVE':
+      return 'success';
+    case 'PAUSED':
+      return 'warning';
+    case 'FAILED':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const SearchResultItem: React.FC<SearchResultItemProps> = ({
+  result,
+  isSelected,
+  onClick,
+  onMouseEnter,
+}) => {
+  return (
+    <ListItem disablePadding>
+      <ListItemButton
+        selected={isSelected}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+        sx={{
+          '&.Mui-selected': {
+            backgroundColor: 'action.selected',
+          },
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      >
+        <ListItemText
+          primary={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body1" fontWeight={500}>
+                {result.name}
+              </Typography>
+              {result.isFavorite && (
+                <StarIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+              )}
+              <Chip
+                label={result.status}
+                size="small"
+                color={getStatusColor(result.status)}
+                sx={{ ml: 'auto' }}
+              />
+            </Box>
+          }
+          secondary={
+            <>
+              {result.description && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {result.description}
+                </Typography>
+              )}
+              <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                <Typography variant="caption" color="text.disabled">
+                  Jobs: {result.numberOfJobs}
+                </Typography>
+                {result.numberOfFailedJobs > 0 && (
+                  <Typography variant="caption" color="error">
+                    Failed: {result.numberOfFailedJobs}
+                  </Typography>
+                )}
+              </Box>
+            </>
+          }
+        />
+      </ListItemButton>
+    </ListItem>
+  );
+};
+
+/**
+ * SearchDropdown component
+ */
+const SearchDropdown = React.forwardRef<HTMLDivElement, SearchDropdownProps>(
+  (
+    { results, loading, error, selectedIndex, totalResults, query, onResultClick, onMouseEnter },
+    ref
+  ) => {
+    /**
+     * Render loading state
+     */
+    if (loading) {
+      return (
+        <Paper
+          ref={ref}
+          elevation={4}
+          sx={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            mt: 1,
+            maxHeight: 400,
+            overflow: 'auto',
+            zIndex: 1300,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              py: 4,
+            }}
+          >
+            <CircularProgress size={32} />
+          </Box>
+        </Paper>
+      );
+    }
+
+    /**
+     * Render error state
+     */
+    if (error) {
+      return (
+        <Paper
+          ref={ref}
+          elevation={4}
+          sx={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            mt: 1,
+            maxHeight: 400,
+            overflow: 'auto',
+            zIndex: 1300,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              py: 4,
+              px: 2,
+            }}
+          >
+            <ErrorOutlineIcon color="error" sx={{ fontSize: 48, mb: 2 }} />
+            <Typography color="error" align="center">
+              {error}
+            </Typography>
+          </Box>
+        </Paper>
+      );
+    }
+
+    /**
+     * Render empty state
+     */
+    if (results.length === 0) {
+      return (
+        <Paper
+          ref={ref}
+          elevation={4}
+          sx={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            mt: 1,
+            maxHeight: 400,
+            overflow: 'auto',
+            zIndex: 1300,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              py: 4,
+              px: 2,
+            }}
+          >
+            <SearchOffIcon sx={{ fontSize: 48, mb: 2, color: 'text.disabled' }} />
+            <Typography color="text.secondary" align="center">
+              No actions found for "{query}"
+            </Typography>
+          </Box>
+        </Paper>
+      );
+    }
+
+    /**
+     * Render results
+     */
     return (
       <Paper
         ref={ref}
-        elevation={8}
+        elevation={4}
         sx={{
           position: 'absolute',
           top: '100%',
           left: 0,
           right: 0,
-          marginTop: 1,
+          mt: 1,
           maxHeight: 400,
-          overflowY: 'auto',
+          overflow: 'auto',
           zIndex: 1300,
         }}
       >
-        {/* Loading State */}
-        {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress size={30} />
-          </Box>
-        )}
+        <List disablePadding>
+          {results.map((result, index) => (
+            <SearchResultItem
+              key={result.hash}
+              result={result}
+              isSelected={index === selectedIndex}
+              onClick={() => onResultClick(result.hash)}
+              onMouseEnter={() => onMouseEnter?.(index)}
+            />
+          ))}
+        </List>
 
-        {/* Error State */}
-        {error && !loading && (
-          <Box sx={{ p: 2 }}>
-            <Typography color="error" variant="body2">
-              {error}
-            </Typography>
-          </Box>
-        )}
-
-        {/* No Results */}
-        {!loading && !error && results.length === 0 && (
-          <Box sx={{ p: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              No actions found matching "{query}"
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Try a different search term or create a new action
-            </Typography>
-          </Box>
-        )}
-
-        {/* Results List */}
-        {!loading && !error && results.length > 0 && (
-          <List dense>
-            {results.map((result, index) => (
-              <SearchResultItem
-                key={result.hash}
-                result={result}
-                isSelected={index === selectedIndex}
-                onClick={() => onResultClick(result.hash)}
-              />
-            ))}
-            {totalResults > results.length && (
-              <>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    secondary={`Showing ${results.length} of ${totalResults} results`}
-                  />
-                </ListItem>
-              </>
-            )}
-          </List>
+        {totalResults > results.length && (
+          <>
+            <Divider />
+            <Box sx={{ py: 1, px: 2, backgroundColor: 'action.hover' }}>
+              <Typography variant="caption" color="text.secondary">
+                Showing {results.length} of {totalResults} results
+              </Typography>
+            </Box>
+          </>
         )}
       </Paper>
     );

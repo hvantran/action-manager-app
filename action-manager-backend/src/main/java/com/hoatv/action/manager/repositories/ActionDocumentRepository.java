@@ -21,6 +21,20 @@ public interface ActionDocumentRepository extends MongoRepository<ActionDocument
     @Query("{actionName: {$regex : ?0, $options: 'i'}}")
     Page<ActionDocument> findActionByName(String actionName, Pageable pageable);
 
+    /**
+     * Search actions by name OR description (case-insensitive)
+     * Uses MongoDB $or operator with regex matching
+     * 
+     * @param searchText the text to search for in name or description
+     * @param pageable pagination information
+     * @return page of matching action documents
+     */
+    @Query("{ $or: [ " +
+           "  { 'actionName': { $regex: ?0, $options: 'i' } }, " +
+           "  { 'actionDescription': { $regex: ?0, $options: 'i' } } " +
+           "] }")
+    Page<ActionDocument> searchByNameOrDescription(String searchText, Pageable pageable);
+
     List<ActionDocument> findByHashIn(Set<String> actionIds);
 
     List<ActionDocument> findByActionStatus(ActionStatus actionStatus);

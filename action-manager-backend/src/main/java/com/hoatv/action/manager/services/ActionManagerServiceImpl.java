@@ -148,7 +148,7 @@ public class ActionManagerServiceImpl implements ActionManagerService {
     @Override
     @LoggingMonitor(description = "Search actions with {argument0}")
     public Page<ActionOverviewDTO> search(String search, Pageable pageable) {
-        Page<ActionDocument> actionDocuments = actionDocumentRepository.findActionByName(search, pageable);
+        Page<ActionDocument> actionDocuments = actionDocumentRepository.searchByNameOrDescription(search, pageable);
         return getActionOverviewDTOs(actionDocuments);
     }
 

@@ -744,6 +744,37 @@ export class ActionAPI {
       return undefined;
     });
   };
+
+  /**
+   * Search actions by name or description
+   * @param searchText the text to search for in action name or description
+   * @param pageIndex page index (0-based)
+   * @param pageSize number of results per page
+   * @param restClient REST client instance
+   * @param successCallback callback function with search results
+   */
+  static searchActions = async (
+    searchText: string,
+    pageIndex: number,
+    pageSize: number,
+    restClient: RestClient,
+    successCallback: (pagingResult: PagingResult) => void
+  ) => {
+    const requestOptions = {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    };
+
+    const targetURL = `${ACTION_MANAGER_API_URL}/search?search=${encodeURIComponent(searchText)}&pageIndex=${pageIndex}&pageSize=${pageSize}`;
+    
+    await restClient.sendRequest(requestOptions, targetURL, async (response) => {
+      const searchResult = (await response.json()) as PagingResult;
+      successCallback(searchResult);
+      return undefined;
+    });
+  };
 }
 
 export class TemplateAPI {
