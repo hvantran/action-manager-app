@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -77,6 +78,7 @@ class ActionControllerV1Test {
     private ObjectMapper objectMapper;
 
     // --- POST /v1/actions ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testExecuteActionSuccess () throws Exception {
         ActionDefinitionDTO actionDefinitionDTO = getActionDefinitionDTO();
@@ -89,6 +91,7 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.actionId").value("action-id"));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testExecuteActionFailure () throws Exception {
         Mockito.when(actionManagerService.create(any())).thenThrow(new RuntimeException("Unexpected error"));
@@ -99,6 +102,7 @@ class ActionControllerV1Test {
     }
 
     // --- POST /v1/actions/{actionId}/jobs ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testAddNewJobsSuccess () throws Exception {
         Mockito.when(actionManagerService.addJobsToAction(eq("a1"), anyList())).thenReturn("a1");
@@ -110,17 +114,19 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.actionId").value("a1"));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testAddNewJobsFailure () throws Exception {
         Mockito.when(actionManagerService.addJobsToAction(anyString(), anyList()))
                .thenThrow(new RuntimeException("Unexpected error"));
         mockMvc.perform(post("/v1/actions/a1/jobs")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(List.of(new JobDefinitionDTO()))))
+                            .content(objectMapper.writeValueAsString(List.of(getJobDefinitionDTO()))))
                .andExpect(status().isInternalServerError());
     }
 
     // --- GET /v1/actions ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetActionsSuccess () throws Exception {
         Mockito.when(actionManagerService.getActions(anyList(), any()))
@@ -131,6 +137,7 @@ class ActionControllerV1Test {
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetActionsFailure () throws Exception {
         Mockito.when(actionManagerService.getActions(anyList(), any())).thenThrow(new RuntimeException());
@@ -141,6 +148,7 @@ class ActionControllerV1Test {
     }
 
     // --- GET /v1/actions/trash ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetActionInTrashSuccess () throws Exception {
         Mockito.when(actionManagerService.getActions(anyList(), any()))
@@ -151,6 +159,7 @@ class ActionControllerV1Test {
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetActionInTrashFailure () throws Exception {
         Mockito.when(actionManagerService.getActions(anyList(), any())).thenThrow(new RuntimeException());
@@ -161,6 +170,7 @@ class ActionControllerV1Test {
     }
 
     // --- GET /v1/actions/{actionId} ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetActionDetailSuccess () throws Exception {
         Mockito.when(actionManagerService.getActionById("a1")).thenReturn(Optional.of(getActionDefinitionDTO()));
@@ -168,6 +178,7 @@ class ActionControllerV1Test {
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetActionDetailNotFound () throws Exception {
         Mockito.when(actionManagerService.getActionById("a1")).thenReturn(Optional.empty());
@@ -175,6 +186,7 @@ class ActionControllerV1Test {
                .andExpect(status().isNotFound());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetActionDetailFailure () throws Exception {
         Mockito.when(actionManagerService.getActionById("a1")).thenThrow(new RuntimeException());
@@ -183,6 +195,7 @@ class ActionControllerV1Test {
     }
 
     // --- PATCH /v1/actions/{actionId}/favorite ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testSetFavoriteActionValueSuccess () throws Exception {
         Mockito.when(actionManagerService.setFavorite(eq("a1"), eq(true)))
@@ -191,6 +204,7 @@ class ActionControllerV1Test {
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testSetFavoriteActionValueFailure () throws Exception {
         Mockito.when(actionManagerService.setFavorite(any(), anyBoolean())).thenThrow(new RuntimeException());
@@ -199,6 +213,7 @@ class ActionControllerV1Test {
     }
 
     // --- POST /v1/actions/{actionId}/replays ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testReplayActionSuccess () throws Exception {
         Mockito.when(actionManagerService.replay("a1")).thenReturn(true);
@@ -207,6 +222,7 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.status").value(true));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testReplayActionFailure () throws Exception {
         Mockito.when(actionManagerService.replay(anyString())).thenThrow(new RuntimeException());
@@ -215,6 +231,7 @@ class ActionControllerV1Test {
     }
 
     // --- POST /v1/actions/{actionId}/failure-replays ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testReplayFailuresSuccess () throws Exception {
         Mockito.when(actionManagerService.replayFailure("a1")).thenReturn(false);
@@ -223,6 +240,7 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.status").value(false));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testReplayFailuresFailure () throws Exception {
         Mockito.when(actionManagerService.replayFailure(anyString())).thenThrow(new RuntimeException());
@@ -231,6 +249,7 @@ class ActionControllerV1Test {
     }
 
     // --- POST /v1/actions/{actionId}/jobs/{jobId}/replays ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testReplayJobSuccess () throws Exception {
         Mockito.when(actionManagerService.replayJob(anyString(), anyString())).thenReturn(true);
@@ -239,6 +258,7 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.status").value(true));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testReplayJobFailure () throws Exception {
         Mockito.when(actionManagerService.replayJob(anyString(), anyString())).thenThrow(new RuntimeException());
@@ -248,6 +268,7 @@ class ActionControllerV1Test {
 
     // --- DELETE /v1/actions/{actionId} ---
     // --- DELETE /v1/actions/{actionId} ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testDeleteActionSuccess () throws Exception {
         Mockito.doNothing().when(actionManagerService).softDelete("a1");
@@ -255,6 +276,7 @@ class ActionControllerV1Test {
                .andExpect(status().isNoContent());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testDeleteActionNotFound () throws Exception {
         Mockito.doThrow(new EntityNotFoundException("Cannot find action ID: a1"))
@@ -263,6 +285,7 @@ class ActionControllerV1Test {
                .andExpect(status().isNotFound());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testDeleteActionFailure () throws Exception {
         Mockito.doThrow(new RuntimeException("Unexpected error"))
@@ -272,28 +295,31 @@ class ActionControllerV1Test {
     }
 
     // --- GET /v1/actions/search ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testSearchActionsSuccess () throws Exception {
         Mockito.when(actionManagerService.search(anyString(), any()))
                .thenReturn(new PageImpl<>(List.of(new ActionOverviewDTO())));
         mockMvc.perform(get("/v1/actions/search")
-                            .param("search", "q")
+                            .param("search", "qa")
                             .param("pageIndex", "0")
                             .param("pageSize", "10"))
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testSearchActionsFailure () throws Exception {
         Mockito.when(actionManagerService.search(anyString(), any())).thenThrow(new RuntimeException());
         mockMvc.perform(get("/v1/actions/search")
-                            .param("search", "q")
+                                                 .param("search", "qa")
                             .param("pageIndex", "0")
                             .param("pageSize", "10"))
                .andExpect(status().isInternalServerError());
     }
 
     // --- GET /v1/actions/{actionId}/jobs ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetJobsFromActionSuccess () throws Exception {
         Mockito.when(jobManagerService.getJobsFromAction(anyString(), any(PageRequest.class), eq(null)))
@@ -304,6 +330,7 @@ class ActionControllerV1Test {
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetJobsFromActionWithSearchSuccess () throws Exception {
         Mockito.when(jobManagerService.getJobsFromAction(eq("a1"), any(PageRequest.class), eq("test")))
@@ -315,6 +342,7 @@ class ActionControllerV1Test {
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testGetJobsFromActionFailure () throws Exception {
         Mockito.when(jobManagerService.getJobsFromAction(anyString(), any(PageRequest.class), any())).thenThrow(
@@ -325,6 +353,7 @@ class ActionControllerV1Test {
                .andExpect(status().isInternalServerError());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testUpdateSuccess () throws Exception {
         mockMvc.perform(put("/v1/actions/a1")
@@ -333,6 +362,7 @@ class ActionControllerV1Test {
                .andExpect(status().isNoContent());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testUpdateFailure () throws Exception {
         Mockito.doThrow(new RuntimeException()).when(actionManagerService).update(anyString(), any());
@@ -343,6 +373,7 @@ class ActionControllerV1Test {
     }
 
     // --- POST /v1/actions/validations ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testDryRunSuccess () throws Exception {
         mockMvc.perform(post("/v1/actions/validations")
@@ -368,6 +399,7 @@ class ActionControllerV1Test {
         return actionDefinitionDTO;
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testDryRunFailure () throws Exception {
         Mockito.doThrow(new RuntimeException()).when(actionManagerService).dryRun(any());
@@ -378,12 +410,14 @@ class ActionControllerV1Test {
     }
 
     // --- PUT /v1/actions/{actionId}/archive ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testArchiveSuccess () throws Exception {
         mockMvc.perform(put("/v1/actions/a1/archive"))
                .andExpect(status().isNoContent());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testArchiveFailure () throws Exception {
         Mockito.doThrow(new RuntimeException()).when(actionManagerService).archive(any());
@@ -392,12 +426,14 @@ class ActionControllerV1Test {
     }
 
     // --- PUT /v1/actions/{actionId}/restore ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testRestoreSuccess () throws Exception {
         mockMvc.perform(put("/v1/actions/a1/restore"))
                .andExpect(status().isOk());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testRestoreFailure () throws Exception {
         Mockito.doThrow(new EntityNotFoundException("Action not found")).when(actionManagerService).restore(any(), any());
@@ -406,6 +442,7 @@ class ActionControllerV1Test {
     }
 
     // --- DELETE /v1/actions/{actionId} (soft delete) ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testSoftDeleteActionSuccess() throws Exception {
         Mockito.doNothing().when(actionManagerService).softDelete("a1");
@@ -414,6 +451,7 @@ class ActionControllerV1Test {
                .andExpect(status().isNoContent());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testSoftDeleteActionAlreadyDeleted() throws Exception {
         Mockito.doThrow(new com.hoatv.fwk.common.exceptions.InvalidArgumentException("Action already deleted"))
@@ -423,6 +461,7 @@ class ActionControllerV1Test {
                .andExpect(status().isBadRequest());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testSoftDeleteActionNotFound() throws Exception {
         Mockito.doThrow(new com.hoatv.fwk.common.exceptions.EntityNotFoundException("Cannot find action ID: a1"))
@@ -433,6 +472,7 @@ class ActionControllerV1Test {
     }
 
     // --- DELETE /v1/actions/{actionId}?permanent=true ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testPermanentDeleteActionSuccess() throws Exception {
         Mockito.doNothing().when(actionManagerService).permanentDelete("a1");
@@ -441,6 +481,7 @@ class ActionControllerV1Test {
                .andExpect(status().isNoContent());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testPermanentDeleteActionNotInDeletedStatus() throws Exception {
         Mockito.doThrow(new com.hoatv.fwk.common.exceptions.InvalidArgumentException(
@@ -451,6 +492,7 @@ class ActionControllerV1Test {
                .andExpect(status().isBadRequest());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testPermanentDeleteActionNotFound() throws Exception {
         Mockito.doThrow(new com.hoatv.fwk.common.exceptions.EntityNotFoundException("Cannot find action ID: a1"))
@@ -461,6 +503,7 @@ class ActionControllerV1Test {
     }
 
     // --- PUT /v1/actions/{actionId}/restore (Enhanced) ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testRestoreActionWithTargetStatusSuccess() throws Exception {
         com.hoatv.action.manager.dtos.RestoreResponse response = com.hoatv.action.manager.dtos.RestoreResponse.builder()
@@ -484,6 +527,7 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.message").value("Action restored successfully"));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testRestoreActionWithoutTargetStatusSuccess() throws Exception {
         com.hoatv.action.manager.dtos.RestoreResponse response = com.hoatv.action.manager.dtos.RestoreResponse.builder()
@@ -502,6 +546,7 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.actionStatus").value("ACTIVE"));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testRestoreActionNotInDeletedOrArchivedStatus() throws Exception {
         Mockito.when(actionManagerService.restore(eq("a1"), any()))
@@ -513,12 +558,14 @@ class ActionControllerV1Test {
     }
 
     // --- PUT /v1/actions/{actionId}/jobs/{jobHash}/resume ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testResumeJobSuccess () throws Exception {
         mockMvc.perform(put("/v1/actions/a1/jobs/j1/resume"))
                .andExpect(status().isNoContent());
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testResumeJobFailure () throws Exception {
         Mockito.doThrow(new RuntimeException()).when(actionManagerService).resume(any());
@@ -527,6 +574,7 @@ class ActionControllerV1Test {
     }
 
     // --- GET /v1/actions/{actionId}/export ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testExportSuccess () throws Exception {
         Pair<String, byte[]> pair = Pair.of("fileExport", new byte[] { 1, 2, 3 });
@@ -538,6 +586,7 @@ class ActionControllerV1Test {
                .andExpect(header().string("Content-Type", "application/octet-stream"));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testExportFailure () throws Exception {
         Mockito.when(actionManagerService.export(anyString(), any())).thenThrow(new RuntimeException());
@@ -546,6 +595,7 @@ class ActionControllerV1Test {
     }
 
     // --- POST /v1/actions/import ---
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testImportActionSuccess () throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "filename.txt", "text/plain", "test content".getBytes());
@@ -556,6 +606,7 @@ class ActionControllerV1Test {
                .andExpect(jsonPath("$.name").value("importedName"));
     }
 
+    @WithMockUser(roles = "ADMIN")
     @Test
     void testImportActionFailure () throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "filename.txt", "text/plain", "test content".getBytes());
