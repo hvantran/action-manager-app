@@ -138,8 +138,8 @@ class ActionControllerSearchTest {
                 .param("pageSize", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(0)))
-                .andExpect(jsonPath("$.totalElements", is(0)))
-                .andExpect(jsonPath("$.empty", is(true)));
+                .andExpect(jsonPath("$.totalElements", is(0)));
+                // Note: PageResponseDTO doesn't have .empty field
     }
 
     // ==================================================
@@ -165,7 +165,7 @@ class ActionControllerSearchTest {
                 .andExpect(jsonPath("$.content", hasSize(2)))
                 .andExpect(jsonPath("$.totalElements", is(2)))
                 .andExpect(jsonPath("$.size", is(20)))
-                .andExpect(jsonPath("$.number", is(0)));
+                .andExpect(jsonPath("$.page", is(0))); // PageResponseDTO uses 'page' not 'number'
     }
 
     // ==================================================
