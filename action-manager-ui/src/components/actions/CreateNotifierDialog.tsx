@@ -119,12 +119,20 @@ export default function CreateNotifierDialog(props: CreateNotifierDialogProps) {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Create Notifier Configuration</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{ className: 'rounded-3xl border border-slate-200 bg-white shadow-2xl' }}
+    >
+      <DialogTitle className="px-6 pt-6 text-xl font-semibold text-slate-900">
+        Create Notifier Configuration
+      </DialogTitle>
+      <DialogContent className="px-6 pb-2">
+        <Box className="mt-1 flex flex-col gap-3" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           {error && (
-            <Alert severity="error" onClose={() => setError(null)}>
+            <Alert severity="error" onClose={() => setError(null)} className="rounded-2xl">
               {error}
             </Alert>
           )}
@@ -135,6 +143,7 @@ export default function CreateNotifierDialog(props: CreateNotifierDialogProps) {
             fullWidth
             required
             disabled
+            className="rounded-2xl"
             helperText="Uses job name as notifier name (read-only)"
           />
 
@@ -143,6 +152,7 @@ export default function CreateNotifierDialog(props: CreateNotifierDialogProps) {
             value={topic}
             fullWidth
             disabled
+            className="rounded-2xl"
             helperText="Auto-generated from job name (read-only)"
           />
 
@@ -153,16 +163,18 @@ export default function CreateNotifierDialog(props: CreateNotifierDialogProps) {
             fullWidth
             multiline
             rows={2}
+            className="rounded-2xl"
             helperText="Describe when this notifier should trigger (optional)"
           />
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box className="flex flex-col gap-3 md:flex-row" sx={{ display: 'flex', gap: 2 }}>
             <FormControl fullWidth required>
               <InputLabel>Rule Operator</InputLabel>
               <Select
                 value={ruleOperator}
                 label="Rule Operator"
                 onChange={(e) => setRuleOperator(e.target.value)}
+                className="rounded-2xl"
               >
                 <MenuItem value="$gt">Greater Than (&gt;)</MenuItem>
                 <MenuItem value="$gte">Greater Than or Equal (≥)</MenuItem>
@@ -179,6 +191,7 @@ export default function CreateNotifierDialog(props: CreateNotifierDialogProps) {
               fullWidth
               required
               type="number"
+              className="rounded-2xl"
               helperText="Threshold value for the alert"
             />
           </Box>
@@ -189,6 +202,7 @@ export default function CreateNotifierDialog(props: CreateNotifierDialogProps) {
             onChange={(e) => setWebhookUrl(e.target.value)}
             fullWidth
             required
+            className="rounded-2xl"
             helperText="Slack webhook endpoint for notifications"
           />
 
@@ -200,19 +214,29 @@ export default function CreateNotifierDialog(props: CreateNotifierDialogProps) {
             required
             multiline
             rows={3}
+            className="rounded-2xl"
             helperText="Use ${value} as placeholder for the metric value"
           />
 
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="caption" color="text.secondary" className="mt-1 text-xs leading-5 text-slate-500" sx={{ mt: 1 }}>
             <strong>Throttling:</strong> Notifications are limited to 1 per 5 minutes by default to prevent spam.
           </Typography>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="inherit">
+      <DialogActions className="px-6 pb-6 pt-2">
+        <Button
+          onClick={handleClose}
+          color="inherit"
+          className="rounded-full px-5 py-2 text-xs font-semibold tracking-[0.16em] text-slate-600"
+        >
           Cancel
         </Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+          className="rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-white hover:bg-slate-800"
+        >
           Create Notifier
         </Button>
       </DialogActions>

@@ -73,13 +73,25 @@ export default function TableRender(props: TableMetadata) {
   }
 
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <Toolbar sx={[{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }]}>
-        <Typography sx={{ flex: '1 1 100%' }} variant="h6" id="tableTitle" component="div">
+    <Paper
+      className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm"
+      sx={{ width: '100%', overflow: 'hidden' }}
+    >
+      <Toolbar
+        className="border-b border-slate-100 bg-slate-50/70"
+        sx={[{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 } }]}
+      >
+        <Typography
+          className="text-base font-semibold text-slate-800"
+          sx={{ flex: '1 1 100%' }}
+          variant="h6"
+          id="tableTitle"
+          component="div"
+        >
           {props.name}
         </Typography>
         {props.visibleSearchbar ? (
-          <Search>
+          <Search className="rounded-full border border-slate-200 bg-white shadow-sm">
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
@@ -109,6 +121,7 @@ export default function TableRender(props: TableMetadata) {
                 >
                   {column.isSortable ? (
                     <TableSortLabel
+                      className="font-semibold text-slate-700"
                       active={orderBy.replace('-', '') === column.id}
                       direction={
                         orderBy.replace('-', '') === column.id
@@ -148,6 +161,7 @@ export default function TableRender(props: TableMetadata) {
                                   key={action.actionName}
                                   onClick={action.onClick(row)}
                                   color="primary"
+                                  className="rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                                   sx={{ opacity: 0.7 }}
                                   aria-label="Next"
                                   component="label"

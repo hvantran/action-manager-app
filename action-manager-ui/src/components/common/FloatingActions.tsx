@@ -10,6 +10,7 @@ export default function FloatingSpeedDialButtons(props: any) {
   return (
     <SpeedDial
       ariaLabel="SpeedDial actions"
+      className="[&_.MuiFab-primary]:bg-amber-500 [&_.MuiFab-primary]:text-slate-950 [&_.MuiFab-primary]:shadow-xl [&_.MuiFab-primary:hover]:bg-amber-400"
       sx={{ position: 'fixed', bottom: 16, right: 16 }}
       icon={<SpeedDialIcon />}
       // direction='left'
@@ -18,7 +19,15 @@ export default function FloatingSpeedDialButtons(props: any) {
         <SpeedDialAction
           key={action.actionName}
           icon={action.actionIcon}
-          FabProps={action.properties}
+          FabProps={{
+            ...action.properties,
+            className: [
+              'bg-white text-slate-700 shadow-lg ring-1 ring-slate-200 hover:bg-slate-50',
+              action.properties?.className,
+            ]
+              .filter(Boolean)
+              .join(' '),
+          }}
           tooltipTitle={action.actionLabel}
           onClick={action.onClick}
         />
