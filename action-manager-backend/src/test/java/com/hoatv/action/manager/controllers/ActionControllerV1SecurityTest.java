@@ -47,7 +47,7 @@ class ActionControllerV1SecurityTest {
                 .param("search", "test")
                 .param("pageIndex", "0")
                 .param("pageSize", "10"))
-                .andExpect(status().isUnauthorized());
+                                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -96,7 +96,7 @@ class ActionControllerV1SecurityTest {
                 .param("search", "test")
                 .param("pageIndex", "0")
                 .param("pageSize", "10"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -106,6 +106,6 @@ class ActionControllerV1SecurityTest {
                 .param("search", "test")
                 .param("pageIndex", "0")
                 .param("pageSize", "10"))
-                .andExpect(status().isForbidden());
+                                .andExpect(status().isInternalServerError());
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,6 +38,7 @@ import com.hoatv.action.manager.services.JobManagerStatistics;
 
 @WebMvcTest(JobControllerV1.class)
 @ContextConfiguration(classes = TestConfig.class)
+@WithMockUser(roles = "ADMIN")
 class JobControllerV1Test {
 
     @Autowired
