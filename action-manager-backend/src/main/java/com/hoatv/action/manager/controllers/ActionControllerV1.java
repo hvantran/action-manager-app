@@ -166,6 +166,7 @@ public class ActionControllerV1 {
     }
 
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ACTION_VIEWER', 'ACTION_MANAGER', 'ADMIN')")
     public ResponseEntity<Object> getActions(@RequestParam("search") String search,
                                              @RequestParam("pageIndex") @Min(0) int pageIndex,
                                              @RequestParam("pageSize") @Min(0) int pageSize) {
