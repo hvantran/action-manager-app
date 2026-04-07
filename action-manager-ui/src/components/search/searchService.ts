@@ -1,8 +1,9 @@
 import { SearchResponse } from './types';
 
-const API_BASE_URL = process.env.REACT_APP_ACTION_MANAGER_API_URL || 
-                     window._env_?.REACT_APP_ACTION_MANAGER_API_URL || 
-                     'http://localhost:6081/api/action-manager';
+const API_BASE_URL =
+  process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL ||
+  window._env_?.REACT_APP_ACTION_MANAGER_BACKEND_URL ||
+  'http://localhost:6081';
 
 /**
  * Search service for action search API calls
