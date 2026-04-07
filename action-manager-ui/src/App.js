@@ -32,10 +32,12 @@ function App() {
     });
   };
 
-  // Redirect to Gateway login if not authenticated (after loading completes)
+  //Redirect to Gateway login if not authenticated (after loading completes)
   React.useEffect(() => {
     if (!loading && !userInfo.authenticated) {
-      window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorization/keycloak`;
+      // Save current origin to redirect back after OAuth2 login
+      const currentOrigin = window.location.origin;
+      window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorization/keycloak?redirect_uri=${encodeURIComponent(currentOrigin)}`;
     }
   }, [loading, userInfo.authenticated]);
 
