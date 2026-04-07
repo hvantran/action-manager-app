@@ -887,7 +887,16 @@ export default function ActionCreation() {
   };
 
   return (
-    <Stack spacing={4}>
+    <Stack 
+      spacing={4}
+      className="p-6 space-y-6 bg-slate-50 min-h-screen"
+      sx={{
+        padding: 3,
+        gap: 3,
+        backgroundColor: '#f8fafc',
+        minHeight: '100vh',
+      }}
+    >
       <PageEntityRender {...initialPageEntityMetdata} />
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
     </Stack>

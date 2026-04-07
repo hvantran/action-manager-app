@@ -576,7 +576,16 @@ export default function JobDetail() {
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack 
+      spacing={2}
+      className="p-6 space-y-4 bg-white rounded-lg"
+      sx={{
+        padding: 3,
+        gap: 2,
+        backgroundColor: 'white',
+        borderRadius: 2,
+      }}
+    >
       <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
       <ProcessTracking isLoading={processTracking}></ProcessTracking>
       <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>

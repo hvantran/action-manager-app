@@ -443,30 +443,44 @@ export default function ActionSummary() {
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack 
+      spacing={2}
+      className="min-h-screen bg-slate-50"
+      sx={{
+        gap: 2,
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
+      }}
+    >
       {viewMode === 'board' ? (
         <>
           <Box
-            className="flex flex-col gap-4 px-4 pt-4 md:flex-row md:items-center md:justify-between md:px-6"
+            className="flex flex-col gap-4 px-4 pt-4 md:flex-row md:items-center md:justify-between md:px-6 bg-white border-b border-slate-200"
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               px: 3,
               pt: 2,
+              backgroundColor: 'white',
+              borderBottom: '1px solid #e2e8f0',
             }}
           >
             <Box>
               <BreadcrumbsComponent breadcrumbs={breadcrumbs} />
-              <Typography variant="h5" className="text-slate-900" sx={{ fontWeight: 600, mt: 1 }}>
+              <Typography variant="h5" className="text-slate-900 font-semibold" sx={{ fontWeight: 600, mt: 1 }}>
                 Action Status Monitor
               </Typography>
             </Box>
-            <Box className="flex flex-wrap gap-2" sx={{ display: 'flex', gap: 1 }}>
+            <Box className="flex flex-wrap gap-2" sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {pageEntityMetadata.pageEntityActions?.map((action, index) => (
-                <Box key={index}>
+                <Box key={index} className="hover:bg-slate-100 rounded-lg transition-colors">
                   {action.onClick ? (
-                    <IconButton onClick={action.onClick} title={action.actionLabel}>
+                    <IconButton 
+                      onClick={action.onClick} 
+                      title={action.actionLabel}
+                      className="hover:bg-slate-100"
+                    >
                       {action.actionIcon}
                     </IconButton>
                   ) : (
