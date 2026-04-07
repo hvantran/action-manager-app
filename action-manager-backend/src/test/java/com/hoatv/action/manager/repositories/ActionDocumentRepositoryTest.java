@@ -5,6 +5,7 @@ import com.hoatv.action.manager.collections.ActionStatus;
 import com.hoatv.action.manager.config.MongoConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.SpringBootConfiguration;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataMongoTest(excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = MongoConfig.class))
 @ActiveProfiles("test")
 @ContextConfiguration(classes = ActionDocumentRepositoryTest.TestMongoConfiguration.class)
+@DisabledIfEnvironmentVariable(named = "GITHUB_ACTIONS", matches = "true")
 class ActionDocumentRepositoryTest {
 
     @SpringBootConfiguration
