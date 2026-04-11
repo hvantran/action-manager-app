@@ -29,11 +29,11 @@ const UserInfoContext = createContext<UserInfoContextValue | undefined>(undefine
 
 // Get Gateway base URL from runtime environment or fallback to localhost
 const getGatewayBaseUrl = (): string => {
-  const actionManagerUrl =
-    (window as any)._env_?.REACT_APP_ACTION_MANAGER_BACKEND_URL ||
-    process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL ||
+  const rawUrl =
+    (window as any)._env_?.REACT_APP_ACTION_MANAGER_BACKEND_URL ??
+    process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL ??
     'http://localhost:6081/api/action-manager';
-  return actionManagerUrl.replace('/api/action-manager', '');
+  return rawUrl.replace('/api/action-manager', '');
 };
 
 const GATEWAY_BASE_URL = getGatewayBaseUrl();

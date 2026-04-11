@@ -17,7 +17,11 @@ import { useUserInfo } from './hooks/useUserInfo';
 
 const selectThemeStorageKey = 'action-manager-enable-dark-theme';
 
-const GATEWAY_BASE_URL = process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') || window._env_?.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') || 'http://localhost:6081';
+const GATEWAY_BASE_URL = (
+  window._env_?.REACT_APP_ACTION_MANAGER_BACKEND_URL ??
+  process.env.REACT_APP_ACTION_MANAGER_BACKEND_URL ??
+  'http://localhost:6081/api/action-manager'
+).replace('/api/action-manager', '');
 
 function App() {
   const [toggleDarkMode, setToggleDarkMode] = React.useState(
