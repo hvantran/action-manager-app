@@ -50,10 +50,19 @@ export const UserInfoProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const response = await fetch(`${GATEWAY_BASE_URL}/api/userinfo`, {
           method: 'GET',
           credentials: 'include',
+          redirect: 'manual',
           headers: {
             'Accept': 'application/json',
           },
         });
+
+        // Keep auth flow in the top-level browser redirect to avoid
+        // cross-origin CORS noise when gateway redirects to Keycloak.
+        if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 401) {
+          setUserInfo(defaultUserInfo);
+          setError(null);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`Failed to fetch user info: ${response.status}`);
