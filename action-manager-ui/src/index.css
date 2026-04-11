@@ -2,15 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  color: #666;
-  font-size: 15px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@layer base {
+  :root {
+    color-scheme: light;
+  }
 
-code {
-  font-family: Arial, sans-serif;
+  body {
+    @apply m-0 bg-gray-50 text-gray-700 antialiased;
+    font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
 }
