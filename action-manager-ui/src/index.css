@@ -3,12 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    color-scheme: light;
-  }
-
   body {
-    @apply m-0 bg-gray-50 text-gray-700 antialiased;
+    @apply m-0 antialiased;
     font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 15px;
     -moz-osx-font-smoothing: grayscale;
