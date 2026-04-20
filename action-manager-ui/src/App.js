@@ -77,9 +77,26 @@ function App() {
   return (
     <ThemeProvider theme={!toggleDarkMode ? DEFAULT_THEME : DARK_THEME}>
       <CssBaseline />
-      <Stack className="min-h-screen bg-gray-50" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Stack
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'background.default',
+        }}
+      >
         <PrimarySearchAppBar toggleDarkMode={toggleDarkMode} setToggleDarkMode={switchTheme} />
-        <Box className="mx-auto w-full max-w-7xl px-4 py-4 md:px-6" sx={{ flexGrow: 1 }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            width: '100%',
+            mx: 'auto',
+            px: { xs: 1.5, sm: 2, md: 3 },
+            py: { xs: 1.5, sm: 2, md: 3 },
+            maxWidth: { xl: '1536px' },
+            boxSizing: 'border-box',
+          }}
+        >
           <Routes>
             <Route path="/" element={<Navigate to="/actions" />} errorElement={<ErrorPage />}></Route>
             <Route path="/actions" element={<ActionSummary />}></Route>
