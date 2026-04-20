@@ -14,12 +14,12 @@ export default function BreadcrumbsComponent(props: any) {
         fontWeight: 'bold',
         '& .MuiBreadcrumbs-ol': {
           alignItems: 'center',
-          gap: 0.5,
+          gap: 0,
           flexWrap: 'wrap',
         },
         '& .MuiBreadcrumbs-separator': {
           color: '#94a3b8',
-          marginInline: 6,
+          marginInline: 2,
         },
         '& .MuiTypography-root, & .MuiLink-root': {
           color: '#475569',
