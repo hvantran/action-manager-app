@@ -71,7 +71,10 @@ export default function PrimarySearchAppBar(props: any) {
 
   const handleLogout = () => {
     // Redirect to Gateway logout endpoint which handles Keycloak SSO logout
-    const gatewayBaseUrl = APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') || 'http://localhost:6081';
+    const gatewayBaseUrl =
+      APP_ENVIRONMENT_VARIABLES.REACT_APP_GATEWAY_URL ||
+      APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') ||
+      'http://localhost:6081';
     window.location.href = `${gatewayBaseUrl}/logout`;
   };
 

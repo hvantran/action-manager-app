@@ -3,6 +3,7 @@ export {};
 declare global {
   interface Window {
     _env_: {
+      REACT_APP_GATEWAY_URL: string;
       REACT_APP_ACTION_MANAGER_BACKEND_URL: string;
       REACT_APP_TEMPLATE_MANAGER_BACKEND_URL: string;
       REACT_APP_ECOMMERCE_MANAGER_BACKEND_URL: string;
