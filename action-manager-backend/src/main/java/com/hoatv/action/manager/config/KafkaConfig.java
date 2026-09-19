@@ -9,8 +9,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 @Configuration
 public class KafkaConfig {
+
     @Bean
-    @ConditionalOnBean(KafkaTemplate.class)
     public KafkaMetricConsumer getKafkaMetricConsumer(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
         return new KafkaMetricConsumer(kafkaTemplate, objectMapper);
     }
