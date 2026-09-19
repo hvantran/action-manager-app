@@ -29,9 +29,9 @@ public class CorsConfig {
             "http://localhost:6081",           // Gateway dev
             "http://localhost:6084",           // Frontend production port
             "http://localhost:8070",           // Alternative port
-            "http://actmanagerui.local:3000",  // Local domain dev
-            "http://actmanagerui.local:6081",  // Local domain gateway
-            "http://actmanagerui.local:6084",  // Local domain production
+            "http://localhost:3000",  // Local domain dev
+            "http://localhost:6081",  // Local domain gateway
+            "http://localhost:6084",  // Local domain production
             "http://api-gateway:8081"          // Gateway container name
         ));
         
