@@ -87,6 +87,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
     private final KafkaConsumerStatusService kafkaConsumerStatusService;
 
+    private final OutboundJobAuthBinder outboundJobAuthBinder;
+
     private final Map<String, ScheduledFuture<?>> scheduledJobRegistry = new ConcurrentHashMap<>();
 
     private final GenericKeyedLock<String> jobExecutionLock = new GenericKeyedLock<>();
@@ -97,13 +99,15 @@ public class JobManagerServiceImpl implements JobManagerService {
                                  JobManagerStatistics jobManagerStatistics,
                                  JobExecutionResultDocumentRepository jobResultDocumentRepository,
                                  MongoTemplate mongoTemplate,
-                                 KafkaConsumerStatusService kafkaConsumerStatusService) {
+                                 KafkaConsumerStatusService kafkaConsumerStatusService,
+                                 OutboundJobAuthBinder outboundJobAuthBinder) {
         this.scriptEngineService = scriptEngineService;
         this.jobDocumentRepository = jobDocumentRepository;
         this.jobResultDocumentRepository = jobResultDocumentRepository;
         this.jobManagerStatistics = jobManagerStatistics;
         this.mongoTemplate = mongoTemplate;
         this.kafkaConsumerStatusService = kafkaConsumerStatusService;
+        this.outboundJobAuthBinder = outboundJobAuthBinder;
         this.metricService = new MetricService();
         this.ioTaskMgmtService = TaskFactory.INSTANCE.getTaskMgmtServiceV1(
                 NUMBER_OF_JOB_THREADS,
@@ -467,6 +471,7 @@ public class JobManagerServiceImpl implements JobManagerService {
                     () -> objectMapper.readValue(immutableAction.getConfigurations(), Map.class);
             HashMap<String, Object> configurationMap = new HashMap<>();
             configurationMap.put(TEMPLATE_ENGINE_NAME, "freemarker");
+            configurationMap.put("actionManagerBaseUrl", "http://localhost:8082/action-manager-backend");
             configurationMap.putAll(actionConfigurationSupplier.get());
             configurationMap.putAll(jobConfigurationSupplier.get());
 
@@ -481,7 +486,8 @@ public class JobManagerServiceImpl implements JobManagerService {
 
             MDC.put("jobName", jobName);
             LOGGER.info("Run job {} with configurations: {}", jobName, configurationMap);
-            return scriptEngineService.execute(jobContent, jobExecutionContext);
+            return outboundJobAuthBinder.run(
+                    () -> scriptEngineService.execute(jobContent, jobExecutionContext));
         } finally {
             MDC.clear();
         }

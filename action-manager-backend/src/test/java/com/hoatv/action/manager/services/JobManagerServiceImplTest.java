@@ -47,6 +47,9 @@ class JobManagerServiceImplTest {
     @Mock
     private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
 
+    @Mock
+    private OutboundJobAuthBinder outboundJobAuthBinder;
+
     private JobManagerServiceImpl jobManagerService;
 
     @BeforeEach
@@ -57,7 +60,8 @@ class JobManagerServiceImplTest {
             jobManagerStatistics,
             jobExecutionResultDocumentRepository,
             mongoTemplate,
-            kafkaConsumerStatusService
+            kafkaConsumerStatusService,
+            outboundJobAuthBinder
         );
     }
 
