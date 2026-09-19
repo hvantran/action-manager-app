@@ -10,6 +10,8 @@ import com.hoatv.metric.mgmt.entities.MetricTag;
 import com.hoatv.metric.mgmt.entities.SimpleValue;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.*;
@@ -22,6 +24,7 @@ import static com.hoatv.fwk.common.ultilities.StringCommonUtils.deAccent;
 public record KafkaMetricConsumer(KafkaTemplate<String, String> kafkaTemplate,
                                   ObjectMapper objectMapper) implements MetricConsumerHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaMetricConsumer.class);
     public static final String UNIT = "unit";
     public static final String NAME_PROPERTY = "name";
 
@@ -105,6 +108,7 @@ public record KafkaMetricConsumer(KafkaTemplate<String, String> kafkaTemplate,
     }
 
     private void sendMessage(String name, String value) {
+        LOGGER.info("Sending metric to Kafka: {} - {}", name, value);
         kafkaTemplate.send(name, value);
     }
 
