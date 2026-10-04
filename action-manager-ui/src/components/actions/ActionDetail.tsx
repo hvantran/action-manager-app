@@ -1,937 +1,467 @@
-import { json } from '@codemirror/lang-json';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
-import CloseIcon from '@mui/icons-material/Close';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import EditIcon from '@mui/icons-material/Edit';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import InfoIcon from '@mui/icons-material/Info';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ReplayIcon from '@mui/icons-material/Replay';
-import SaveIcon from '@mui/icons-material/Save';
-import SearchIcon from '@mui/icons-material/Search';
-import SettingsIcon from '@mui/icons-material/Settings';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  Grid,
-  IconButton,
-  Menu,
-  MenuItem,
-  Select,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import Badge, { BadgeProps } from '@mui/material/Badge';
-import { green, yellow } from '@mui/material/colors';
-import Link from '@mui/material/Link';
-import { styled, useTheme } from '@mui/material/styles';
-import React, { useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-
+  EntityDetailTemplate,
+  ConfirmationDialog,
+  DataTable,
+  JobStatusBadge,
+  TextTruncate,
+  PropertyMetadata,
+  PropType,
+  GenericActionMetadata,
+  ColumnMetadata,
+  PagingResult,
+} from '@hvantran/ui-component-library';
 import {
-  ACTION_STATUS_SELECTION,
+  Edit2,
+  Save,
+  Trash2,
+  RefreshCw,
+  PlusCircle,
+  Download,
+  Archive,
+  Clock,
+  Zap,
+  Play,
+  Pause,
+  Copy,
+  Eye,
+  List,
+} from 'lucide-react';
+import {
   ActionAPI,
   ActionDetails,
+  JobAPI,
+  JobOverview,
+  ACTION_STATUS_SELECTION,
   ROOT_BREADCRUMB,
-  isAllDependOnPropsValid,
 } from '../AppConstants';
-import ConfirmationDialog from '../common/ConfirmationDialog';
-import { Search, SearchIconWrapper, StyledInputBase } from '../common/GenericComponent';
-import ProcessTracking from '../common/ProcessTracking';
-import {
-  DialogMetadata,
-  GenericActionMetadata,
-  PageEntityMetadata,
-  PropType,
-  PropertyMetadata,
-  RestClient,
-  onChangeProperty,
-} from '../GenericConstants';
-
-import ActionJobTable from './ActionJobTable';
-import { ActionProvider } from './ActionProvider';
-
-const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
-  '& .MuiBadge-badge': {
-    border: `2px solid ${theme.palette.background.paper}`,
-    padding: '0 4px',
-  },
-}));
-
-const StatusChip = styled(Chip)(({ theme }) => ({
-  fontWeight: 'bold',
-  textTransform: 'uppercase',
-  fontSize: '0.7rem',
-  height: '28px',
-  '& .MuiChip-icon': {
-    marginLeft: '8px',
-  },
-}));
-
-const StatCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : 'rgb(248, 250, 252)',
-  border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
-  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
-}));
-
-const CodeBlock = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(2),
-  fontFamily: 'monospace',
-  fontSize: '0.875rem',
-  overflowX: 'auto',
-  position: 'relative',
-  maxHeight: '200px',
-  '& pre': {
-    margin: 0,
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-  },
-}));
+import { DataTypeDisplayer, RestClient } from '../GenericConstants';
 
 export default function ActionDetail() {
-  const theme = useTheme();
-  const targetAction = useParams();
   const navigate = useNavigate();
-  const actionRef = useRef<ActionDetails>();
-  const actionId: string | undefined = targetAction.actionId;
+  const targetAction = useParams();
+  const actionId = targetAction.actionId;
+
   if (!actionId) {
     throw new Error('Action is required');
   }
 
-  const [processTracking, setCircleProcessOpen] = React.useState(false);
-  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
-  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
-  const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState('');
-  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(
-    () => () => {}
-  );
-  const [replayFlag, setReplayActionFlag] = React.useState(false);
-  const [configDialogOpen, setConfigDialogOpen] = React.useState(false);
-  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const menuOpen = Boolean(anchorEl);
+  const actionNameRef = useRef('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [processTracking, setCircleProcessOpen] = useState(false);
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = useState(false);
 
-  const restClient = React.useMemo(
-    () => new RestClient(setCircleProcessOpen),
-    [setCircleProcessOpen]
-  );
-  const [numberOfFailureJobs, setNumberOfFailureJobs] = React.useState(0);
-  const [actionStats, setActionStats] = React.useState({
-    totalJobs: 0,
-    successRate: 0,
-    avgDuration: '0s',
-    failures24h: 0,
+  // Job table state
+  const [jobPageIndex, setJobPageIndex] = useState(0);
+  const [jobPageSize, setJobPageSize] = useState(10);
+  const [jobOrderBy, setJobOrderBy] = useState('-startedAt');
+  const [jobSearchText, setJobSearchText] = useState('');
+  const [jobPagingResult, setJobPagingResult] = useState<PagingResult>({
+    totalElements: 0,
+    content: [],
   });
-  const [jobSearchText, setJobSearchText] = React.useState('');
+  const [jobProcessTracking, setJobProcessTracking] = useState(false);
+  const [deleteJobDialogOpen, setDeleteJobDialogOpen] = useState(false);
+  const selectedJob = useRef({ jobId: '', jobName: '' });
 
-  const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>([
+  const restClient = useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
+  const jobRestClient = useMemo(
+    () => new RestClient(setJobProcessTracking),
+    [setJobProcessTracking]
+  );
+
+  const [properties, setProperties] = useState<PropertyMetadata[]>([
     {
       propName: 'actionName',
       propLabel: 'Name',
       propValue: '',
       isRequired: true,
       disabled: true,
-      disablePerpetualy: true,
-      propDescription: 'This is action name',
+      colSpan: 6,
       propType: PropType.InputText,
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 2.5, sx: { pl: 5 } },
-      valueElementProperties: { xs: 9.5 },
-      textFieldMeta: {
-        onChangeEvent: function (event: any) {
-          const propValue = event.target.value;
-          const propName = event.target.name;
-          setPropertyMetadata(onChangeProperty(propName, propValue));
-        },
-      },
     },
     {
       propName: 'actionStatus',
       propLabel: 'Status',
-      propValue: '',
-      propDefaultValue: '',
-      disabled: true,
+      propValue: 'INITIAL',
       isRequired: true,
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 4, sx: { pl: 15 } },
-      valueElementProperties: { xs: 8 },
-      propDescription: 'This is status of action',
+      disabled: true,
+      colSpan: 6,
       propType: PropType.Selection,
       selectionMeta: {
         selections: ACTION_STATUS_SELECTION,
-        onChangeEvent: function (event) {
-          const propValue = event.target.value;
-          const propName = event.target.name;
-          setPropertyMetadata(onChangeProperty(propName, propValue));
-        },
       },
     },
     {
       propName: 'actionConfigurations',
-      propLabel: 'Configurations',
-      propValue: '{}',
-      propDefaultValue: '{}',
-      disabled: true,
-      layoutProperties: { xs: 12 },
-      labelElementProperties: { xs: 1.2, sx: { pl: 5 } },
-      valueElementProperties: { xs: 10.8 },
+      propLabel: 'Configurations (JSON)',
       isRequired: true,
+      propValue: '{}',
+      disabled: true,
+      colSpan: 12,
       propType: PropType.CodeEditor,
       codeEditorMeta: {
-        height: '100px',
-        codeLanguges: [json()],
-        onChangeEvent: function (propName) {
-          return (value, _) => {
-            const propValue = value;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
-          };
-        },
+        height: '350px',
+        codeLanguages: ['json'],
       },
     },
   ]);
 
-  const getPropertyValue = (propName: string) => {
-    const prop = propertyMetadata.find((p) => p.propName === propName);
-    return prop?.propValue || '';
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toUpperCase()) {
-      case 'ACTIVE':
-        return {
-          color: theme.palette.success.main,
-          bg: theme.palette.mode === 'dark' ? 'rgba(46, 125, 50, 0.3)' : 'rgba(46, 125, 50, 0.1)',
-          border: theme.palette.success.light,
-        };
-      case 'PAUSED':
-        return {
-          color: theme.palette.warning.main,
-          bg: theme.palette.mode === 'dark' ? 'rgba(237, 108, 2, 0.3)' : 'rgba(237, 108, 2, 0.1)',
-          border: theme.palette.warning.light,
-        };
-      default:
-        return {
-          color: theme.palette.grey[600],
-          bg:
-            theme.palette.mode === 'dark' ? 'rgba(158, 158, 158, 0.3)' : 'rgba(158, 158, 158, 0.1)',
-          border: theme.palette.grey[400],
-        };
-    }
-  };
-
-  React.useEffect(() => {
+  const loadAction = useCallback(() => {
     ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
-      actionRef.current = actionDetail;
-      Object.keys(actionDetail).forEach((propertyName: string) => {
-        setPropertyMetadata(
-          onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
-        );
-      });
-
-      // Calculate action statistics (mock data - replace with real API calls)
-      // In a real scenario, this would come from the backend
-      setActionStats({
-        totalJobs: 13,
-        successRate: 62,
-        avgDuration: '5.4s',
-        failures24h: numberOfFailureJobs,
-      });
+      actionNameRef.current = actionDetail.actionName || '';
+      setProperties((prev) =>
+        prev.map((p) => {
+          const val = (actionDetail as any)[p.propName];
+          return val !== undefined ? { ...p, propValue: val } : p;
+        })
+      );
     });
-  }, [actionId, numberOfFailureJobs]);
+  }, [actionId, restClient]);
 
-  const handleCopyJSON = async () => {
-    try {
-      const config = getPropertyValue('actionConfigurations') || '{}';
-      const formattedJSON = JSON.stringify(JSON.parse(config), null, 2);
-      await navigator.clipboard.writeText(formattedJSON);
-      toast.success('Configuration copied to clipboard!');
-    } catch (error) {
-      toast.error('Failed to copy configuration');
-      console.error('Copy failed:', error);
-    }
+  const loadJobs = useCallback(() => {
+    ActionAPI.loadRelatedJobsAsync(
+      jobPageIndex,
+      jobPageSize,
+      jobOrderBy,
+      actionId,
+      jobRestClient,
+      (data) => {
+        setJobPagingResult(data);
+      },
+      jobSearchText
+    );
+  }, [actionId, jobPageIndex, jobPageSize, jobOrderBy, jobSearchText, jobRestClient]);
+
+  useEffect(() => {
+    loadAction();
+  }, [loadAction]);
+
+  useEffect(() => {
+    loadJobs();
+  }, [loadJobs]);
+
+  const handlePropertyChange = (propName: string, value: any) => {
+    setProperties((prev) =>
+      prev.map((p) => {
+        if (p.propName === propName) {
+          return { ...p, propValue: value };
+        }
+        return p;
+      })
+    );
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
+  const handleToggleEdit = () => {
+    const nextEditing = !isEditing;
+    setIsEditing(nextEditing);
+    setProperties((prev) =>
+      prev.map((p) => {
+        if (p.propName === 'actionName') return p; // Name is read-only
+        return { ...p, disabled: !nextEditing };
+      })
+    );
+  };
+
+  const handleSave = () => {
+    ActionAPI.updateAction(actionId, restClient, properties as any, () => {
+      handleToggleEdit();
+      loadAction();
+    });
+  };
+
+  const handleExport = () => {
+    ActionAPI.export(actionId, actionNameRef.current, restClient);
   };
 
   const handleArchive = () => {
-    handleMenuClose();
-    setConfirmationDialogTitle('Archive');
-    setConfirmationDialogContent(
-      <p>
-        Are you sure you want to archive <b>{actionRef.current?.actionName}</b> action?
-      </p>
-    );
-    setConfirmationDialogPositiveAction(
-      () => () => ActionAPI.archive(actionId, restClient, () => navigate('/actions'))
-    );
-    setDeleteConfirmationDialogOpen(true);
-  };
-
-  const handleReplayAll = () => {
-    handleMenuClose();
-    ActionAPI.replayAction(actionId, restClient, () => setReplayActionFlag((prev) => !prev));
-  };
-
-  const handleReplayFailures = () => {
-    handleMenuClose();
-    if (numberOfFailureJobs > 0) {
-      ActionAPI.replayFailures(actionId, restClient, () => setReplayActionFlag((prev) => !prev));
-    }
-  };
-
-  const handleEditAction = () => {
-    // Enable editing for configuration and status only
-    setPropertyMetadata((prev) =>
-      prev.map((prop) => {
-        if (prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations') {
-          return { ...prop, disabled: false };
-        }
-        return prop;
-      })
-    );
-    setEditDialogOpen(true);
-  };
-
-  const handleSaveAction = () => {
-    ActionAPI.updateAction(actionId, restClient, propertyMetadata, () => {
-      // Reload action details after save
-      ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
-        actionRef.current = actionDetail;
-        Object.keys(actionDetail).forEach((propertyName: string) => {
-          setPropertyMetadata(
-            onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
-          );
-        });
-      });
-      // Re-disable fields and close dialog
-      setPropertyMetadata((prev) =>
-        prev.map((prop) => {
-          if (prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations') {
-            return { ...prop, disabled: true };
-          }
-          return prop;
-        })
-      );
-      setEditDialogOpen(false);
-      toast.success('Action updated successfully!');
+    ActionAPI.archive(actionId, restClient, () => {
+      navigate('/actions');
     });
   };
 
-  const handleCancelEdit = () => {
-    // Reload original values and re-disable fields
-    ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
-      Object.keys(actionDetail).forEach((propertyName: string) => {
-        setPropertyMetadata(
-          onChangeProperty(propertyName, actionDetail[propertyName as keyof ActionDetails])
-        );
-      });
-    });
-    setPropertyMetadata((prev) =>
-      prev.map((prop) => {
-        if (prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations') {
-          return { ...prop, disabled: true };
-        }
-        return prop;
-      })
-    );
-    setEditDialogOpen(false);
-  };
+  const breadcrumbs = [
+    { label: ROOT_BREADCRUMB, href: '/actions' },
+    { label: actionNameRef.current || actionId },
+  ];
 
-  const confirmationDeleteDialogMeta: DialogMetadata = {
-    open: deleteConfirmationDialogOpen,
-    title: confirmationDialogTitle,
-    content: confirmationDialogContent,
-    positiveText: 'Yes',
-    negativeText: 'No',
-    negativeAction() {
-      setDeleteConfirmationDialogOpen(false);
+  const headerActions: GenericActionMetadata[] = [
+    {
+      actionName: 'refresh',
+      actionLabel: 'Refresh',
+      actionIcon: <RefreshCw className="w-4 h-4" />,
+      onClick: () => {
+        loadAction();
+        loadJobs();
+      },
     },
-    positiveAction: confirmationDialogPositiveAction,
-  };
+    {
+      actionName: 'toggleEdit',
+      actionLabel: isEditing ? 'Cancel Edit' : 'Edit',
+      actionIcon: <Edit2 className="w-4 h-4" />,
+      onClick: handleToggleEdit,
+    },
+  ];
 
-  const actionStatus = getPropertyValue('actionStatus');
-  const statusColors = getStatusColor(actionStatus);
+  if (isEditing) {
+    headerActions.push({
+      actionName: 'save',
+      actionLabel: 'Save Changes',
+      actionIcon: <Save className="w-4 h-4 text-primary-600" />,
+      onClick: handleSave,
+    });
+  }
+
+  headerActions.push(
+    {
+      actionName: 'addJob',
+      actionLabel: 'Add Job',
+      actionIcon: <PlusCircle className="w-4 h-4 text-primary-600" />,
+      onClick: () => navigate(`/actions/${actionId}/jobs/new`),
+    },
+    {
+      actionName: 'export',
+      actionLabel: 'Export Action',
+      actionIcon: <Download className="w-4 h-4" />,
+      onClick: handleExport,
+    },
+    {
+      actionName: 'archive',
+      actionLabel: 'Archive Action',
+      actionIcon: <Archive className="w-4 h-4" />,
+      onClick: handleArchive,
+    },
+    {
+      actionName: 'delete',
+      actionLabel: 'Delete Action',
+      actionIcon: <Trash2 className="w-4 h-4 text-error-600" />,
+      onClick: () => setDeleteConfirmationDialogOpen(true),
+    }
+  );
+
+  const jobColumns: ColumnMetadata<JobOverview>[] = [
+    {
+      id: 'hash',
+      label: 'Hash',
+      isHidden: true,
+      isKeyColumn: true,
+    },
+    {
+      id: 'name',
+      label: 'Name',
+      isSortable: true,
+      minWidth: 160,
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      isSortable: true,
+      minWidth: 100,
+    },
+    {
+      id: 'executionStatus',
+      label: 'Execution Status',
+      isSortable: true,
+      minWidth: 140,
+      renderCell: (row: JobOverview) => (
+        <JobStatusBadge status={(row.executionStatus || 'PENDING') as any} />
+      ),
+    },
+    {
+      id: 'isSchedule',
+      label: 'Type',
+      isSortable: true,
+      minWidth: 90,
+      renderCell: (row: JobOverview) => {
+        const isScheduled = Boolean(row.isSchedule ?? row.schedule);
+        return isScheduled ? (
+          <span title="Scheduled Job" className="flex items-center gap-1 text-primary-600">
+            <Clock className="w-4 h-4" />
+            <span className="text-xs">Schedule</span>
+          </span>
+        ) : (
+          <span title="One-time Job" className="flex items-center gap-1 text-secondary-500">
+            <Zap className="w-4 h-4" />
+            <span className="text-xs">Once</span>
+          </span>
+        );
+      },
+    },
+    {
+      id: 'startedAt',
+      label: 'Started At',
+      isSortable: true,
+      minWidth: 150,
+      format: (val: number) => DataTypeDisplayer.formatDate(val),
+    },
+    {
+      id: 'updatedAt',
+      label: 'Last Run',
+      isSortable: true,
+      minWidth: 150,
+      format: (val: number) => DataTypeDisplayer.formatDate(val),
+    },
+    {
+      id: 'failureNotes',
+      label: 'Failure Notes',
+      minWidth: 180,
+      renderCell: (row: JobOverview) =>
+        row.failureNotes ? (
+          <TextTruncate text={row.failureNotes} maxTextLength={60} tooltipVisiable={true} />
+        ) : (
+          <span className="text-secondary-400 text-xs">-</span>
+        ),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      minWidth: 160,
+      align: 'right',
+      actions: [
+        {
+          actionIcon: <Play className="w-4 h-4 text-emerald-600" />,
+          actionLabel: 'Resume Job',
+          actionName: 'resumeJob',
+          visible: (row: JobOverview) => row.status === 'PAUSED',
+          onClick: (row: JobOverview) => () => {
+            JobAPI.resume(actionId, row.hash, row.name, restClient).then(loadJobs);
+          },
+        },
+        {
+          actionIcon: <Pause className="w-4 h-4 text-amber-600" />,
+          actionLabel: 'Pause Job',
+          actionName: 'pauseJob',
+          visible: (row: JobOverview) => row.status === 'ACTIVE',
+          onClick: (row: JobOverview) => () => {
+            JobAPI.pause(row.hash, row.name, restClient).then(loadJobs);
+          },
+        },
+        {
+          actionIcon: <Copy className="w-4 h-4 text-secondary-600" />,
+          actionLabel: 'Clone Job',
+          actionName: 'cloneJob',
+          onClick: (row: JobOverview) => () => {
+            navigate(`/actions/${actionId}/jobs/new`, { state: { copyJobId: row.hash } });
+          },
+        },
+        {
+          actionIcon: <Eye className="w-4 h-4 text-primary-600" />,
+          actionLabel: 'Job Details',
+          actionName: 'gotoJobDetail',
+          onClick: (row: JobOverview) => () => {
+            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } });
+          },
+        },
+        {
+          actionIcon: <Trash2 className="w-4 h-4 text-error-600" />,
+          actionLabel: 'Delete Job',
+          actionName: 'deleteJob',
+          onClick: (row: JobOverview) => () => {
+            selectedJob.current = { jobId: row.hash, jobName: row.name };
+            setDeleteJobDialogOpen(true);
+          },
+        },
+      ],
+    },
+  ];
 
   return (
-    <ActionProvider setNumberOfFailureJobs={setNumberOfFailureJobs}>
-      <Box
-        className="mx-auto max-w-[1600px] bg-gradient-to-b from-slate-50 via-white to-amber-50/30 p-3 md:p-6"
-        sx={{ maxWidth: 1600, mx: 'auto', p: 3 }}
-      >
-        {/* Breadcrumb and Actions Bar */}
-        <Box
-          className="mb-2 flex flex-col justify-between gap-3 rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center"
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
-        >
-          <Box className="flex items-center gap-1 text-slate-500" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-            <Link underline="hover" color="inherit" href="/actions" sx={{ fontSize: '0.875rem' }}>
-              {ROOT_BREADCRUMB}
-            </Link>
-            <Typography sx={{ fontSize: '0.875rem' }}>/</Typography>
-            <Typography color="text.primary" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-              {actionId}
-            </Typography>
-          </Box>
+    <>
+      <EntityDetailTemplate
+        pageTitle={`Action: ${actionNameRef.current || actionId}`}
+        breadcrumbs={breadcrumbs}
+        headerActions={headerActions}
+        properties={properties}
+        onPropertyChange={handlePropertyChange}
+        disabled={!isEditing}
+      />
 
-          <Box className="flex flex-wrap gap-1" sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Edit Action">
-              <IconButton
-                size="small"
-                onClick={handleEditAction}
-                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-                aria-label="Edit Action"
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Copy JSON">
-              <IconButton
-                size="small"
-                onClick={handleCopyJSON}
-                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-                aria-label="Copy JSON"
-              >
-                <ContentCopyIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Refresh">
-              <IconButton
-                size="small"
-                onClick={() => {
-                  ActionAPI.loadActionDetailAsync(
-                    actionId,
-                    restClient,
-                    (actionDetail: ActionDetails) => {
-                      Object.keys(actionDetail).forEach((propertyName: string) => {
-                        setPropertyMetadata(
-                          onChangeProperty(
-                            propertyName,
-                            actionDetail[propertyName as keyof ActionDetails]
-                          )
-                        );
-                      });
-                    }
-                  );
-                  setReplayActionFlag((prev) => !prev);
-                }}
-                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-                aria-label="Refresh"
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="More actions">
-              <IconButton
-                size="small"
-                onClick={(e) => setAnchorEl(e.currentTarget)}
-                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-                aria-label="More actions"
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={anchorEl}
-              open={menuOpen}
-              onClose={handleMenuClose}
-              PaperProps={{ className: 'rounded-2xl border border-slate-200 bg-white shadow-xl' }}
-            >
-              <MenuItem onClick={handleArchive}>
-                <ArchiveOutlinedIcon sx={{ mr: 2, color: 'primary.main' }} />
-                Archive
-              </MenuItem>
-              <MenuItem onClick={handleReplayAll}>
-                <ReplayIcon sx={{ mr: 2, color: 'primary.main' }} />
-                Replay all
-              </MenuItem>
-              <MenuItem onClick={handleReplayFailures} disabled={numberOfFailureJobs === 0}>
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  <StyledBadge
-                    color="error"
-                    badgeContent={numberOfFailureJobs}
-                    showZero
-                    sx={{ mr: 2 }}
-                  >
-                    <ReplayIcon sx={{ color: 'primary.main' }} />
-                  </StyledBadge>
-                  Replay failures
-                </Box>
-              </MenuItem>
-            </Menu>
-            <Button
-              variant="contained"
-              startIcon={<AddCircleOutlineIcon />}
-              onClick={() => navigate(`/actions/${actionId}/jobs/new`)}
-              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-white hover:bg-slate-800"
-              sx={{
-                ml: 1,
-                bgcolor: '#1976d2',
-                '&:hover': {
-                  bgcolor: '#1565c0',
-                },
-              }}
-            >
-              New Job
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Main Content Grid */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          {/* Left Column - Action Details */}
-          <Grid item xs={12} lg={8}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent sx={{ p: 3 }}>
-                {/* Action Name and Status */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'start',
-                    mb: 3,
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        textTransform: 'uppercase',
-                        fontWeight: 700,
-                        color: 'text.secondary',
-                        fontSize: '0.625rem',
-                        letterSpacing: 1.2,
-                      }}
-                    >
-                      Action Name
-                    </Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 600, mt: 0.5 }}>
-                      {getPropertyValue('actionName')}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        textTransform: 'uppercase',
-                        fontWeight: 700,
-                        color: 'text.secondary',
-                        fontSize: '0.625rem',
-                        letterSpacing: 1.2,
-                      }}
-                    >
-                      Status
-                    </Typography>
-                    <Box sx={{ mt: 0.5 }}>
-                      <StatusChip
-                        label={actionStatus}
-                        icon={
-                          <Box
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: '50%',
-                              bgcolor: statusColors.color,
-                              animation: actionStatus === 'ACTIVE' ? 'pulse 2s infinite' : 'none',
-                              '@keyframes pulse': {
-                                '0%, 100%': { opacity: 1 },
-                                '50%': { opacity: 0.5 },
-                              },
-                            }}
-                          />
-                        }
-                        sx={{
-                          bgcolor: statusColors.bg,
-                          color: statusColors.color,
-                          border: `1px solid ${statusColors.border}`,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-
-                {/* Configuration Section */}
-                <Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 2,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <SettingsIcon sx={{ color: 'text.secondary', fontSize: '1.25rem' }} />
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                        Configuration
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button
-                        size="small"
-                        startIcon={<ContentCopyIcon />}
-                        onClick={handleCopyJSON}
-                        sx={{ fontSize: '0.75rem', textTransform: 'none' }}
-                      >
-                        Copy JSON
-                      </Button>
-                      <Button
-                        size="small"
-                        startIcon={<FullscreenIcon />}
-                        onClick={() => setConfigDialogOpen(true)}
-                        sx={{ fontSize: '0.75rem', textTransform: 'none' }}
-                      >
-                        Expand
-                      </Button>
-                    </Box>
-                  </Box>
-                  <CodeBlock>
-                    <pre>
-                      {JSON.stringify(
-                        JSON.parse(getPropertyValue('actionConfigurations') || '{}'),
-                        null,
-                        2
-                      )}
-                    </pre>
-                  </CodeBlock>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Right Column - Action Summary */}
-          <Grid item xs={12} lg={4}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                  Action Summary
-                </Typography>
-                <Grid container spacing={2} sx={{ mb: 3, flex: 1 }}>
-                  <Grid item xs={6}>
-                    <StatCard>
-                      <CardContent sx={{ p: 2 }}>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ fontSize: '0.75rem' }}
-                        >
-                          Total Jobs
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontWeight: 600,
-                            mt: 0.5,
-                            color: 'text.primary',
-                            fontSize: '1.5rem',
-                          }}
-                        >
-                          {actionStats.totalJobs}
-                        </Typography>
-                      </CardContent>
-                    </StatCard>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <StatCard>
-                      <CardContent sx={{ p: 2 }}>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ fontSize: '0.75rem' }}
-                        >
-                          Success Rate
-                        </Typography>
-                        <Typography
-                          sx={{ fontWeight: 600, mt: 0.5, color: '#4ade80', fontSize: '1.5rem' }}
-                        >
-                          {actionStats.successRate}%
-                        </Typography>
-                      </CardContent>
-                    </StatCard>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <StatCard>
-                      <CardContent sx={{ p: 2 }}>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ fontSize: '0.75rem' }}
-                        >
-                          Avg Duration
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontWeight: 600,
-                            mt: 0.5,
-                            color: 'text.primary',
-                            fontSize: '1.5rem',
-                          }}
-                        >
-                          {actionStats.avgDuration}
-                        </Typography>
-                      </CardContent>
-                    </StatCard>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <StatCard>
-                      <CardContent sx={{ p: 2 }}>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ fontSize: '0.75rem' }}
-                        >
-                          Failures (24h)
-                        </Typography>
-                        <Typography
-                          sx={{ fontWeight: 600, mt: 0.5, color: '#f87171', fontSize: '1.5rem' }}
-                        >
-                          {actionStats.failures24h}
-                        </Typography>
-                      </CardContent>
-                    </StatCard>
-                  </Grid>
-                </Grid>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{
-                    mt: 'auto',
-                    bgcolor: '#1a1a1a',
-                    color: 'common.white',
-                    '&:hover': {
-                      bgcolor: '#2d2d2d',
-                    },
-                  }}
-                >
-                  Run All Enabled Jobs
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Job Table */}
-        <Card className="overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-sm">
-          <Box
-            className="flex flex-col items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 p-4 md:flex-row md:items-center"
-            sx={{
-              p: 2.5,
-              borderBottom: 1,
-              borderColor: 'divider',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 font-sans -mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-secondary-900 dark:text-white flex items-center gap-2">
+              <List className="w-5 h-5 text-primary-600" />
+              Jobs in this Action
+            </h2>
+            <p className="text-xs text-secondary-500">
+              Manage and monitor jobs linked to this action definition
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/actions/${actionId}/jobs/new`)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-btn bg-primary-600 text-white hover:bg-primary-700 font-medium text-xs shadow-sm transition-colors"
           >
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
-            >
-              <FormatListBulletedIcon sx={{ color: 'primary.main' }} />
-              Job Table
-            </Typography>
-            <Search>
-              <SearchIconWrapper>
-                <SearchIcon />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder="Filter jobs..."
-                inputProps={{ 'aria-label': 'search' }}
-                value={jobSearchText}
-                onChange={(e) => setJobSearchText(e.target.value)}
-              />
-            </Search>
-          </Box>
-          <ActionJobTable
-            setCircleProcessOpen={setCircleProcessOpen}
-            replayFlag={replayFlag}
-            actionId={actionId}
-            searchText={jobSearchText}
-          />
-        </Card>
+            <PlusCircle className="w-4 h-4" />
+            <span>Add Job</span>
+          </button>
+        </div>
 
-        {/* Configuration Dialog */}
-        <Dialog
-          open={configDialogOpen}
-          onClose={() => setConfigDialogOpen(false)}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{ className: 'rounded-3xl border border-slate-200 bg-white shadow-2xl' }}
-        >
-          <DialogTitle className="px-6 pt-6">
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6">Action Configuration</Typography>
-              <IconButton
-                onClick={() => setConfigDialogOpen(false)}
-                size="small"
-                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          </DialogTitle>
-          <DialogContent className="px-6 pb-6">
-            <Box
-              sx={{
-                backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5',
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 1,
-                p: 2,
-                maxHeight: '500px',
-                overflow: 'auto',
-              }}
-            >
-              <pre
-                style={{
-                  margin: 0,
-                  fontFamily: 'monospace',
-                  fontSize: '0.875rem',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {JSON.stringify(
-                  JSON.parse(getPropertyValue('actionConfigurations') || '{}'),
-                  null,
-                  2
-                )}
-              </pre>
-            </Box>
-          </DialogContent>
-        </Dialog>
+        <DataTable<JobOverview>
+          name="Action Jobs"
+          columns={jobColumns}
+          keyColumn="hash"
+          loading={jobProcessTracking}
+          pagingResult={jobPagingResult}
+          pagingOptions={{
+            pageIndex: jobPageIndex,
+            pageSize: jobPageSize,
+            orderBy: jobOrderBy,
+            searchText: jobSearchText,
+            rowsPerPageOptions: [5, 10, 20, 50],
+            onPageChange: (pIndex, pSize, pOrderBy, pSearch) => {
+              setJobPageIndex(pIndex);
+              setJobPageSize(pSize);
+              setJobOrderBy(pOrderBy);
+              setJobSearchText(pSearch);
+            },
+          }}
+          visibleSearchbar={true}
+          searchPlaceholder="Filter jobs..."
+          onRowClickCallback={(row: JobOverview) =>
+            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
+          }
+        />
+      </div>
 
-        {/* Edit Action Dialog */}
-        <Dialog
-          open={editDialogOpen}
-          onClose={handleCancelEdit}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{ className: 'rounded-3xl border border-slate-200 bg-white shadow-2xl' }}
-        >
-          <DialogTitle className="px-6 pt-6">
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6">Edit Action</Typography>
-              <IconButton
-                onClick={handleCancelEdit}
-                size="small"
-                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          </DialogTitle>
-          <DialogContent className="px-6 pb-6">
-            <Box sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
-                {propertyMetadata
-                  .filter(
-                    (prop) =>
-                      prop.propName === 'actionStatus' || prop.propName === 'actionConfigurations'
-                  )
-                  .map((prop) => {
-                    if (prop.propName === 'actionStatus') {
-                      return (
-                        <Grid item xs={12} key={prop.propName}>
-                          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                            Status
-                          </Typography>
-                          <FormControl fullWidth size="small">
-                            <Select
-                              value={prop.propValue || ''}
-                              onChange={(e) => {
-                                setPropertyMetadata(
-                                  onChangeProperty(prop.propName, e.target.value)
-                                );
-                              }}
-                            >
-                              {ACTION_STATUS_SELECTION.map((option) => (
-                                <MenuItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                      );
-                    }
-                    if (prop.propName === 'actionConfigurations') {
-                      return (
-                        <Grid item xs={12} key={prop.propName}>
-                          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                            Configuration
-                          </Typography>
-                          <TextField
-                            fullWidth
-                            multiline
-                            rows={12}
-                            value={prop.propValue || '{}'}
-                            onChange={(e) => {
-                              setPropertyMetadata(onChangeProperty(prop.propName, e.target.value));
-                            }}
-                            placeholder="Enter JSON configuration"
-                            variant="outlined"
-                            sx={{
-                              '& .MuiInputBase-root': {
-                                fontFamily: 'monospace',
-                                fontSize: '0.875rem',
-                              },
-                            }}
-                          />
-                        </Grid>
-                      );
-                    }
-                    return null;
-                  })}
-              </Grid>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-                <Button
-                  onClick={handleCancelEdit}
-                  variant="outlined"
-                  className="rounded-full border-slate-300 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-slate-600"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSaveAction}
-                  variant="contained"
-                  startIcon={<SaveIcon />}
-                  className="rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-white hover:bg-slate-800"
-                >
-                  Save Changes
-                </Button>
-              </Box>
-            </Box>
-          </DialogContent>
-        </Dialog>
+      <ConfirmationDialog
+        open={deleteConfirmationDialogOpen}
+        title="Delete Action"
+        content={
+          <p>
+            Are you sure you want to delete action <b>{actionNameRef.current}</b>?
+          </p>
+        }
+        positiveText="Yes, Delete"
+        negativeText="Cancel"
+        negativeAction={() => setDeleteConfirmationDialogOpen(false)}
+        positiveAction={() => {
+          ActionAPI.deleteAction(actionId, restClient, () => {
+            navigate('/actions');
+          });
+          setDeleteConfirmationDialogOpen(false);
+        }}
+      />
 
-        <ProcessTracking isLoading={processTracking} />
-        <ConfirmationDialog {...confirmationDeleteDialogMeta} />
-      </Box>
-    </ActionProvider>
+      <ConfirmationDialog
+        open={deleteJobDialogOpen}
+        title="Delete Job"
+        content={
+          <p>
+            Are you sure you want to delete job <b>{selectedJob.current.jobName}</b>?
+          </p>
+        }
+        positiveText="Yes, Delete"
+        negativeText="Cancel"
+        negativeAction={() => setDeleteJobDialogOpen(false)}
+        positiveAction={() => {
+          JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
+            loadJobs();
+          });
+          setDeleteJobDialogOpen(false);
+        }}
+      />
+    </>
   );
 }

@@ -1,8 +1,6 @@
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import InboxIcon from '@mui/icons-material/Inbox';
-import { Box, Button, Typography } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Inbox, PlusCircle } from 'lucide-react';
 
 export interface EmptyStateProps {
   message?: string;
@@ -16,33 +14,19 @@ export default function EmptyState({
   const navigate = useNavigate();
 
   return (
-    <Box
-      className="flex flex-col items-center justify-center px-3 py-10 text-center"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 6,
-        px: 2,
-        textAlign: 'center',
-      }}
-    >
-      <InboxIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {message}
-      </Typography>
+    <div className="flex flex-col items-center justify-center px-4 py-8 text-center font-sans">
+      <Inbox className="w-10 h-10 text-secondary-300 dark:text-secondary-600 mb-2" />
+      <p className="text-xs text-secondary-500 dark:text-secondary-400 mb-3">{message}</p>
       {showAddButton && (
-        <Button
-          className="rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
-          size="small"
-          startIcon={<AddCircleOutlineIcon />}
+        <button
+          type="button"
           onClick={() => navigate('/actions/new')}
-          variant="outlined"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-secondary-700 dark:text-secondary-200 border border-secondary-300 dark:border-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors"
         >
-          Add Action
-        </Button>
+          <PlusCircle className="w-3.5 h-3.5" />
+          <span>Add Action</span>
+        </button>
       )}
-    </Box>
+    </div>
   );
 }

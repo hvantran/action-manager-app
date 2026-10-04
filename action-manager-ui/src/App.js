@@ -1,21 +1,22 @@
-import { Box, Stack, ThemeProvider, CssBaseline, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import {
+  ThemeProvider,
+  useTheme,
+  ErrorPageTemplate,
+  AppFooter,
+  Spinner,
+} from '@hvantran/ui-component-library';
 
 import ActionCreation from './components/actions/ActionCreation';
 import ActionDetail from './components/actions/ActionDetail';
 import ActionSummary from './components/actions/ActionSummary';
-import ErrorPage from './components/common/ErrorPage';
-import Footer from './components/common/Footer';
-import { DARK_THEME, DEFAULT_THEME, LocalStorageService } from './components/GenericConstants';
 import JobCreation from './components/jobs/JobCreation';
 import JobDetail from './components/jobs/JobDetail';
 import JobSummary from './components/jobs/JobSummary';
 import PrimarySearchAppBar from './ResponsiveAppBar';
 import { useUserInfo } from './hooks/useUserInfo';
-
-const selectThemeStorageKey = 'action-manager-enable-dark-theme';
 
 const GATEWAY_BASE_URL =
   window._env_?.REACT_APP_GATEWAY_URL ??
@@ -26,49 +27,27 @@ const GATEWAY_BASE_URL =
     'http://localhost:6081/api/action-manager'
   ).replace('/api/action-manager', '');
 
-function App() {
-  const [toggleDarkMode, setToggleDarkMode] = React.useState(
-    LocalStorageService.getOrDefault(selectThemeStorageKey, false) === 'true'
-  );
+function AppContent() {
+  const { resolvedTheme, toggleTheme } = useTheme();
   const { userInfo, loading } = useUserInfo();
 
-  const switchTheme = () => {
-    setToggleDarkMode((previous) => {
-      LocalStorageService.put(selectThemeStorageKey, !previous);
-      return !previous;
-    });
-  };
-
-  //Redirect to Gateway login if not authenticated (after loading completes)
+  // Redirect to Gateway login if not authenticated (after loading completes)
   React.useEffect(() => {
     if (!loading && !userInfo.authenticated) {
-      // Save current origin to redirect back after OAuth2 login
       const currentOrigin = window.location.origin;
-      window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorization/keycloak?redirect_uri=${encodeURIComponent(currentOrigin)}`;
+      window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorization/keycloak?redirect_uri=${encodeURIComponent(
+        currentOrigin
+      )}`;
     }
   }, [loading, userInfo.authenticated]);
 
   // Show loading spinner while checking authentication
   if (loading) {
     return (
-      <ThemeProvider theme={!toggleDarkMode ? DEFAULT_THEME : DARK_THEME}>
-        <CssBaseline />
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '100vh',
-            gap: 2,
-          }}
-        >
-          <CircularProgress size={60} />
-          <Typography variant="h6" color="text.secondary">
-            Loading...
-          </Typography>
-        </Box>
-      </ThemeProvider>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-surface-ground-light dark:bg-surface-ground-dark text-secondary-900 dark:text-secondary-100">
+        <Spinner size="lg" />
+        <p className="text-sm font-medium text-secondary-500">Loading...</p>
+      </div>
     );
   }
 
@@ -78,42 +57,44 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={!toggleDarkMode ? DEFAULT_THEME : DARK_THEME}>
-      <CssBaseline />
-      <Stack
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          bgcolor: 'background.default',
-        }}
-      >
-        <PrimarySearchAppBar toggleDarkMode={toggleDarkMode} setToggleDarkMode={switchTheme} />
-        <Box
-          sx={{
-            flexGrow: 1,
-            width: '100%',
-            mx: 'auto',
-            px: { xs: 1.5, sm: 2, md: 3 },
-            py: { xs: 1.5, sm: 2, md: 3 },
-            maxWidth: { xl: '1536px' },
-            boxSizing: 'border-box',
-          }}
-        >
-          <Routes>
-            <Route path="/" element={<Navigate to="/actions" />} errorElement={<ErrorPage />}></Route>
-            <Route path="/actions" element={<ActionSummary />}></Route>
-            <Route path="/actions/:actionId" element={<ActionDetail />}></Route>
-            <Route path="/actions/:actionId/jobs/new" element={<JobCreation />}></Route>
-            <Route path="/actions/:actionId/jobs/:jobId" element={<JobDetail />}></Route>
-            <Route path="/actions/new" element={<ActionCreation />}></Route>
-            <Route path="jobs" element={<JobSummary />}></Route>
-          </Routes>
-        </Box>
-        <Footer />
-      </Stack>
+    <div className="min-h-screen flex flex-col bg-surface-ground-light dark:bg-surface-ground-dark text-secondary-900 dark:text-secondary-100 font-sans">
+      <PrimarySearchAppBar
+        toggleDarkMode={resolvedTheme === 'dark'}
+        setToggleDarkMode={toggleTheme}
+      />
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <Routes>
+          <Route
+            path="/"
+            element={<Navigate to="/actions" />}
+            errorElement={<ErrorPageTemplate title="Not Found" message="Page not found" />}
+          />
+          <Route path="/actions" element={<ActionSummary />} />
+          <Route path="/actions/new" element={<ActionCreation />} />
+          <Route path="/actions/:actionId" element={<ActionDetail />} />
+          <Route path="/actions/:actionId/jobs/new" element={<JobCreation />} />
+          <Route path="/actions/:actionId/jobs/:jobId" element={<JobDetail />} />
+          <Route path="/jobs" element={<JobSummary />} />
+          <Route path="/jobs/new" element={<JobCreation />} />
+          <Route path="/jobs/:jobId" element={<JobDetail />} />
+        </Routes>
+      </main>
+      <AppFooter
+        appName="Action Manager"
+        statusText="All systems operational"
+        isOnline={true}
+      />
       <ToastContainer />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="action-manager-enable-dark-theme">
+      <AppContent />
     </ThemeProvider>
   );
 }
+
 export default App;

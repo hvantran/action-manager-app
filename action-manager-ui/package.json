@@ -5,27 +5,21 @@
   "dependencies": {
     "@codemirror/lang-javascript": "^6.1.4",
     "@codemirror/lang-json": "^6.0.1",
-    "@emotion/react": "^11.10.6",
-    "@emotion/styled": "^11.10.6",
-    "@fontsource/roboto": "^4.5.8",
-    "@mui/icons-material": "^5.15.16",
-    "@mui/material": "^5.15.16",
-    "@mui/styles": "^5.15.16",
-    "@mui/x-charts": "^7.20.0",
-    "@mui/x-data-grid": "^6.0.1",
+    "@hvantran/ui-component-library": "^1.0.9",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@uiw/codemirror-themes": "^4.19.16",
     "@uiw/react-codemirror": "^4.19.16",
-    "add": "^2.0.6",
     "js-file-download": "^0.4.12",
+    "lucide-react": "^0.454.0",
     "nth-check": ">=2.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.3",
     "react-scripts": "5.0.1",
     "react-toastify": "^10.0.4",
+    "tailwind-merge": "^2.5.4",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4",
     "yarn": "^1.22.19"
@@ -36,6 +30,12 @@
     "test": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/ && react-scripts test",
     "eject": "react-scripts eject"
   },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
   "resolutions": {
     "@codemirror/state": "6.5.4",
     "@codemirror/view": "6.39.11",
@@ -45,16 +45,7 @@
     "@babel/core": "^7.29.0",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
-    "@typescript-eslint/eslint-plugin": "^8.53.1",
-    "@typescript-eslint/parser": "^8.53.1",
     "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.1",
     "postcss": "^8.4.49",
     "prettier": "^3.8.1",
     "tailwindcss": "^3.4.17"

@@ -1,109 +1,94 @@
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
-import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
-import PendingIcon from '@mui/icons-material/Pending';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import RestoreIcon from '@mui/icons-material/Restore';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { Badge, Box, IconButton, Stack } from '@mui/material';
-import { green, yellow } from '@mui/material/colors';
-import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
-import BreadcrumbsComponent from '../common/Breadcrumbs';
-import ConfirmationDialog from '../common/ConfirmationDialog';
-import ProcessTracking from '../common/ProcessTracking';
-import ViewModeToggle from '../common/ViewModeToggle';
 import {
+  ConfirmationDialog,
+  ViewModeToggle,
+  DataTable,
   ColumnMetadata,
-  DialogMetadata,
-  LocalStorageService,
-  PageEntityMetadata,
-  PagingOptionMetadata,
   PagingResult,
+} from '@hvantran/ui-component-library';
+import {
+  LayoutGrid,
+  List,
+  RefreshCw,
+  PlusCircle,
+  Eye,
+  Trash2,
+  Star,
+  Download,
+} from 'lucide-react';
+import { ActionAPI, ActionOverview, ROOT_BREADCRUMB } from '../AppConstants';
+import {
+  DataTypeDisplayer,
+  LocalStorageService,
   RestClient,
-  SpeedDialActionMetadata,
-  TableMetadata,
-  WithLink,
 } from '../GenericConstants';
-import PageEntityRender from '../renders/PageEntityRender';
-
 import BoardView from './BoardView';
 
 const pageIndexStorageKey = 'action-manager-action-table-page-index';
-const pageSizeStorageKey = 'action-manager-action-table-page-size';
+const pageSizeStorageKey = 'action-manager-action-table-size';
 const orderByStorageKey = 'action-manager-action-table-order';
 const viewModeStorageKey = 'action-manager-view-mode';
 
 export default function ActionSummary() {
   const navigate = useNavigate();
-  const [processTracking, setCircleProcessOpen] = React.useState(false);
-  const initialPagingResult: PagingResult = { totalElements: 0, content: [] };
-  const [pagingResult, setPagingResult] = React.useState(initialPagingResult);
-  const [viewMode, setViewMode] = React.useState<'board' | 'list'>(
-    LocalStorageService.getOrDefault(viewModeStorageKey, 'board') as 'board' | 'list'
+  const [processTracking, setCircleProcessOpen] = useState(false);
+  const initialPagingResult: PagingResult<ActionOverview> = { totalElements: 0, content: [] };
+  const [pagingResult, setPagingResult] = useState<PagingResult<ActionOverview>>(initialPagingResult);
+
+  const [viewMode, setViewMode] = useState<'board' | 'list'>(
+    (LocalStorageService.getOrDefault(viewModeStorageKey, 'board') as 'board' | 'list')
   );
 
-  const [pageIndex, setPageIndex] = React.useState(
-    parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0))
+  const [pageIndex, setPageIndex] = useState(
+    parseInt(LocalStorageService.getOrDefault(pageIndexStorageKey, 0), 10)
   );
-  const [pageSize, setPageSize] = React.useState(
-    parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10))
+  const [pageSize, setPageSize] = useState(
+    parseInt(LocalStorageService.getOrDefault(pageSizeStorageKey, 10), 10)
   );
-  const [orderBy, setOrderBy] = React.useState(
+  const [orderBy, setOrderBy] = useState(
     LocalStorageService.getOrDefault(orderByStorageKey, '-name')
   );
-  const boardRestClient = React.useMemo(
-    () => new RestClient(() => {}), // no-op callback
-    []
-  );
-  const listRestClient = React.useMemo(
-    () => new RestClient(setCircleProcessOpen),
-    [setCircleProcessOpen]
-  );
-  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
-  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
-  const [confirmationDialogContent, setConfirmationDialogContent] = React.useState(<p></p>);
-  const [confirmationDialogTitle, setConfirmationDialogTitle] = React.useState('');
-  const [confirmationDialogPositiveAction, setConfirmationDialogPositiveAction] = React.useState(
-    () => () => {}
-  );
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const confirmationDeleteDialogMeta: DialogMetadata = {
-    open: deleteConfirmationDialogOpen,
-    title: confirmationDialogTitle,
-    content: confirmationDialogContent,
-    positiveText: 'Yes',
-    negativeText: 'No',
-    negativeAction() {
-      setDeleteConfirmationDialogOpen(false);
-    },
-    positiveAction: confirmationDialogPositiveAction,
+  const selectedAction = useRef<{ name: string; hash: string }>({ name: '', hash: '' });
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = useState(false);
+
+  const restClient = useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
+  const boardRestClient = useMemo(() => new RestClient(() => {}), []);
+
+  const handleViewModeChange = (mode: 'board' | 'list') => {
+    setViewMode(mode);
+    LocalStorageService.put(viewModeStorageKey, mode);
   };
 
+  const loadActionList = () => {
+    ActionAPI.loadActionSummarysAsync(
+      pageIndex,
+      pageSize,
+      orderBy,
+      restClient,
+      (result) => {
+        setPagingResult(result);
+      }
+    );
+  };
+
+  useEffect(() => {
+    if (viewMode === 'list') {
+      loadActionList();
+    }
+  }, [pageIndex, pageSize, orderBy, viewMode, refreshTrigger]);
+
   const breadcrumbs = [
-    <Link underline="hover" key="1" color="inherit" href="#">
-      {ROOT_BREADCRUMB}
-    </Link>,
-    <Typography key="2" color="text.primary">
-      Summary
-    </Typography>,
+    { label: ROOT_BREADCRUMB, href: '#' },
+    { label: 'Summary' },
   ];
 
-  const columns: ColumnMetadata[] = [
+  const columns: ColumnMetadata<ActionOverview>[] = [
     {
       id: 'hash',
       label: 'Hash',
-      minWidth: 100,
       isHidden: true,
       isKeyColumn: true,
     },
@@ -111,392 +96,204 @@ export default function ActionSummary() {
       id: 'name',
       label: 'Name',
       isSortable: true,
-      minWidth: 100,
+      minWidth: 150,
     },
     {
       id: 'status',
       label: 'Status',
       isSortable: true,
-      minWidth: 50,
-      align: 'left',
-      format: (value: string) => value,
-    },
-    {
-      id: 'createdAt',
-      label: 'Created at',
-      isSortable: true,
-      minWidth: 170,
-      align: 'left',
-      format: (value: number) => {
-        if (!value) {
-          return '';
-        }
-
-        const createdAtDate = new Date(0);
-        createdAtDate.setUTCSeconds(value);
-        return createdAtDate.toISOString();
-      },
+      minWidth: 100,
     },
     {
       id: 'numberOfJobs',
-      label: 'No jobs',
-      minWidth: 100,
-      align: 'left',
-      format: (value: number) => value,
+      label: 'Total Jobs',
+      isSortable: true,
+      minWidth: 90,
+      align: 'center',
     },
     {
-      id: 'numberOfPendingJobs',
-      label: 'No pending jobs',
-      minWidth: 100,
-      align: 'left',
-      format: (value: number) => (
-        <Badge badgeContent={value} color="warning" showZero>
-          <PendingIcon color="warning" />
-        </Badge>
+      id: 'numberOfSuccessJobs',
+      label: 'Success',
+      isSortable: true,
+      minWidth: 90,
+      align: 'center',
+      renderCell: (row) => (
+        <span className="text-emerald-600 font-semibold">{row.numberOfSuccessJobs}</span>
       ),
     },
     {
       id: 'numberOfFailureJobs',
-      label: 'No failure jobs',
-      minWidth: 100,
-      align: 'left',
-      format: (value: number) => (
-        <Badge badgeContent={value} color="error" showZero>
-          <WarningAmberIcon color="error" />
-        </Badge>
+      label: 'Failed',
+      isSortable: true,
+      minWidth: 90,
+      align: 'center',
+      renderCell: (row) => (
+        <span className="text-red-600 font-semibold">{row.numberOfFailureJobs}</span>
       ),
     },
     {
-      id: 'numberOfSuccessJobs',
-      label: 'No success jobs',
-      minWidth: 100,
-      align: 'left',
-      format: (value: number) => (
-        <Badge badgeContent={value} color="success" showZero>
-          <CheckCircleIcon color="success" />
-        </Badge>
+      id: 'numberOfPendingJobs',
+      label: 'Pending',
+      isSortable: true,
+      minWidth: 90,
+      align: 'center',
+      renderCell: (row) => (
+        <span className="text-purple-600 font-semibold">{row.numberOfPendingJobs}</span>
       ),
     },
     {
-      id: 'numberOfScheduleJobs',
-      label: 'No schedule jobs',
-      minWidth: 100,
-      align: 'left',
-      format: (value: number) => (
-        <Badge badgeContent={value} color="secondary" showZero>
-          <ScheduleIcon color="secondary" />
-        </Badge>
-      ),
+      id: 'createdAt',
+      label: 'Created At',
+      isSortable: true,
+      minWidth: 150,
+      format: (val: number) => DataTypeDisplayer.formatDate(val),
     },
     {
       id: 'actions',
       label: '',
+      minWidth: 120,
       align: 'right',
       actions: [
         {
-          actionIcon: <StarBorderIcon />,
-          properties: { sx: { color: yellow[800] } },
-          actionLabel: 'Favorite action',
-          visible: (row: ActionOverview) => !row.isFavorite,
-          actionName: 'favoriteAction',
-          onClick: (row: ActionOverview) => {
-            return () =>
-              ActionAPI.setFavoriteAction(row.hash, true, listRestClient, () => {
-                ActionAPI.loadActionSummarysAsync(
-                  pageIndex,
-                  pageSize,
-                  orderBy,
-                  listRestClient,
-                  (actionPagingResult) => setPagingResult(actionPagingResult)
-                );
-              });
+          actionIcon: <Star className="w-4 h-4 text-amber-500" />,
+          actionLabel: 'Toggle Favorite',
+          actionName: 'toggleFavorite',
+          onClick: (row: ActionOverview) => () => {
+            ActionAPI.setFavoriteAction(row.hash, !row.isFavorite, restClient, () => {
+              loadActionList();
+            });
           },
         },
         {
-          actionIcon: <StarIcon />,
-          properties: { sx: { color: yellow[800] } },
-          actionLabel: 'Unfavorite action',
-          visible: (row: ActionOverview) => row.isFavorite,
-          actionName: 'unFavoriteAction',
-          onClick: (row: ActionOverview) => {
-            return () =>
-              ActionAPI.setFavoriteAction(row.hash, false, listRestClient, () => {
-                ActionAPI.loadActionSummarysAsync(
-                  pageIndex,
-                  pageSize,
-                  orderBy,
-                  listRestClient,
-                  (actionPagingResult) => setPagingResult(actionPagingResult)
-                );
-              });
+          actionIcon: <Download className="w-4 h-4" />,
+          actionLabel: 'Export Action',
+          actionName: 'exportAction',
+          onClick: (row: ActionOverview) => () => {
+            ActionAPI.export(row.hash, row.name, restClient);
           },
         },
         {
-          actionIcon: <RestoreIcon />,
-          actionLabel: 'Restore',
-          actionName: 'restoreAction',
-          visible: (row: ActionOverview) => row.status === 'ARCHIVED' || row.status === 'DELETED',
-          onClick: (row: ActionOverview) => {
-            return () => {
-              return ActionAPI.restoreAction(row.hash, listRestClient, () => {
-                ActionAPI.loadActionSummarysAsync(
-                  pageIndex,
-                  pageSize,
-                  orderBy,
-                  listRestClient,
-                  (actionPagingResult) => setPagingResult(actionPagingResult)
-                );
-              });
-            };
-          },
+          actionIcon: <Eye className="w-4 h-4" />,
+          actionLabel: 'View details',
+          actionName: 'viewDetails',
+          onClick: (row: ActionOverview) => () => navigate(`/actions/${row.hash}`),
         },
         {
-          actionIcon: <ArchiveOutlinedIcon />,
-          actionLabel: 'Archive',
-          actionName: 'archive',
-          visible: (row: ActionOverview) => row.status !== 'ARCHIVED',
-          onClick: (row: ActionOverview) => {
-            return () => {
-              setConfirmationDialogTitle('Archive');
-              setConfirmationDialogContent((previous) => (
-                <p>
-                  Are you sure you want to archive <b>{row.name}</b> action?
-                </p>
-              ));
-              setConfirmationDialogPositiveAction(
-                (previous) => () =>
-                  ActionAPI.archive(row.hash, listRestClient, () => {
-                    ActionAPI.loadActionSummarysAsync(
-                      pageIndex,
-                      pageSize,
-                      orderBy,
-                      listRestClient,
-                      (actionPagingResult) => setPagingResult(actionPagingResult)
-                    );
-                    setDeleteConfirmationDialogOpen((previous) => !previous);
-                  })
-              );
-              setDeleteConfirmationDialogOpen((previous) => !previous);
-            };
-          },
-        },
-        {
-          actionIcon: <FileDownloadOutlinedIcon />,
-          actionLabel: 'Export',
-          actionName: 'export',
-          onClick: (row: ActionOverview) => {
-            return () => {
-              return ActionAPI.export(row.hash, row.name, listRestClient);
-            };
-          },
-        },
-        {
-          actionIcon: <ReadMoreIcon />,
-          actionLabel: 'Action details',
-          actionName: 'gotoActionDetail',
-          onClick: (row: ActionOverview) => {
-            return () => navigate(`/actions/${row.hash}`);
+          actionIcon: <Trash2 className="w-4 h-4 text-error-600" />,
+          actionLabel: 'Delete',
+          actionName: 'deleteAction',
+          onClick: (row: ActionOverview) => () => {
+            selectedAction.current = { name: row.name, hash: row.hash };
+            setDeleteConfirmationDialogOpen(true);
           },
         },
       ],
     },
   ];
 
-  React.useEffect(() => {
-    // Only load actions for list view; board view columns handle their own data
-    if (viewMode === 'list') {
-      ActionAPI.loadActionSummarysAsync(
-        pageIndex,
-        pageSize,
-        orderBy,
-        listRestClient,
-        (actionPagingResult) => setPagingResult(actionPagingResult)
-      );
-    }
-  }, [pageIndex, pageSize, orderBy, listRestClient, viewMode]);
-
-  const actions: Array<SpeedDialActionMetadata> = [
-    {
-      actionIcon: WithLink('/actions/new', <AddCircleOutlineIcon />),
-      actionName: 'create',
-      actionLabel: 'New Action',
-      properties: {
-        sx: {
-          bgcolor: green[500],
-          '&:hover': {
-            bgcolor: green[800],
-          },
-        },
-      },
-    },
-  ];
-
-  const pagingOptions: PagingOptionMetadata = {
-    pageIndex,
-    pageSize,
-    orderBy,
-    component: 'div',
-    searchText: '',
-    rowsPerPageOptions: [5, 10, 20],
-    onPageChange: (pageIndex: number, pageSize: number, orderBy: string) => {
-      setPageIndex(pageIndex);
-      setPageSize(pageSize);
-      setOrderBy(orderBy);
-      LocalStorageService.put(pageIndexStorageKey, pageIndex);
-      LocalStorageService.put(pageSizeStorageKey, pageSize);
-      LocalStorageService.put(orderByStorageKey, orderBy);
-      ActionAPI.loadActionSummarysAsync(
-        pageIndex,
-        pageSize,
-        orderBy,
-        listRestClient,
-        (actionPagingResult) => setPagingResult(actionPagingResult)
-      );
-    },
-  };
-
-  const tableMetadata: TableMetadata = {
-    columns,
-    name: 'Overview',
-    onRowClickCallback: (row: ActionOverview) => navigate(`/actions/${row.hash}`),
-    pagingOptions: pagingOptions,
-    pagingResult: pagingResult,
-  };
-  const importActionFunc = function (target: any) {
-    const importAction = document.getElementById('raised-button-file') as HTMLInputElement;
-    if (importAction === null || importAction.files === null || importAction.files.length === 0) {
-      return;
-    }
-    const uploadFormData = new FormData();
-    uploadFormData.append('file', importAction.files[0]);
-    ActionAPI.importFromFile(uploadFormData, listRestClient, (actionName) => {
-      ActionAPI.loadActionSummarysAsync(
-        pageIndex,
-        pageSize,
-        orderBy,
-        listRestClient,
-        (actionPagingResult) => setPagingResult(actionPagingResult)
-      );
-    });
-  };
-
-  const pageEntityMetadata: PageEntityMetadata = {
-    pageName: 'action-summary',
-    pageTitle: 'Actions Overview',
-    floatingActions: actions,
-    tableMetadata: tableMetadata,
-    breadcumbsMeta: breadcrumbs,
-    pageEntityActions: [
-      {
-        actionIcon: (
-          <ViewModeToggle
-            currentMode={viewMode}
-            onModeChange={(mode) => {
-              setViewMode(mode);
-              LocalStorageService.put(viewModeStorageKey, mode);
-            }}
-          />
-        ),
-        actionLabel: 'Toggle view mode',
-        actionName: 'toggleViewMode',
-      },
-      {
-        actionIcon: (
-          <Box>
-            <input
-              id="raised-button-file"
-              accept=".zip"
-              hidden
-              multiple
-              onChange={importActionFunc}
-              type="file"
+  return (
+    <>
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-secondary-500 mb-1">
+              <span>{ROOT_BREADCRUMB}</span>
+              <span>/</span>
+              <span>Summary</span>
+            </div>
+            <h1 className="text-2xl font-bold text-secondary-900 dark:text-white">
+              Action Status Monitor
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <ViewModeToggle<'board' | 'list'>
+              mode={viewMode}
+              modes={[
+                { value: 'board', label: 'Board', icon: <LayoutGrid className="w-3.5 h-3.5 mr-1" /> },
+                { value: 'list', label: 'List', icon: <List className="w-3.5 h-3.5 mr-1" /> },
+              ]}
+              onChange={handleViewModeChange}
+              size="sm"
             />
-            <label htmlFor="raised-button-file">
-              <IconButton component="span" color="primary">
-                <FileUploadOutlinedIcon />
-              </IconButton>
-            </label>
-          </Box>
-        ),
-        actionLabel: 'Import action',
-        actionName: 'importAction',
-      },
-      {
-        actionIcon: <RefreshIcon />,
-        actionLabel: 'Refresh action',
-        actionName: 'refreshAction',
-        onClick: () => {
-          if (viewMode === 'board') {
-            setRefreshTrigger((prev) => prev + 1);
-          } else {
-            ActionAPI.loadActionSummarysAsync(
+            <button
+              type="button"
+              aria-label="Refresh actions"
+              onClick={() => {
+                setRefreshTrigger((prev) => prev + 1);
+                if (viewMode === 'list') {
+                  loadActionList();
+                }
+              }}
+              className="p-2 rounded-btn text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/actions/new')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-btn bg-primary-600 text-white hover:bg-primary-700 font-medium text-xs shadow-sm transition-colors"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>New Action</span>
+            </button>
+          </div>
+        </div>
+
+        {viewMode === 'board' ? (
+          <BoardView
+            restClient={boardRestClient}
+            refreshTrigger={refreshTrigger}
+            onStatusChange={() => setRefreshTrigger((prev) => prev + 1)}
+          />
+        ) : (
+          <DataTable<ActionOverview>
+            name="Action Overview"
+            columns={columns}
+            keyColumn="hash"
+            loading={processTracking}
+            pagingResult={pagingResult}
+            pagingOptions={{
               pageIndex,
               pageSize,
               orderBy,
-              listRestClient,
-              (actionPagingResult) => setPagingResult(actionPagingResult)
-            );
-          }
-        },
-      },
-    ],
-  };
-
-  return (
-    <Stack 
-      spacing={2}
-      className="min-h-screen bg-slate-50"
-      sx={{
-        gap: 2,
-        minHeight: '100vh',
-        backgroundColor: '#f8fafc',
-      }}
-    >
-      {viewMode === 'board' ? (
-        <>
-          <Box
-            className="flex flex-col gap-4 px-4 pt-4 md:flex-row md:items-center md:justify-between md:px-6 bg-white border-b border-slate-200"
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              px: 3,
-              pt: 2,
-              backgroundColor: 'white',
-              borderBottom: '1px solid #e2e8f0',
+              searchText: '',
+              rowsPerPageOptions: [10, 20, 50, 100],
+              onPageChange: (pIndex, pSize, pOrderBy) => {
+                setPageIndex(pIndex);
+                setPageSize(pSize);
+                setOrderBy(pOrderBy);
+                LocalStorageService.put(pageIndexStorageKey, pIndex);
+                LocalStorageService.put(pageSizeStorageKey, pSize);
+                LocalStorageService.put(orderByStorageKey, pOrderBy);
+              },
             }}
-          >
-            <Box>
-              <BreadcrumbsComponent breadcrumbs={breadcrumbs} />
-              <Typography variant="h5" className="text-slate-900 font-semibold" sx={{ fontWeight: 600, mt: 1 }}>
-                Action Status Monitor
-              </Typography>
-            </Box>
-            <Box className="flex flex-wrap gap-2" sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {pageEntityMetadata.pageEntityActions?.map((action, index) => (
-                <Box key={index} className="hover:bg-slate-100 rounded-lg transition-colors">
-                  {action.onClick ? (
-                    <IconButton 
-                      onClick={action.onClick} 
-                      title={action.actionLabel}
-                      className="hover:bg-slate-100"
-                    >
-                      {action.actionIcon}
-                    </IconButton>
-                  ) : (
-                    action.actionIcon
-                  )}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-          <BoardView restClient={boardRestClient} refreshTrigger={refreshTrigger} onStatusChange={() => setRefreshTrigger((prev) => prev + 1)} />
-        </>
-      ) : (
-        <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
-      )}
-      {viewMode === 'list' && <ProcessTracking isLoading={processTracking}></ProcessTracking>}
-      <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
-    </Stack>
+            onRowClickCallback={(row: ActionOverview) => navigate(`/actions/${row.hash}`)}
+          />
+        )}
+      </div>
+
+      <ConfirmationDialog
+        open={deleteConfirmationDialogOpen}
+        title="Delete Action"
+        content={
+          <p>
+            Are you sure you want to delete action <b>{selectedAction.current.name}</b>?
+          </p>
+        }
+        positiveText="Yes, Delete"
+        negativeText="Cancel"
+        negativeAction={() => setDeleteConfirmationDialogOpen(false)}
+        positiveAction={() => {
+          ActionAPI.deleteAction(selectedAction.current.hash, restClient, () => {
+            if (viewMode === 'list') {
+              loadActionList();
+            } else {
+              setRefreshTrigger((prev) => prev + 1);
+            }
+          });
+          setDeleteConfirmationDialogOpen(false);
+        }}
+      />
+    </>
   );
 }

@@ -68,12 +68,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: action-manager-ui/.nvmrc
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@hvantran'
           cache: 'yarn'
           cache-dependency-path: action-manager-ui/yarn.lock
       
       - name: Install dependencies
         working-directory: action-manager-ui
-        run: yarn install --frozen-lockfile
+        run: yarn install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
       
       - name: Setup environment
         working-directory: action-manager-ui
