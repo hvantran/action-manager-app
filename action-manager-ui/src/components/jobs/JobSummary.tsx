@@ -98,22 +98,24 @@ export default function JobSummary() {
       ),
     },
     {
-      id: 'schedule',
+      id: 'isSchedule',
       label: 'Type',
       isSortable: true,
       minWidth: 90,
-      renderCell: (row: JobOverview) =>
-        row.schedule ? (
+      renderCell: (row: JobOverview) => {
+        const isScheduled = Boolean(row.isSchedule ?? row.schedule);
+        return isScheduled ? (
           <span title="Scheduled Job" className="flex items-center gap-1 text-primary-600">
             <Clock className="w-4 h-4" />
-            <span className="text-xs">Cron</span>
+            <span className="text-xs">Schedule</span>
           </span>
         ) : (
           <span title="One-time Job" className="flex items-center gap-1 text-secondary-500">
             <Zap className="w-4 h-4" />
             <span className="text-xs">Once</span>
           </span>
-        ),
+        );
+      },
     },
     {
       id: 'startedAt',

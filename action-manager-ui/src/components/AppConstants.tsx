@@ -222,7 +222,8 @@ export interface JobOverview {
   startedAt: number;
   elapsedTime: number;
   updatedAt: number;
-  schedule: boolean;
+  isSchedule?: boolean;
+  schedule?: boolean;
   hasActiveConsumer?: boolean;
 }
 
