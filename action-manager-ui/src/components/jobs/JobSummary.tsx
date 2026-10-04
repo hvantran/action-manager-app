@@ -62,7 +62,6 @@ export default function JobSummary() {
 
   useEffect(() => {
     loadJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex, pageSize, orderBy, statusFilter]);
 
   const breadcrumbs = [

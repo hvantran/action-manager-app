@@ -91,7 +91,6 @@ export default function ActionDetail() {
 
   useEffect(() => {
     loadAction();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionId]);
 
   const handlePropertyChange = (propName: string, value: any) => {

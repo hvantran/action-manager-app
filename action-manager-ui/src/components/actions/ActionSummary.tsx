@@ -80,7 +80,6 @@ export default function ActionSummary() {
     if (viewMode === 'list') {
       loadActionList();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex, pageSize, orderBy, viewMode, refreshTrigger]);
 
   const breadcrumbs = [

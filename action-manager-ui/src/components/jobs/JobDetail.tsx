@@ -177,7 +177,6 @@ export default function JobDetail() {
 
   useEffect(() => {
     loadJob();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
   const handlePropertyChange = (propName: string, value: any) => {
