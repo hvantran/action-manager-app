@@ -236,7 +236,7 @@ export default function ActionSummary() {
   return (
     <>
       {viewMode === 'board' ? (
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2 text-xs text-secondary-500 mb-1">

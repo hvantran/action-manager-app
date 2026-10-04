@@ -18,10 +18,10 @@ export default function BoardView({ restClient, refreshTrigger, onStatusChange }
   };
 
   return (
-    <div className="w-full overflow-x-auto pb-6 pt-2 font-sans">
-      <div className="flex gap-4 min-w-max">
+    <div className="w-full pb-6 pt-2 font-sans">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {statusOrder.map((status) => (
-          <div key={status} className="w-72 shrink-0">
+          <div key={status} className="w-full min-w-0">
             <BoardColumn
               status={status}
               onActionClick={handleActionClick}

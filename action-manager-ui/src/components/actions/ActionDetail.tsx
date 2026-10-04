@@ -1,11 +1,16 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   EntityDetailTemplate,
   ConfirmationDialog,
+  DataTable,
+  JobStatusBadge,
+  TextTruncate,
   PropertyMetadata,
   PropType,
   GenericActionMetadata,
+  ColumnMetadata,
+  PagingResult,
 } from '@hvantran/ui-component-library';
 import {
   Edit2,
@@ -15,14 +20,23 @@ import {
   PlusCircle,
   Download,
   Archive,
+  Clock,
+  Zap,
+  Play,
+  Pause,
+  Copy,
+  Eye,
+  List,
 } from 'lucide-react';
 import {
   ActionAPI,
   ActionDetails,
+  JobAPI,
+  JobOverview,
   ACTION_STATUS_SELECTION,
   ROOT_BREADCRUMB,
 } from '../AppConstants';
-import { RestClient } from '../GenericConstants';
+import { DataTypeDisplayer, RestClient } from '../GenericConstants';
 
 export default function ActionDetail() {
   const navigate = useNavigate();
@@ -38,7 +52,24 @@ export default function ActionDetail() {
   const [processTracking, setCircleProcessOpen] = useState(false);
   const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = useState(false);
 
+  // Job table state
+  const [jobPageIndex, setJobPageIndex] = useState(0);
+  const [jobPageSize, setJobPageSize] = useState(10);
+  const [jobOrderBy, setJobOrderBy] = useState('-startedAt');
+  const [jobSearchText, setJobSearchText] = useState('');
+  const [jobPagingResult, setJobPagingResult] = useState<PagingResult>({
+    totalElements: 0,
+    content: [],
+  });
+  const [jobProcessTracking, setJobProcessTracking] = useState(false);
+  const [deleteJobDialogOpen, setDeleteJobDialogOpen] = useState(false);
+  const selectedJob = useRef({ jobId: '', jobName: '' });
+
   const restClient = useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
+  const jobRestClient = useMemo(
+    () => new RestClient(setJobProcessTracking),
+    [setJobProcessTracking]
+  );
 
   const [properties, setProperties] = useState<PropertyMetadata[]>([
     {
@@ -77,7 +108,7 @@ export default function ActionDetail() {
     },
   ]);
 
-  const loadAction = () => {
+  const loadAction = useCallback(() => {
     ActionAPI.loadActionDetailAsync(actionId, restClient, (actionDetail: ActionDetails) => {
       actionNameRef.current = actionDetail.actionName || '';
       setProperties((prev) =>
@@ -87,11 +118,29 @@ export default function ActionDetail() {
         })
       );
     });
-  };
+  }, [actionId, restClient]);
+
+  const loadJobs = useCallback(() => {
+    ActionAPI.loadRelatedJobsAsync(
+      jobPageIndex,
+      jobPageSize,
+      jobOrderBy,
+      actionId,
+      jobRestClient,
+      (data) => {
+        setJobPagingResult(data);
+      },
+      jobSearchText
+    );
+  }, [actionId, jobPageIndex, jobPageSize, jobOrderBy, jobSearchText, jobRestClient]);
 
   useEffect(() => {
     loadAction();
-  }, [actionId]);
+  }, [loadAction]);
+
+  useEffect(() => {
+    loadJobs();
+  }, [loadJobs]);
 
   const handlePropertyChange = (propName: string, value: any) => {
     setProperties((prev) =>
@@ -142,7 +191,10 @@ export default function ActionDetail() {
       actionName: 'refresh',
       actionLabel: 'Refresh',
       actionIcon: <RefreshCw className="w-4 h-4" />,
-      onClick: loadAction,
+      onClick: () => {
+        loadAction();
+        loadJobs();
+      },
     },
     {
       actionName: 'toggleEdit',
@@ -188,6 +240,130 @@ export default function ActionDetail() {
     }
   );
 
+  const jobColumns: ColumnMetadata<JobOverview>[] = [
+    {
+      id: 'hash',
+      label: 'Hash',
+      isHidden: true,
+      isKeyColumn: true,
+    },
+    {
+      id: 'name',
+      label: 'Name',
+      isSortable: true,
+      minWidth: 160,
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      isSortable: true,
+      minWidth: 100,
+    },
+    {
+      id: 'executionStatus',
+      label: 'Execution Status',
+      isSortable: true,
+      minWidth: 140,
+      renderCell: (row: JobOverview) => (
+        <JobStatusBadge status={(row.executionStatus || 'PENDING') as any} />
+      ),
+    },
+    {
+      id: 'schedule',
+      label: 'Type',
+      isSortable: true,
+      minWidth: 90,
+      renderCell: (row: JobOverview) =>
+        row.schedule ? (
+          <span title="Scheduled Job" className="flex items-center gap-1 text-primary-600">
+            <Clock className="w-4 h-4" />
+            <span className="text-xs">Cron</span>
+          </span>
+        ) : (
+          <span title="One-time Job" className="flex items-center gap-1 text-secondary-500">
+            <Zap className="w-4 h-4" />
+            <span className="text-xs">Once</span>
+          </span>
+        ),
+    },
+    {
+      id: 'startedAt',
+      label: 'Started At',
+      isSortable: true,
+      minWidth: 150,
+      format: (val: number) => DataTypeDisplayer.formatDate(val),
+    },
+    {
+      id: 'updatedAt',
+      label: 'Last Run',
+      isSortable: true,
+      minWidth: 150,
+      format: (val: number) => DataTypeDisplayer.formatDate(val),
+    },
+    {
+      id: 'failureNotes',
+      label: 'Failure Notes',
+      minWidth: 180,
+      renderCell: (row: JobOverview) =>
+        row.failureNotes ? (
+          <TextTruncate text={row.failureNotes} maxTextLength={60} tooltipVisiable={true} />
+        ) : (
+          <span className="text-secondary-400 text-xs">-</span>
+        ),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      minWidth: 160,
+      align: 'right',
+      actions: [
+        {
+          actionIcon: <Play className="w-4 h-4 text-emerald-600" />,
+          actionLabel: 'Resume Job',
+          actionName: 'resumeJob',
+          visible: (row: JobOverview) => row.status === 'PAUSED',
+          onClick: (row: JobOverview) => () => {
+            JobAPI.resume(actionId, row.hash, row.name, restClient).then(loadJobs);
+          },
+        },
+        {
+          actionIcon: <Pause className="w-4 h-4 text-amber-600" />,
+          actionLabel: 'Pause Job',
+          actionName: 'pauseJob',
+          visible: (row: JobOverview) => row.status === 'ACTIVE',
+          onClick: (row: JobOverview) => () => {
+            JobAPI.pause(row.hash, row.name, restClient).then(loadJobs);
+          },
+        },
+        {
+          actionIcon: <Copy className="w-4 h-4 text-secondary-600" />,
+          actionLabel: 'Clone Job',
+          actionName: 'cloneJob',
+          onClick: (row: JobOverview) => () => {
+            navigate(`/actions/${actionId}/jobs/new`, { state: { copyJobId: row.hash } });
+          },
+        },
+        {
+          actionIcon: <Eye className="w-4 h-4 text-primary-600" />,
+          actionLabel: 'Job Details',
+          actionName: 'gotoJobDetail',
+          onClick: (row: JobOverview) => () => {
+            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } });
+          },
+        },
+        {
+          actionIcon: <Trash2 className="w-4 h-4 text-error-600" />,
+          actionLabel: 'Delete Job',
+          actionName: 'deleteJob',
+          onClick: (row: JobOverview) => () => {
+            selectedJob.current = { jobId: row.hash, jobName: row.name };
+            setDeleteJobDialogOpen(true);
+          },
+        },
+      ],
+    },
+  ];
+
   return (
     <>
       <EntityDetailTemplate
@@ -198,6 +374,54 @@ export default function ActionDetail() {
         onPropertyChange={handlePropertyChange}
         disabled={!isEditing}
       />
+
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 font-sans -mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-secondary-900 dark:text-white flex items-center gap-2">
+              <List className="w-5 h-5 text-primary-600" />
+              Jobs in this Action
+            </h2>
+            <p className="text-xs text-secondary-500">
+              Manage and monitor jobs linked to this action definition
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/actions/${actionId}/jobs/new`)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-btn bg-primary-600 text-white hover:bg-primary-700 font-medium text-xs shadow-sm transition-colors"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Add Job</span>
+          </button>
+        </div>
+
+        <DataTable<JobOverview>
+          name="Action Jobs"
+          columns={jobColumns}
+          keyColumn="hash"
+          loading={jobProcessTracking}
+          pagingResult={jobPagingResult}
+          pagingOptions={{
+            pageIndex: jobPageIndex,
+            pageSize: jobPageSize,
+            orderBy: jobOrderBy,
+            searchText: jobSearchText,
+            rowsPerPageOptions: [5, 10, 20, 50],
+            onPageChange: (pIndex, pSize, pOrderBy, pSearch) => {
+              setJobPageIndex(pIndex);
+              setJobPageSize(pSize);
+              setJobOrderBy(pOrderBy);
+              setJobSearchText(pSearch);
+            },
+          }}
+          visibleSearchbar={true}
+          searchPlaceholder="Filter jobs..."
+          onRowClickCallback={(row: JobOverview) =>
+            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
+          }
+        />
+      </div>
 
       <ConfirmationDialog
         open={deleteConfirmationDialogOpen}
@@ -215,6 +439,25 @@ export default function ActionDetail() {
             navigate('/actions');
           });
           setDeleteConfirmationDialogOpen(false);
+        }}
+      />
+
+      <ConfirmationDialog
+        open={deleteJobDialogOpen}
+        title="Delete Job"
+        content={
+          <p>
+            Are you sure you want to delete job <b>{selectedJob.current.jobName}</b>?
+          </p>
+        }
+        positiveText="Yes, Delete"
+        negativeText="Cancel"
+        negativeAction={() => setDeleteJobDialogOpen(false)}
+        positiveAction={() => {
+          JobAPI.delete(selectedJob.current.jobId, selectedJob.current.jobName, restClient, () => {
+            loadJobs();
+          });
+          setDeleteJobDialogOpen(false);
         }}
       />
     </>
