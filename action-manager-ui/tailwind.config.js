@@ -1,19 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}'],
-  corePlugins: {
-    preflight: false,
-  },
+  presets: [require('@hvantran/ui-component-library/preset')],
+  content: [
+    './src/**/*.{js,jsx,ts,tsx}',
+    './node_modules/@hvantran/ui-component-library/**/*.{js,mjs,ts,tsx}',
+  ],
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
-    extend: {
-      colors: {
-        brand: {
-          primary: '#2563eb',
-          secondary: '#4b5563',
-        },
-      },
-    },
+    extend: {},
   },
   plugins: [],
-}
-
+};

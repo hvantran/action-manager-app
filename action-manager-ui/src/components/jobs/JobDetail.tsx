@@ -1,227 +1,124 @@
-import { javascript } from '@codemirror/lang-javascript';
-import { json } from '@codemirror/lang-json';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import EditIcon from '@mui/icons-material/Edit';
-import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
-import InfoIcon from '@mui/icons-material/Info';
-import PauseCircleOutline from '@mui/icons-material/PauseCircleOutline';
-import PestControlIcon from '@mui/icons-material/PestControl';
-import PlayCircleIcon from '@mui/icons-material/PlayCircle';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ReplayIcon from '@mui/icons-material/Replay';
-import SaveIcon from '@mui/icons-material/Save';
-import { Box, Chip, Stack } from '@mui/material';
-import { red, yellow } from '@mui/material/colors';
-import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
-import React from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
+  EntityDetailTemplate,
+  ConfirmationDialog,
+  PropertyMetadata,
+  PropType,
+  GenericActionMetadata,
+} from '@hvantran/ui-component-library';
+import {
+  Edit2,
+  Save,
+  Trash2,
+  RefreshCw,
+  Play,
+  Pause,
+  RotateCcw,
+  Wrench,
+  ExternalLink,
+} from 'lucide-react';
+import {
+  JobAPI,
   ActionAPI,
-  CHIP_RANDOM_COLOR,
+  JobDetailMetadata,
+  TemplateAPI,
+  TemplateOverview,
   JOB_CATEGORY_VALUES,
   JOB_OUTPUT_TARGET_VALUES,
   JOB_SCHEDULE_TIME_SELECTION,
   JOB_STATUS_SELECTION,
-  JobAPI,
-  JobDetailMetadata,
   ROOT_BREADCRUMB,
-  TemplateAPI,
-  TemplateOverview,
-  findPropertyByCondition,
-  isAllDependOnPropsValid,
 } from '../AppConstants';
-import ConfirmationDialog from '../common/ConfirmationDialog';
-import ProcessTracking from '../common/ProcessTracking';
-import {
-  DialogMetadata,
-  GenericActionMetadata,
-  PageEntityMetadata,
-  PropType,
-  PropertyMetadata,
-  RestClient,
-  onChangeProperty,
-} from '../GenericConstants';
-import PageEntityRender from '../renders/PageEntityRender';
+import { RestClient } from '../GenericConstants';
 
 export default function JobDetail() {
   const navigate = useNavigate();
   const targetJob = useParams();
-  const location = useLocation();
+  const jobId = targetJob.jobId;
+  const actionId = targetJob.actionId || '';
 
-  const jobName = React.useRef(location.state?.name || '');
-  const [isPausedJob, setIsPausedJob] = React.useState(false);
-  const jobId: string | undefined = targetJob.jobId;
-  const actionId: string = targetJob.actionId || '';
   if (!jobId) {
-    throw new Error('TaskId is required');
+    throw new Error('JobId is required');
   }
 
-  const enableEditFunction = function (isEnabled: boolean) {
-    setEditActionMeta((previous) => {
-      previous.disable = isEnabled;
-      return previous;
-    });
-    setSaveActionMeta((previous) => {
-      previous.disable = !isEnabled;
-      return previous;
-    });
-    setPropertyMetadata((previous) => {
-      return [...previous].map((p) => {
-        if (p.dependOn && !isAllDependOnPropsValid(p.dependOn, previous)) {
-          return p;
-        }
+  const jobName = useRef('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPausedJob, setIsPausedJob] = useState(false);
+  const [processTracking, setCircleProcessOpen] = useState(false);
+  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = useState(false);
 
-        if (!p.disablePerpetualy) {
-          p.disabled = !isEnabled;
-        }
+  const restClient = useMemo(() => new RestClient(setCircleProcessOpen), [setCircleProcessOpen]);
 
-        return p;
-      });
-    });
-  };
-
-  const [saveActionMeta, setSaveActionMeta] = React.useState<GenericActionMetadata>({
-    actionIcon: <SaveIcon />,
-    actionLabel: 'Save',
-    actionName: 'saveAction',
-    disable: true,
-    onClick: () =>
-      JobAPI.update(jobId, restClient, propertyMetadata, () => enableEditFunction(false)),
-  });
-
-  const [editActionMeta, setEditActionMeta] = React.useState<GenericActionMetadata>({
-    actionIcon: <EditIcon />,
-    properties: { sx: { color: yellow[800] } },
-    actionLabel: 'Edit',
-    actionName: 'editAction',
-    onClick: () => enableEditFunction(true),
-  });
-
-  const [propertyMetadata, setPropertyMetadata] = React.useState<Array<PropertyMetadata>>([
+  const [properties, setProperties] = useState<PropertyMetadata[]>([
     {
       propName: 'name',
       propLabel: 'Name',
       propValue: '',
       isRequired: true,
       disabled: true,
-      disablePerpetualy: true,
-      propDescription: 'This is name of job',
+      colSpan: 6,
       propType: PropType.InputText,
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
-      textFieldMeta: {
-        onChangeEvent: function (event: any) {
-          const propValue = event.target.value;
-          const propName = event.target.name;
-          setPropertyMetadata(onChangeProperty(propName, propValue));
-        },
+    },
+    {
+      propName: 'status',
+      propLabel: 'Status',
+      propValue: 'INITIAL',
+      disabled: true,
+      colSpan: 6,
+      propType: PropType.Selection,
+      selectionMeta: {
+        selections: JOB_STATUS_SELECTION,
       },
     },
     {
       propName: 'isAsync',
-      propLabel: 'Asynchronous',
+      propLabel: 'Asynchronous Execution',
       propValue: false,
       disabled: true,
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
+      colSpan: 6,
       propType: PropType.Switcher,
-      switcherFieldMeta: {
-        onChangeEvent: function (event, propValue) {
-          const propName = event.target.name;
-          setPropertyMetadata(
-            onChangeProperty(propName, propValue, (propertyMetadata) => {
-              if (propertyMetadata.propName === 'category') {
-                propertyMetadata.disabled = !propValue;
-              }
-            })
-          );
-        },
-      },
-    },
-    {
-      propName: 'outputTargets',
-      propLabel: 'Output',
-      disabled: true,
-      propValue: [],
-      propDefaultValue: [],
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
-      propType: PropType.Selection,
-      selectionMeta: {
-        selections: JOB_OUTPUT_TARGET_VALUES,
-        isMultiple: true,
-        onChangeEvent: function (event) {
-          const propName = event.target.name;
-          setPropertyMetadata(onChangeProperty(propName, event.target.value));
-        },
-      },
     },
     {
       propName: 'category',
       propLabel: 'Category',
+      propValue: 'IO',
       disabled: true,
-      propValue: '',
-      propDefaultValue: '',
-      dependOn: ['isAsync', true],
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
+      colSpan: 6,
       propType: PropType.Selection,
       selectionMeta: {
         selections: JOB_CATEGORY_VALUES,
-        onChangeEvent: function (event) {
-          const propName = event.target.name;
-          setPropertyMetadata(onChangeProperty(propName, event.target.value));
-        },
       },
     },
     {
       propName: 'isScheduled',
-      propLabel: 'Schedule',
+      propLabel: 'Scheduled Job',
       propValue: false,
       disabled: true,
-      layoutProperties: { xs: 6 },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
-      propDefaultValue: false,
+      colSpan: 6,
       propType: PropType.Switcher,
-      switcherFieldMeta: {
-        onChangeEvent: function (event, propValue) {
-          const propName = event.target.name;
-
-          setPropertyMetadata(
-            onChangeProperty(propName, propValue, (propertyMetadata) => {
-              if (propertyMetadata.propName === 'scheduleInterval') {
-                propertyMetadata.disabled = !propValue;
-              }
-            })
-          );
-        },
-      },
     },
     {
       propName: 'scheduleInterval',
-      propLabel: 'Period',
-      info: 'The period between successive executions',
-      disabled: true,
-      dependOn: ['isScheduled', true],
+      propLabel: 'Schedule Period',
       propValue: 0,
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
+      disabled: true,
+      colSpan: 6,
       propType: PropType.Selection,
       selectionMeta: {
         selections: JOB_SCHEDULE_TIME_SELECTION,
-        onChangeEvent: function (event) {
-          const propName = event.target.name;
-          const propValue = event.target.value;
-          setPropertyMetadata(onChangeProperty(propName, propValue));
-        },
+      },
+    },
+    {
+      propName: 'outputTargets',
+      propLabel: 'Output Target',
+      propValue: ['CONSOLE'],
+      disabled: true,
+      colSpan: 6,
+      propType: PropType.Selection,
+      selectionMeta: {
+        selections: JOB_OUTPUT_TARGET_VALUES,
+        isMultiple: true,
       },
     },
     {
@@ -229,366 +126,190 @@ export default function JobDetail() {
       propLabel: 'Description',
       propValue: '',
       disabled: true,
-      layoutProperties: { xs: 6 },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
+      colSpan: 12,
       propType: PropType.Textarea,
       textareaFieldMeta: {
-        onChangeEvent: function (event: any) {
-          const propValue = event.target.value;
-          const propName = event.target.name;
-          setPropertyMetadata(onChangeProperty(propName, propValue));
-        },
-      },
-    },
-    {
-      propName: 'status',
-      propLabel: 'Status',
-      disabled: true,
-      propValue: '',
-      layoutProperties: { xs: 6, alignItems: 'center', justifyContent: 'center' },
-      labelElementProperties: { xs: 4, sx: { pl: 10 } },
-      valueElementProperties: { xs: 8 },
-      propType: PropType.Selection,
-      selectionMeta: {
-        selections: JOB_STATUS_SELECTION,
-        onChangeEvent: function (event) {
-          const propValue = event.target.value;
-          const propName = event.target.name;
-          setPropertyMetadata(onChangeProperty(propName, propValue));
-        },
+        rows: 3,
+        placeholder: 'Job description...',
       },
     },
     {
       propName: 'configurations',
-      propLabel: 'Configurations',
+      propLabel: 'Configurations (JSON)',
       isRequired: true,
       propValue: '{}',
       disabled: true,
-      propDefaultValue: '{}',
-      layoutProperties: { xs: 12 },
-      labelElementProperties: { xs: 2, sx: { pl: 10 } },
-      valueElementProperties: { xs: 10 },
+      colSpan: 12,
       propType: PropType.CodeEditor,
       codeEditorMeta: {
-        height: '100px',
-        codeLanguges: [json()],
-        onChangeEvent: function (propName) {
-          return (value, _) => {
-            const propValue = value;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
-          };
-        },
-      },
-    },
-    {
-      propName: 'templates',
-      propLabel: 'Content Templates',
-      propValue: [],
-      disabled: true,
-      layoutProperties: { xs: 12 },
-      labelElementProperties: { xs: 2, sx: { pl: 10 } },
-      valueElementProperties: { xs: 10 },
-      propType: PropType.Autocomplete,
-      autoCompleteMeta: {
-        isMultiple: true,
-        options: [],
-        limitTags: 4,
-        filterSelectedOptions: true,
-        isOptionEqualToValue(option: TemplateOverview, value: TemplateOverview) {
-          return option.templateName === value.templateName;
-        },
-        getOptionLabel: (option: TemplateOverview) => {
-          return option.templateName;
-        },
-        renderTags: (value: Array<TemplateOverview>, getTagProps) =>
-          value.map((option, index) => {
-            const { key, ...tagProps } = getTagProps({ index });
-            return (
-              <Chip
-                key={key}
-                label={option.templateName}
-                sx={{
-                  backgroundColor:
-                    CHIP_RANDOM_COLOR[Math.floor(Math.random() * CHIP_RANDOM_COLOR.length)],
-                  color: 'white',
-                }}
-                {...tagProps}
-              />
-            );
-          }),
-        onChange: function (event, value: Array<TemplateOverview>, reason) {
-          const templateContent = value
-            .map((p) => `//*************** ${p.templateName} ***************\n${p.templateText}`)
-            .join('\n\n');
-
-          const templateProperty = findPropertyByCondition(propertyMetadata, (property) =>
-            property.propName.startsWith('templates')
-          );
-          const configurationProperty = findPropertyByCondition(propertyMetadata, (property) =>
-            property.propName.startsWith('configurations')
-          );
-          const allOptions = templateProperty?.autoCompleteMeta?.options;
-          const allOptionsArr = allOptions as Array<TemplateOverview>;
-          const allTemplateConfigurations = allOptionsArr
-            .map((p) => JSON.parse(p.dataTemplateJSON))
-            .reduce((previousValue, currentValue) => {
-              return { ...previousValue, ...currentValue };
-            }, {});
-          const currentConfigurations = JSON.parse(configurationProperty?.propValue);
-
-          const customOwnConfigurations: any = {};
-          Object.keys(currentConfigurations)
-            .filter((p) => !allTemplateConfigurations.hasOwnProperty(p))
-            .forEach((p) => (customOwnConfigurations[p] = currentConfigurations[p]));
-
-          const configurations = value
-            .map((p) => JSON.parse(p.dataTemplateJSON))
-            .reduce((previousValue, currentValue) => {
-              return { ...previousValue, ...currentValue };
-            }, customOwnConfigurations);
-          setPropertyMetadata(onChangeProperty('content', templateContent));
-          setPropertyMetadata(onChangeProperty('templates', value));
-          setPropertyMetadata(
-            onChangeProperty('configurations', JSON.stringify(configurations, undefined, 2))
-          );
-        },
-        onSearchTextChangeEvent: function (event: any) {
-          const propValue = event.target.value;
-          TemplateAPI.search(propValue, restClient, (templateOverviews) => {
-            setPropertyMetadata(
-              onChangeProperty(
-                'templates',
-                templateOverviews,
-                undefined,
-                (property: PropertyMetadata) => {
-                  if (property.autoCompleteMeta) {
-                    property.autoCompleteMeta.options = templateOverviews;
-                  }
-                }
-              )
-            );
-          });
-        },
+        height: '150px',
+        codeLanguages: ['json'],
       },
     },
     {
       propName: 'content',
-      propLabel: 'Content Script',
-      layoutProperties: { xs: 12 },
-      labelElementProperties: { xs: 2, sx: { pl: 10 } },
-      valueElementProperties: { xs: 10 },
+      propLabel: 'Content Script (JavaScript)',
       isRequired: true,
-      disabled: true,
       propValue: '',
-      propDefaultValue: '',
+      disabled: true,
+      colSpan: 12,
       propType: PropType.CodeEditor,
       codeEditorMeta: {
-        codeLanguges: [javascript({ jsx: true })],
-        onChangeEvent: function (propName) {
-          return (value, _) => {
-            const propValue = value;
-            setPropertyMetadata(onChangeProperty(propName, propValue));
-          };
-        },
+        height: '400px',
+        codeLanguages: ['javascript'],
       },
     },
   ]);
-  const [processTracking, setCircleProcessOpen] = React.useState(false);
-  const [deleteConfirmationDialogOpen, setDeleteConfirmationDialogOpen] = React.useState(false);
-  const restClient = React.useMemo(() => new RestClient(setCircleProcessOpen), []);
 
-  const breadcrumbs = [
-    <Link underline="hover" key="1" color="inherit" href="/actions">
-      {ROOT_BREADCRUMB}
-    </Link>,
-    <Link underline="hover" key="1" color="inherit" href={`/actions/${actionId}`}>
-      {actionId}
-    </Link>,
-    <Typography key="3" color="text.primary">
-      Jobs
-    </Typography>,
-    <Typography key="3" color="text.primary">
-      {jobId}
-    </Typography>,
-  ];
+  const loadJob = () => {
+    JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
+      jobName.current = jobDetail.name || '';
+      setIsPausedJob(jobDetail.status === 'PAUSED');
 
-  const onLoad = () => {
-    TemplateAPI.search('', restClient, (templateOverviews) => {
-      setPropertyMetadata(
-        onChangeProperty(
-          'templates',
-          templateOverviews,
-          undefined,
-          (property: PropertyMetadata) => {
-            if (property.autoCompleteMeta) {
-              property.autoCompleteMeta.options = templateOverviews;
-            }
-          }
-        )
+      setProperties((prev) =>
+        prev.map((p) => {
+          const val = (jobDetail as any)[p.propName];
+          return val !== undefined ? { ...p, propValue: val } : p;
+        })
       );
     });
-    JobAPI.load(jobId, restClient, (jobDetail: JobDetailMetadata) => {
-      jobName.current = jobDetail.name;
-      jobDetail.templates = jobDetail.templates || '[]';
-      setIsPausedJob(jobDetail.status === 'PAUSED');
-      const valueCallback = (property: PropertyMetadata, value: any) => {
-        return (property.propValue = property.propName === 'templates' ? JSON.parse(value) : value);
-      };
-      Object.keys(jobDetail).forEach((propertyName: string) => {
-        const rawPropValue = jobDetail[propertyName as keyof JobDetailMetadata];
-        setPropertyMetadata(onChangeProperty(propertyName, rawPropValue, undefined, valueCallback));
-      });
+  };
+
+  useEffect(() => {
+    loadJob();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+
+  const handlePropertyChange = (propName: string, value: any) => {
+    setProperties((prev) =>
+      prev.map((p) => {
+        if (p.propName === propName) {
+          return { ...p, propValue: value };
+        }
+        return p;
+      })
+    );
+  };
+
+  const handleToggleEdit = () => {
+    const nextEditing = !isEditing;
+    setIsEditing(nextEditing);
+    setProperties((prev) =>
+      prev.map((p) => {
+        if (p.propName === 'name') return p; // Name is read-only
+        return { ...p, disabled: !nextEditing };
+      })
+    );
+  };
+
+  const handleSave = () => {
+    JobAPI.update(jobId, restClient, properties as any, () => {
+      handleToggleEdit();
+      loadJob();
     });
   };
 
-  const onPause = () => {
-    setIsPausedJob(true);
-    JobAPI.pause(jobId, jobName.current, restClient);
+  const handlePauseResume = () => {
+    if (isPausedJob) {
+      setIsPausedJob(false);
+      JobAPI.resume(actionId, jobId, jobName.current, restClient);
+    } else {
+      setIsPausedJob(true);
+      JobAPI.pause(jobId, jobName.current, restClient);
+    }
   };
 
-  const onResume = () => {
-    setIsPausedJob(false);
-    JobAPI.resume(actionId, jobId, jobName.current, restClient);
-  };
+  const breadcrumbs = [
+    { label: ROOT_BREADCRUMB, href: '/actions' },
+    { label: actionId || 'Action', href: `/actions/${actionId}` },
+    { label: 'Jobs', href: '/jobs' },
+    { label: jobName.current || jobId },
+  ];
 
-  React.useEffect(onLoad, [jobId, restClient]);
-
-  const pageEntityMetadata: PageEntityMetadata = {
-    pageName: 'template-details',
-    breadcumbsMeta: breadcrumbs,
-    pageEntityActions: [
-      editActionMeta,
-      saveActionMeta,
-      {
-        actionIcon: (
-          <Link
-            underline="hover"
-            key="1"
-            color="black"
-            target="_blank"
-            href={`${process.env.REACT_APP_TROUBLESHOOTING_BASE_URL}app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now%2Fd,to:now%2Fd))&_a=(columns:!(),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',key:jobName.keyword,negate:!f,params:(query:${jobName.current}),type:phrase),query:(match_phrase:(jobName.keyword:${jobName.current})))),index:'364e818f-85bf-4cd6-8608-c4e43ec6f98e',interval:auto,query:(language:kuery,query:''),sort:!(!('@timestamp',desc)))`}
-            rel="noopener noreferrer"
-          >
-            <PestControlIcon sx={{ color: red[900] }} />
-          </Link>
-        ),
-        actionLabel: 'Troubleshoot',
-        actionName: 'troubleshootAction',
-        isSecondary: true,
-      },
-      {
-        actionIcon: <EngineeringOutlinedIcon />,
-        // properties: {color: 'success'},
-        actionLabel: 'Dry run',
-        actionName: 'dryRunAction',
-        isSecondary: true,
-        onClick: () => JobAPI.dryRun(restClient, propertyMetadata, actionId),
-      },
-      {
-        actionIcon: <ReplayIcon />,
-        actionLabel: 'Replay',
-        isSecondary: true,
-        actionLabelContent: (
-          <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
-            <InfoIcon />
-            <p>
-              Replay function only support for <b>one time</b> and <b>schedule jobs</b>
-            </p>
-          </Box>
-        ),
-        actionName: 'replayJob',
-        onClick: () => ActionAPI.replayJob(actionId, jobId, restClient),
-      },
-      {
-        actionIcon: <DeleteForeverIcon />,
-        properties: { sx: { color: red[800] } },
-        actionLabel: 'Delete',
-        actionName: 'deleteAction',
-        actionLabelContent: (
-          <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
-            <InfoIcon />
-            <p>
-              The job will be <b>deleted forever</b>
-            </p>
-          </Box>
-        ),
-        onClick: () => setDeleteConfirmationDialogOpen(true),
-      },
-      {
-        actionIcon: <PlayCircleIcon />,
-        visible: isPausedJob,
-        actionLabelContent: (
-          <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
-            <InfoIcon />
-            <p>
-              Paused/Resume function only support for schedule jobs,{' '}
-              <b>doesn't support for one time jobs</b>
-            </p>
-          </Box>
-        ),
-        actionLabel: 'Resume',
-        actionName: 'resumeAction',
-        onClick: onResume,
-      },
-      {
-        actionIcon: <PauseCircleOutline />,
-        visible: !isPausedJob,
-        actionLabelContent: (
-          <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
-            <InfoIcon />
-            <p>
-              Paused/Resume function only support for schedule jobs,{' '}
-              <b>doesn't support for one time jobs</b>
-            </p>
-          </Box>
-        ),
-        actionLabel: 'Pause',
-        actionName: 'pauseAction',
-        onClick: onPause,
-      },
-      {
-        actionIcon: <RefreshIcon />,
-        actionLabel: 'Refresh',
-        actionName: 'refreshAction',
-        onClick: onLoad,
-      },
-    ],
-    properties: propertyMetadata,
-  };
-
-  const confirmationDeleteDialogMeta: DialogMetadata = {
-    open: deleteConfirmationDialogOpen,
-    title: 'Delete Job',
-    content: (
-      <p>
-        Are you sure you want to delete <b>{jobName.current}</b> job?
-      </p>
-    ),
-    positiveText: 'Yes',
-    negativeText: 'No',
-    negativeAction() {
-      setDeleteConfirmationDialogOpen(false);
+  const headerActions: GenericActionMetadata[] = [
+    {
+      actionName: 'refresh',
+      actionLabel: 'Refresh',
+      actionIcon: <RefreshCw className="w-4 h-4" />,
+      onClick: loadJob,
     },
-    positiveAction() {
-      JobAPI.delete(jobId, jobName.current, restClient, () => navigate('/actions/' + actionId));
+    {
+      actionName: 'toggleEdit',
+      actionLabel: isEditing ? 'Cancel Edit' : 'Edit',
+      actionIcon: <Edit2 className="w-4 h-4" />,
+      onClick: handleToggleEdit,
     },
-  };
+  ];
+
+  if (isEditing) {
+    headerActions.push({
+      actionName: 'save',
+      actionLabel: 'Save Changes',
+      actionIcon: <Save className="w-4 h-4 text-primary-600" />,
+      onClick: handleSave,
+    });
+  }
+
+  headerActions.push(
+    {
+      actionName: 'pauseResume',
+      actionLabel: isPausedJob ? 'Resume Job' : 'Pause Job',
+      actionIcon: isPausedJob ? (
+        <Play className="w-4 h-4 text-success-600" />
+      ) : (
+        <Pause className="w-4 h-4 text-warning-600" />
+      ),
+      onClick: handlePauseResume,
+    },
+    {
+      actionName: 'replay',
+      actionLabel: 'Replay Job',
+      actionIcon: <RotateCcw className="w-4 h-4" />,
+      onClick: () => ActionAPI.replayJob(actionId, jobId, restClient),
+    },
+    {
+      actionName: 'dryRun',
+      actionLabel: 'Dry Run',
+      actionIcon: <Wrench className="w-4 h-4" />,
+      onClick: () => JobAPI.dryRun(restClient, properties as any, actionId),
+    },
+    {
+      actionName: 'delete',
+      actionLabel: 'Delete Job',
+      actionIcon: <Trash2 className="w-4 h-4 text-error-600" />,
+      onClick: () => setDeleteConfirmationDialogOpen(true),
+    }
+  );
 
   return (
-    <Stack 
-      spacing={2}
-      className="p-6 space-y-4 bg-white rounded-lg"
-      sx={{
-        padding: 3,
-        gap: 2,
-        backgroundColor: 'white',
-        borderRadius: 2,
-      }}
-    >
-      <PageEntityRender {...pageEntityMetadata}></PageEntityRender>
-      <ProcessTracking isLoading={processTracking}></ProcessTracking>
-      <ConfirmationDialog {...confirmationDeleteDialogMeta}></ConfirmationDialog>
-    </Stack>
+    <>
+      <EntityDetailTemplate
+        pageTitle={`Job: ${jobName.current || jobId}`}
+        breadcrumbs={breadcrumbs}
+        headerActions={headerActions}
+        properties={properties}
+        onPropertyChange={handlePropertyChange}
+        disabled={!isEditing}
+      />
+
+      <ConfirmationDialog
+        open={deleteConfirmationDialogOpen}
+        title="Delete Job"
+        content={
+          <p>
+            Are you sure you want to delete <b>{jobName.current}</b> job? This action cannot be undone.
+          </p>
+        }
+        positiveText="Yes, Delete"
+        negativeText="Cancel"
+        negativeAction={() => setDeleteConfirmationDialogOpen(false)}
+        positiveAction={() => {
+          JobAPI.delete(jobId, jobName.current, restClient, () => {
+            navigate(actionId ? `/actions/${actionId}` : '/jobs');
+          });
+          setDeleteConfirmationDialogOpen(false);
+        }}
+      />
+    </>
   );
 }

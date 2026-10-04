@@ -1,29 +1,14 @@
-import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
-import DeleteIcon from '@mui/icons-material/Delete';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import PauseIcon from '@mui/icons-material/Pause';
-import RestoreIcon from '@mui/icons-material/Restore';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
+import React, { useState } from 'react';
+import { ConfirmationDialog } from '@hvantran/ui-component-library';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  IconButton,
-  LinearProgress,
-  Link,
-  Typography,
-} from '@mui/material';
-import React from 'react';
-
+  Star,
+  Download,
+  Pause,
+  RotateCcw,
+  Archive,
+  Trash2,
+  MoreHorizontal,
+} from 'lucide-react';
 import { ActionAPI, ActionOverview } from '../AppConstants';
 import { RestClient } from '../GenericConstants';
 
@@ -37,10 +22,8 @@ export interface ActionCardProps {
 
 type HealthStatus = 'Critical' | 'Warning' | 'Healthy';
 
-// Utility functions
 function getHealthStatus(action: ActionOverview): HealthStatus {
   const failureRate = action.numberOfFailureJobs / (action.numberOfJobs || 1);
-
   if (failureRate > 0.3 || action.numberOfFailureJobs > 0) return 'Critical';
   if (action.numberOfPendingJobs > action.numberOfJobs * 0.5) return 'Warning';
   return 'Healthy';
@@ -58,6 +41,20 @@ function formatDate(timestamp: number): string {
   return date.toISOString().split('T')[0];
 }
 
+const statusColorsMap: Record<string, { bg: string; text: string }> = {
+  INITIAL: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-700 dark:text-slate-300' },
+  ACTIVE: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-300' },
+  PAUSED: { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-300' },
+  DELETED: { bg: 'bg-red-50 dark:bg-red-950/40', text: 'text-red-700 dark:text-red-300' },
+  ARCHIVED: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400' },
+};
+
+const healthColorsMap: Record<HealthStatus, { dot: string; text: string }> = {
+  Healthy: { dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' },
+  Warning: { dot: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400' },
+  Critical: { dot: 'bg-red-500', text: 'text-red-600 dark:text-red-400' },
+};
+
 const ActionCard = React.memo(function ActionCard({
   action,
   onClick,
@@ -65,8 +62,9 @@ const ActionCard = React.memo(function ActionCard({
   onRefresh,
   onStatusChange,
 }: ActionCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(action.isFavorite || false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [isFavorite, setIsFavorite] = useState(action.isFavorite || false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   const healthStatus = getHealthStatus(action);
   const successRate = calculateSuccessRate(action);
   const total = action.numberOfJobs || 0;
@@ -77,15 +75,8 @@ const ActionCard = React.memo(function ActionCard({
     const newFavoriteState = !isFavorite;
     ActionAPI.setFavoriteAction(action.hash, newFavoriteState, restClient, () => {
       setIsFavorite(newFavoriteState);
-      // Trigger refresh after successful favorite toggle
-      if (onRefresh) {
-        onRefresh();
-      }
+      if (onRefresh) onRefresh();
     });
-  };
-
-  const handleMenuClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
   };
 
   const handleExport = (e: React.MouseEvent) => {
@@ -96,24 +87,16 @@ const ActionCard = React.memo(function ActionCard({
   const handleArchive = (e: React.MouseEvent) => {
     e.stopPropagation();
     ActionAPI.archive(action.hash, restClient, () => {
-      // Trigger refresh of all columns when status changes
-      if (onStatusChange) {
-        onStatusChange();
-      } else if (onRefresh) {
-        onRefresh();
-      }
+      if (onStatusChange) onStatusChange();
+      else if (onRefresh) onRefresh();
     });
   };
 
   const handleRestore = (e: React.MouseEvent) => {
     e.stopPropagation();
     ActionAPI.restoreAction(action.hash, restClient, () => {
-      // Trigger refresh of all columns when status changes
-      if (onStatusChange) {
-        onStatusChange();
-      } else if (onRefresh) {
-        onRefresh();
-      }
+      if (onStatusChange) onStatusChange();
+      else if (onRefresh) onRefresh();
     });
   };
 
@@ -122,406 +105,211 @@ const ActionCard = React.memo(function ActionCard({
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    setDeleteDialogOpen(false);
-    // Use soft delete - move to DELETED status
-    ActionAPI.softDeleteAction(action.hash, restClient, () => {
-      // Trigger refresh of all columns when status changes
-      if (onStatusChange) {
-        onStatusChange();
-      } else if (onRefresh) {
-        onRefresh();
-      }
-    });
-  };
-
-  const handlePermanentDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDeleteDialogOpen(true);
-  };
-
-  const handlePermanentDeleteConfirm = () => {
-    setDeleteDialogOpen(false);
-    ActionAPI.permanentDeleteAction(action.hash, restClient, () => {
-      // Trigger refresh after successful permanent delete
-      if (onRefresh) {
-        onRefresh();
-      }
-    });
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-  };
-
   const handlePause = (e: React.MouseEvent) => {
     e.stopPropagation();
     ActionAPI.pauseAction(action.hash, restClient, () => {
-      // Trigger refresh of all columns when status changes
-      if (onStatusChange) {
-        onStatusChange();
-      } else if (onRefresh) {
-        onRefresh();
-      }
+      if (onStatusChange) onStatusChange();
+      else if (onRefresh) onRefresh();
     });
   };
 
-  const getHealthColor = (status: HealthStatus) => {
-    switch (status) {
-      case 'Critical':
-        return '#dc2626';
-      case 'Warning':
-        return '#ea580c';
-      case 'Healthy':
-        return '#10b981';
-    }
+  const handleDeleteConfirm = () => {
+    ActionAPI.softDeleteAction(action.hash, restClient, () => {
+      setDeleteDialogOpen(false);
+      if (onStatusChange) onStatusChange();
+      else if (onRefresh) onRefresh();
+    });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'ACTIVE':
-        return { bg: '#d1fae5', text: '#065f46' };
-      case 'PAUSED':
-        return { bg: '#fef3c7', text: '#92400e' };
-      case 'INITIAL':
-        return { bg: '#e0e7ff', text: '#3730a3' };
-      default:
-        return { bg: '#f3f4f6', text: '#1f2937' };
-    }
+  const handlePermanentDeleteConfirm = () => {
+    ActionAPI.deleteAction(action.hash, restClient, () => {
+      setDeleteDialogOpen(false);
+      if (onStatusChange) onStatusChange();
+      else if (onRefresh) onRefresh();
+    });
   };
 
-  const statusColors = getStatusColor(action.status);
+  const statusStyle = statusColorsMap[action.status] || statusColorsMap.INITIAL;
+  const healthStyle = healthColorsMap[healthStatus];
 
   return (
     <>
-      <Card
-        className="mb-2 rounded-[1.4rem] border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-        sx={{
-          mb: 2,
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          border: '1px solid #e5e7eb',
-        '&:hover': {
-          boxShadow: 3,
-          borderColor: '#d1d5db',
-        },
-      }}
-      onClick={onClick}
-    >
-      <CardContent className="p-4" sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        {/* Header: Title with Star and Menu */}
-        <Box
-          className="mb-1 flex items-start justify-between gap-2"
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: '1rem',
-              fontWeight: 600,
-              flex: 1,
-              mr: 1,
-              lineHeight: 1.4,
-              wordBreak: 'break-word',
-            }}
-          >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className="w-full text-left bg-surface-card-light dark:bg-surface-card-dark rounded-xl border border-secondary-200 dark:border-secondary-800 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer mb-3 font-sans"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="font-semibold text-sm text-secondary-900 dark:text-white break-words flex-1">
             {action.name}
-          </Typography>
-          <Box className="flex gap-1" sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton
-              size="small"
+          </h3>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               onClick={handleFavoriteClick}
-              className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
-              sx={{ p: 0.5 }}
+              className="p-1 rounded-full text-secondary-400 hover:text-amber-500 hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
             >
-              {isFavorite ? (
-                <StarIcon sx={{ fontSize: 20, color: '#eab308' }} />
-              ) : (
-                <StarBorderIcon sx={{ fontSize: 20 }} />
-              )}
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={handleMenuClick}
-              className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
-              sx={{ p: 0.5 }}
-            >
-              <MoreHorizIcon sx={{ fontSize: 20 }} />
-            </IconButton>
-          </Box>
-        </Box>
-
-        {/* Status and Date */}
-        <Box className="mb-2 flex flex-wrap items-center gap-2" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Chip
-            label={action.status.toUpperCase()}
-            size="small"
-            sx={{
-              backgroundColor: statusColors.bg,
-              color: statusColors.text,
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              height: 24,
-            }}
-            className="rounded-full"
-          />
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-            • {formatDate(action.createdAt)}
-          </Typography>
-        </Box>
-
-        {/* Metrics Grid: Total Jobs and Health */}
-        <Box className="mb-2 grid grid-cols-2 gap-3" sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
-          <Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: '0.75rem', fontWeight: 500, display: 'block', mb: 0.5 }}
-            >
-              TOTAL JOBS
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '2rem' }}>
-              {total}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: '0.75rem', fontWeight: 500, display: 'block', mb: 0.5 }}
-            >
-              HEALTH
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  backgroundColor: getHealthColor(healthStatus),
-                }}
+              <Star
+                className={`w-4 h-4 ${
+                  isFavorite ? 'fill-amber-400 text-amber-400' : 'text-secondary-400'
+                }`}
               />
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 600, color: getHealthColor(healthStatus), fontSize: '0.875rem' }}
-              >
-                {healthStatus}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
+            </button>
+          </div>
+        </div>
 
-        {/* Status Breakdown */}
-        <Box className="mb-2" sx={{ mb: 2 }}>
-          <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
+        {/* Status & Date */}
+        <div className="flex items-center gap-2 mb-3">
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase ${statusStyle.bg} ${statusStyle.text}`}
           >
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-              Status Breakdown
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: '0.75rem', fontWeight: 600 }}
-            >
-              {successRate}% Success
-            </Typography>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={successRate}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: '#fecaca',
-              '& .MuiLinearProgress-bar': {
-                backgroundColor: '#10b981',
-                borderRadius: 4,
-              },
-            }}
-          />
-          {/* Legend */}
-          <Box className="mt-1 flex flex-wrap gap-3" sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#f97316' }} />
-              <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
-                {scheduledCount}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#dc2626' }} />
-              <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
-                {action.numberOfFailureJobs}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#10b981' }} />
-              <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
-                {action.numberOfSuccessJobs}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#8b5cf6' }} />
-              <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
-                {action.numberOfPendingJobs}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
+            {action.status}
+          </span>
+          <span className="text-xs text-secondary-400">&bull; {formatDate(action.createdAt)}</span>
+        </div>
 
-        {/* Footer: View Details and Actions */}
-        <Box
-          className="flex items-center justify-between border-t border-slate-100 pt-2"
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            pt: 1,
-            borderTop: '1px solid #f3f4f6',
-          }}
-        >
-          <Link
-            href="#"
-            underline="hover"
-            className="text-xs font-bold uppercase tracking-[0.16em]"
-            sx={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: '#2563eb',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              onClick();
-            }}
-          >
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 gap-2 mb-3 bg-secondary-50/60 dark:bg-secondary-800/40 p-2.5 rounded-lg">
+          <div>
+            <span className="text-[10px] uppercase font-semibold text-secondary-400 block mb-0.5">
+              Total Jobs
+            </span>
+            <span className="text-xl font-bold text-secondary-900 dark:text-white">{total}</span>
+          </div>
+          <div>
+            <span className="text-[10px] uppercase font-semibold text-secondary-400 block mb-0.5">
+              Health
+            </span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`w-2 h-2 rounded-full ${healthStyle.dot}`} />
+              <span className={`text-xs font-semibold ${healthStyle.text}`}>{healthStatus}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-3">
+          <div className="flex justify-between items-center text-[11px] text-secondary-500 mb-1">
+            <span>Success Rate</span>
+            <span className="font-semibold text-secondary-700 dark:text-secondary-300">
+              {successRate}%
+            </span>
+          </div>
+          <div className="w-full bg-red-100 dark:bg-red-950/40 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-emerald-500 h-1.5 rounded-full transition-all"
+              style={{ width: `${successRate}%` }}
+            />
+          </div>
+          {/* Counters */}
+          <div className="flex items-center gap-3 mt-1.5 text-[11px]">
+            <span className="flex items-center gap-1 text-amber-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              {scheduledCount}
+            </span>
+            <span className="flex items-center gap-1 text-red-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              {action.numberOfFailureJobs}
+            </span>
+            <span className="flex items-center gap-1 text-emerald-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {action.numberOfSuccessJobs}
+            </span>
+            <span className="flex items-center gap-1 text-purple-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+              {action.numberOfPendingJobs}
+            </span>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between pt-2 border-t border-secondary-100 dark:border-secondary-800/80">
+          <span className="text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">
             View Details
-          </Link>
-          <Box className="flex gap-1" sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton
-              size="small"
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              title="Export action"
               onClick={handleExport}
-              className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
-              sx={{ p: 0.5 }}
-              title="Export"
+              className="p-1 text-secondary-500 hover:text-secondary-800 dark:hover:text-white rounded hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
             >
-              <FileDownloadIcon sx={{ fontSize: 18 }} />
-            </IconButton>
+              <Download className="w-3.5 h-3.5" />
+            </button>
             {action.status === 'ACTIVE' && (
-              <IconButton
-                size="small"
+              <button
+                type="button"
+                title="Pause action"
                 onClick={handlePause}
-                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
-                sx={{ p: 0.5 }}
-                title="Pause"
+                className="p-1 text-secondary-500 hover:text-amber-600 rounded hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
               >
-                <PauseIcon sx={{ fontSize: 18 }} />
-              </IconButton>
+                <Pause className="w-3.5 h-3.5" />
+              </button>
             )}
-            {action.status === 'ARCHIVED' && (
-              <IconButton
-                size="small"
+            {(action.status === 'ARCHIVED' || action.status === 'DELETED') && (
+              <button
+                type="button"
+                title="Restore action"
                 onClick={handleRestore}
-                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
-                sx={{ p: 0.5 }}
-                title="Restore"
+                className="p-1 text-secondary-500 hover:text-emerald-600 rounded hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
               >
-                <RestoreIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            )}
-            {action.status === 'DELETED' && (
-              <IconButton
-                size="small"
-                onClick={handleRestore}
-                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
-                sx={{ p: 0.5 }}
-                title="Restore from Trash"
-              >
-                <RestoreIcon sx={{ fontSize: 18 }} />
-              </IconButton>
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
             )}
             {action.status !== 'DELETED' && action.status !== 'ARCHIVED' && (
-              <IconButton
-                size="small"
+              <button
+                type="button"
+                title="Archive action"
                 onClick={handleArchive}
-                className="rounded-full border border-slate-200 bg-white p-1 text-slate-600 hover:bg-slate-50"
-                sx={{ p: 0.5 }}
-                title="Archive"
+                className="p-1 text-secondary-500 hover:text-secondary-800 dark:hover:text-white rounded hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
               >
-                <ArchiveOutlinedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
+                <Archive className="w-3.5 h-3.5" />
+              </button>
             )}
-            {action.status === 'DELETED' ? (
-              <IconButton 
-                size="small" 
-                onClick={handlePermanentDelete} 
-                className="rounded-full border border-red-200 bg-red-50 p-1"
-                sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
-                title="Delete Forever"
-              >
-                <DeleteIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            ) : action.status !== 'ARCHIVED' && (
-              <IconButton 
-                size="small" 
-                onClick={handleDelete} 
-                className="rounded-full border border-red-200 bg-red-50 p-1"
-                sx={{ p: 0.5, color: '#dc2626', '&:hover': { color: '#b91c1c' } }} 
-                title="Move to Trash"
-              >
-                <DeleteIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            )}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
+            <button
+              type="button"
+              title={action.status === 'DELETED' ? 'Delete forever' : 'Move to trash'}
+              onClick={handleDelete}
+              className="p-1 text-secondary-500 hover:text-error-600 rounded hover:bg-error-50 dark:hover:bg-error-950/40 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-    {/* Delete Confirmation Dialog */}
-    <Dialog
-      open={deleteDialogOpen}
-      onClose={handleDeleteCancel}
-      aria-labelledby="delete-dialog-title"
-      aria-describedby="delete-dialog-description"
-      PaperProps={{
-        className: 'rounded-3xl border border-slate-200 bg-white shadow-2xl',
-      }}
-    >
-      <DialogTitle id="delete-dialog-title" className="px-6 pt-6 text-xl font-semibold text-slate-900">
-        {action.status === 'DELETED' ? 'Permanently Delete Action' : 'Move to Trash'}
-      </DialogTitle>
-      <DialogContent className="px-6 pb-2">
-        <DialogContentText id="delete-dialog-description" className="text-sm leading-6 text-slate-600">
-          {action.status === 'DELETED' ? (
-            <>
-              Are you sure you want to <strong>permanently delete</strong> action "<strong>{action.name}</strong>"?
-              <br /><br />
-              <strong style={{ color: '#dc2626' }}>Warning: This action cannot be undone. All associated jobs and results will be permanently removed.</strong>
-            </>
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        title={action.status === 'DELETED' ? 'Permanently Delete Action' : 'Move to Trash'}
+        content={
+          action.status === 'DELETED' ? (
+            <p>
+              Are you sure you want to permanently delete action <b>{action.name}</b>? All
+              associated jobs and results will be permanently removed.
+            </p>
           ) : (
-            <>
-              Are you sure you want to move action "<strong>{action.name}</strong>" to trash? 
-              You can restore it later from the DELETED column.
-            </>
-          )}
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions className="px-6 pb-6 pt-2">
-        <Button onClick={handleDeleteCancel} color="primary" className="rounded-full px-5 py-2 text-xs font-semibold tracking-[0.16em] text-slate-600">
-          Cancel
-        </Button>
-        <Button 
-          onClick={action.status === 'DELETED' ? handlePermanentDeleteConfirm : handleDeleteConfirm} 
-          color="error" 
-          variant="contained" 
-          className="rounded-full bg-red-600 px-5 py-2 text-xs font-semibold tracking-[0.16em] text-white hover:bg-red-700"
-          autoFocus
-        >
-          {action.status === 'DELETED' ? 'Delete Forever' : 'Move to Trash'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+            <p>
+              Are you sure you want to move action <b>{action.name}</b> to trash? You can restore it
+              later from the DELETED column.
+            </p>
+          )
+        }
+        positiveText={action.status === 'DELETED' ? 'Delete Forever' : 'Move to Trash'}
+        negativeText="Cancel"
+        negativeAction={() => setDeleteDialogOpen(false)}
+        positiveAction={
+          action.status === 'DELETED' ? handlePermanentDeleteConfirm : handleDeleteConfirm
+        }
+      />
     </>
   );
 });

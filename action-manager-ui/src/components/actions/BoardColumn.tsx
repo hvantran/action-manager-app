@@ -1,14 +1,15 @@
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import PauseCircleIcon from '@mui/icons-material/PauseCircle';
-import { Box, Button, Chip, CircularProgress, Paper, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import {
+  Circle,
+  CheckCircle,
+  PauseCircle,
+  Trash2,
+  Archive,
+  ChevronDown,
+  PlusCircle,
+} from 'lucide-react';
+import { Spinner } from '@hvantran/ui-component-library';
 import { ActionAPI, ActionOverview } from '../AppConstants';
 import { RestClient } from '../GenericConstants';
 
@@ -25,12 +26,15 @@ export interface BoardColumnProps {
   onStatusChange?: () => void;
 }
 
-const statusConfig = {
-  INITIAL: { icon: FiberManualRecordIcon, color: '#6b7280', bg: '#f3f4f6' },
-  ACTIVE: { icon: CheckCircleIcon, color: '#10b981', bg: '#d1fae5' },
-  PAUSED: { icon: PauseCircleIcon, color: '#f59e0b', bg: '#fef3c7' },
-  DELETED: { icon: DeleteIcon, color: '#ef4444', bg: '#fee2e2' },
-  ARCHIVED: { icon: ArchiveIcon, color: '#9ca3af', bg: '#e5e7eb' },
+const statusConfig: Record<
+  ActionStatus,
+  { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }
+> = {
+  INITIAL: { icon: Circle, color: 'text-slate-500', bg: 'bg-slate-100 dark:bg-slate-800' },
+  ACTIVE: { icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+  PAUSED: { icon: PauseCircle, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/40' },
+  DELETED: { icon: Trash2, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-950/40' },
+  ARCHIVED: { icon: Archive, color: 'text-slate-400', bg: 'bg-slate-100 dark:bg-slate-800' },
 };
 
 const PAGE_SIZE = 3;
@@ -98,62 +102,28 @@ export default function BoardColumn({
   const hasMore = actions.length < totalElements;
 
   return (
-    <Paper
-      elevation={0}
-      className="flex min-h-[500px] flex-col rounded-2xl border border-slate-200 bg-slate-50/70 shadow-sm"
-      sx={{
-        p: 2,
-        bgcolor: 'background.default',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 2,
-        minHeight: '500px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Column Header */}
-      <Box
-        className="mb-2 flex items-center border-b border-slate-200 pb-4"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          mb: 2,
-          pb: 2,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            borderRadius: 1,
-            bgcolor: config.bg,
-            mr: 1,
-          }}
-        >
-          <StatusIcon sx={{ fontSize: 18, color: config.color }} />
-        </Box>
-        <Typography
-          variant="subtitle2"
-          className="tracking-[0.12em] text-slate-700"
-          sx={{ textTransform: 'uppercase', fontWeight: 600, flex: 1 }}
-        >
-          {status}
-        </Typography>
-        <Chip label={actions.length} size="small" />
-      </Box>
+    <div className="flex flex-col min-h-[500px] rounded-2xl border border-secondary-200 dark:border-secondary-800 bg-surface-ground-light dark:bg-surface-ground-dark p-3 shadow-sm font-sans">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-secondary-200 dark:border-secondary-800">
+        <div className="flex items-center gap-2">
+          <div className={`p-1.5 rounded-lg ${config.bg}`}>
+            <StatusIcon className={`w-4 h-4 ${config.color}`} />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-wider text-secondary-800 dark:text-secondary-200">
+            {status}
+          </span>
+        </div>
+        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-secondary-100 dark:bg-secondary-800 text-secondary-600 dark:text-secondary-400">
+          {actions.length}
+        </span>
+      </div>
 
-      {/* Cards Container */}
-      <Box sx={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 300px)' }}>
+      {/* Cards List */}
+      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-320px)] pr-1">
         {loading && actions.length === 0 ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress size={24} />
-          </Box>
+          <div className="flex justify-center p-6">
+            <Spinner size="md" />
+          </div>
         ) : actions.length === 0 ? (
           <EmptyState showAddButton={false} />
         ) : (
@@ -169,48 +139,40 @@ export default function BoardColumn({
               />
             ))}
 
-            {/* Load More Button */}
             {hasMore && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <Button
-                  className="rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
-                  size="small"
-                  startIcon={loading ? <CircularProgress size={16} /> : <ExpandMoreIcon />}
+              <div className="flex justify-center mt-2">
+                <button
+                  type="button"
                   onClick={handleLoadMore}
                   disabled={loading}
-                  variant="outlined"
-                  fullWidth
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-secondary-300 dark:border-secondary-700 bg-white dark:bg-secondary-800 text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700 transition-colors disabled:opacity-50"
                 >
-                  {loading ? 'Loading...' : `Load More (${totalElements - actions.length} more)`}
-                </Button>
-              </Box>
+                  {loading ? (
+                    <Spinner size="sm" />
+                  ) : (
+                    <>
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      <span>Load More ({totalElements - actions.length} more)</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </>
         )}
-      </Box>
+      </div>
 
       {/* Add Action Button */}
       {status !== 'PAUSED' && status !== 'DELETED' && status !== 'ARCHIVED' && (
-        <Button
-          className="rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-white"
-          size="small"
-          startIcon={<AddCircleOutlineIcon />}
+        <button
+          type="button"
           onClick={() => navigate(`/actions/new?status=${status}`)}
-          sx={{
-            mt: 2,
-            borderColor: 'divider',
-            color: 'text.secondary',
-            '&:hover': {
-              borderColor: 'text.secondary',
-              bgcolor: 'action.hover',
-            },
-          }}
-          fullWidth
-          variant="outlined"
+          className="mt-3 inline-flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl border border-dashed border-secondary-300 dark:border-secondary-700 text-xs font-medium text-secondary-600 dark:text-secondary-400 hover:text-secondary-900 dark:hover:text-white hover:border-secondary-400 dark:hover:border-secondary-600 transition-colors"
         >
-          Add Action
-        </Button>
+          <PlusCircle className="w-3.5 h-3.5" />
+          <span>Add Action</span>
+        </button>
       )}
-    </Paper>
+    </div>
   );
 }

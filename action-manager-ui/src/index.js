@@ -7,10 +7,6 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { UserInfoProvider } from './contexts/UserInfoContext';
 import reportWebVitals from './reportWebVitals';
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
 import 'react-toastify/dist/ReactToastify.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

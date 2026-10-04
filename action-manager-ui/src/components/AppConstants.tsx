@@ -580,6 +580,30 @@ export class ActionAPI {
     });
   };
 
+  static createAction = async (
+    restClient: RestClient,
+    propertyMetadata: Array<PropertyMetadata>,
+    successCallback: () => void
+  ) => {
+    const actionDefinition = getActionDefinition(propertyMetadata);
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(actionDefinition),
+    };
+    const targetURL = `${ACTION_MANAGER_API_URL}`;
+    await restClient.sendRequest(requestOptions, targetURL, async () => {
+      successCallback();
+      return {
+        message: 'Action created successfully',
+        key: new Date().getTime(),
+      } as SnackbarMessage;
+    });
+  };
+
   static updateAction = async (
     actionId: string,
     restClient: RestClient,
@@ -797,6 +821,16 @@ export class TemplateAPI {
 }
 
 export class JobAPI {
+  static create = async (
+    actionId: string,
+    restClient: RestClient,
+    propertyMetadata: Array<PropertyMetadata>,
+    successCallback: () => void
+  ) => {
+    const jobDefinition = getJobDefinition(propertyMetadata);
+    await JobAPI.new(actionId, [jobDefinition], restClient, successCallback);
+  };
+
   static update = async (
     jobId: string,
     restClient: RestClient,
