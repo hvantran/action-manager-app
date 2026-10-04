@@ -150,10 +150,14 @@ export default function JobSummary() {
           actionIcon: <Eye className="w-4 h-4" />,
           actionLabel: 'Job details',
           actionName: 'gotoJobDetail',
-          onClick: (row: JobOverview) => () =>
-            navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, {
+          onClick: (row: JobOverview) => () => {
+            const targetUrl = row.actionHash
+              ? `/actions/${row.actionHash}/jobs/${row.hash}`
+              : `/jobs/${row.hash}`;
+            navigate(targetUrl, {
               state: { name: row.name },
-            }),
+            });
+          },
         },
         {
           actionIcon: <Trash2 className="w-4 h-4 text-error-600" />,
@@ -223,10 +227,14 @@ export default function JobSummary() {
               LocalStorageService.put(orderByStorageKey, pOrderBy);
             },
           },
-          onRowClickCallback: (row: JobOverview) =>
-            navigate(`/actions/${row.actionHash}/jobs/${row.hash}`, {
+          onRowClickCallback: (row: JobOverview) => {
+            const targetUrl = row.actionHash
+              ? `/actions/${row.actionHash}/jobs/${row.hash}`
+              : `/jobs/${row.hash}`;
+            navigate(targetUrl, {
               state: { name: row.name },
-            }),
+            });
+          },
         }}
       />
 
