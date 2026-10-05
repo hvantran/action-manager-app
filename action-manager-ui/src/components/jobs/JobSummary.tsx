@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  EntitySummaryTemplate,
+  JobSummaryTemplate,
   ConfirmationDialog,
   JobStatusBadge,
   TextTruncate,
@@ -204,7 +204,7 @@ export default function JobSummary() {
 
   return (
     <>
-      <EntitySummaryTemplate<JobOverview>
+      <JobSummaryTemplate<JobOverview>
         pageTitle="Job Summary"
         breadcrumbs={breadcrumbs}
         headerActions={headerActions}

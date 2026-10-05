@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
-  WizardCreationTemplate,
+  JobCreationTemplate,
   StepMetadata,
   PropertyMetadata,
   PropType,
@@ -192,7 +192,7 @@ export default function JobCreation() {
   ];
 
   return (
-    <WizardCreationTemplate
+    <JobCreationTemplate
       pageTitle="Create New Job"
       breadcrumbs={breadcrumbs}
       steps={steps}

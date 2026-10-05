@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  ActionSummaryTemplate,
   ConfirmationDialog,
   ViewModeToggle,
-  DataTable,
   ColumnMetadata,
   PagingResult,
+  GenericActionMetadata,
+  SpeedDialActionMetadata,
 } from '@hvantran/ui-component-library';
 import {
   LayoutGrid,
@@ -191,68 +193,106 @@ export default function ActionSummary() {
     },
   ];
 
+  const headerActions: GenericActionMetadata[] = [
+    {
+      actionIcon: <RefreshCw className="w-4 h-4" />,
+      actionLabel: 'Refresh actions',
+      actionName: 'refreshAction',
+      onClick: () => {
+        setRefreshTrigger((prev) => prev + 1);
+        if (viewMode === 'list') {
+          loadActionList();
+        }
+      },
+    },
+    {
+      actionIcon: <PlusCircle className="w-4 h-4" />,
+      actionLabel: 'New Action',
+      actionName: 'newAction',
+      onClick: () => navigate('/actions/new'),
+    },
+  ];
+
+  const floatingActions: SpeedDialActionMetadata[] = [
+    {
+      actionIcon: <PlusCircle className="w-5 h-5" />,
+      actionLabel: 'New Action',
+      actionName: 'newAction',
+      onClick: () => navigate('/actions/new'),
+    },
+  ];
+
   return (
     <>
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs text-secondary-500 mb-1">
-              <span>{ROOT_BREADCRUMB}</span>
-              <span>/</span>
-              <span>Summary</span>
+      {viewMode === 'board' ? (
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <div className="flex items-center gap-2 text-xs text-secondary-500 mb-1">
+                <span>{ROOT_BREADCRUMB}</span>
+                <span>/</span>
+                <span>Summary</span>
+              </div>
+              <h1 className="text-2xl font-bold text-secondary-900 dark:text-white">
+                Action Status Monitor
+              </h1>
             </div>
-            <h1 className="text-2xl font-bold text-secondary-900 dark:text-white">
-              Action Status Monitor
-            </h1>
+            <div className="flex items-center gap-3">
+              <ViewModeToggle<'board' | 'list'>
+                mode={viewMode}
+                modes={[
+                  { value: 'board', label: 'Board', icon: <LayoutGrid className="w-3.5 h-3.5 mr-1" /> },
+                  { value: 'list', label: 'List', icon: <List className="w-3.5 h-3.5 mr-1" /> },
+                ]}
+                onChange={handleViewModeChange}
+                size="sm"
+              />
+              <button
+                type="button"
+                aria-label="Refresh actions"
+                onClick={() => {
+                  setRefreshTrigger((prev) => prev + 1);
+                }}
+                className="p-2 rounded-btn text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/actions/new')}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-btn bg-primary-600 text-white hover:bg-primary-700 font-medium text-xs shadow-sm transition-colors"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>New Action</span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <ViewModeToggle<'board' | 'list'>
-              mode={viewMode}
-              modes={[
-                { value: 'board', label: 'Board', icon: <LayoutGrid className="w-3.5 h-3.5 mr-1" /> },
-                { value: 'list', label: 'List', icon: <List className="w-3.5 h-3.5 mr-1" /> },
-              ]}
-              onChange={handleViewModeChange}
-              size="sm"
-            />
-            <button
-              type="button"
-              aria-label="Refresh actions"
-              onClick={() => {
-                setRefreshTrigger((prev) => prev + 1);
-                if (viewMode === 'list') {
-                  loadActionList();
-                }
-              }}
-              className="p-2 rounded-btn text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/actions/new')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-btn bg-primary-600 text-white hover:bg-primary-700 font-medium text-xs shadow-sm transition-colors"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>New Action</span>
-            </button>
-          </div>
-        </div>
 
-        {viewMode === 'board' ? (
           <BoardView
             restClient={boardRestClient}
             refreshTrigger={refreshTrigger}
             onStatusChange={() => setRefreshTrigger((prev) => prev + 1)}
           />
-        ) : (
-          <DataTable<ActionOverview>
-            name="Action Overview"
-            columns={columns}
-            keyColumn="hash"
-            loading={processTracking}
-            pagingResult={pagingResult}
-            pagingOptions={{
+        </div>
+      ) : (
+        <ActionSummaryTemplate<ActionOverview>
+          pageTitle="Action Status Monitor"
+          breadcrumbs={breadcrumbs}
+          headerActions={headerActions}
+          floatingActions={floatingActions}
+          defaultViewMode="list"
+          boardProps={{
+            columns: [],
+            renderCard: () => null,
+          }}
+          onViewModeChange={handleViewModeChange}
+          tableProps={{
+            name: 'Action Overview',
+            columns,
+            keyColumn: 'hash',
+            loading: processTracking,
+            pagingResult,
+            pagingOptions: {
               pageIndex,
               pageSize,
               orderBy,
@@ -266,11 +306,11 @@ export default function ActionSummary() {
                 LocalStorageService.put(pageSizeStorageKey, pSize);
                 LocalStorageService.put(orderByStorageKey, pOrderBy);
               },
-            }}
-            onRowClickCallback={(row: ActionOverview) => navigate(`/actions/${row.hash}`)}
-          />
-        )}
-      </div>
+            },
+            onRowClickCallback: (row: ActionOverview) => navigate(`/actions/${row.hash}`),
+          }}
+        />
+      )}
 
       <ConfirmationDialog
         open={deleteConfirmationDialogOpen}

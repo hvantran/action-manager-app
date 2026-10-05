@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  EntityDetailTemplate,
+  ActionDetailTemplate,
   ConfirmationDialog,
-  DataTable,
   JobStatusBadge,
   TextTruncate,
   PropertyMetadata,
@@ -368,43 +367,21 @@ export default function ActionDetail() {
 
   return (
     <>
-      <EntityDetailTemplate
+      <ActionDetailTemplate
         pageTitle={`Action: ${actionNameRef.current || actionId}`}
         breadcrumbs={breadcrumbs}
         headerActions={headerActions}
         properties={properties}
         onPropertyChange={handlePropertyChange}
         disabled={!isEditing}
-      />
-
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 font-sans -mt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-secondary-900 dark:text-white flex items-center gap-2">
-              <List className="w-5 h-5 text-primary-600" />
-              Jobs in this Action
-            </h2>
-            <p className="text-xs text-secondary-500">
-              Manage and monitor jobs linked to this action definition
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate(`/actions/${actionId}/jobs/new`)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-btn bg-primary-600 text-white hover:bg-primary-700 font-medium text-xs shadow-sm transition-colors"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Add Job</span>
-          </button>
-        </div>
-
-        <DataTable<JobOverview>
-          name="Action Jobs"
-          columns={jobColumns}
-          keyColumn="hash"
-          loading={jobProcessTracking}
-          pagingResult={jobPagingResult}
-          pagingOptions={{
+        onAddJob={() => navigate(`/actions/${actionId}/jobs/new`)}
+        jobsTableProps={{
+          name: 'Action Jobs',
+          columns: jobColumns,
+          keyColumn: 'hash',
+          loading: jobProcessTracking,
+          pagingResult: jobPagingResult,
+          pagingOptions: {
             pageIndex: jobPageIndex,
             pageSize: jobPageSize,
             orderBy: jobOrderBy,
@@ -416,14 +393,13 @@ export default function ActionDetail() {
               setJobOrderBy(pOrderBy);
               setJobSearchText(pSearch);
             },
-          }}
-          visibleSearchbar={true}
-          searchPlaceholder="Filter jobs..."
-          onRowClickCallback={(row: JobOverview) =>
-            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } })
-          }
-        />
-      </div>
+          },
+          visibleSearchbar: true,
+          searchPlaceholder: 'Filter jobs...',
+          onRowClickCallback: (row: JobOverview) =>
+            navigate(`/actions/${actionId}/jobs/${row.hash}`, { state: { name: row.name } }),
+        }}
+      />
 
       <ConfirmationDialog
         open={deleteConfirmationDialogOpen}
