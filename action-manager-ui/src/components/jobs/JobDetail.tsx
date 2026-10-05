@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  EntityDetailTemplate,
+  JobDetailTemplate,
   ConfirmationDialog,
   PropertyMetadata,
   PropType,
@@ -282,7 +282,7 @@ export default function JobDetail() {
 
   return (
     <>
-      <EntityDetailTemplate
+      <JobDetailTemplate
         pageTitle={`Job: ${jobName.current || jobId}`}
         breadcrumbs={breadcrumbs}
         headerActions={headerActions}

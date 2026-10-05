@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  WizardCreationTemplate,
+  ActionCreationTemplate,
   StepMetadata,
   PropertyMetadata,
   PropType,
@@ -93,7 +93,7 @@ export default function ActionCreation() {
   ];
 
   return (
-    <WizardCreationTemplate
+    <ActionCreationTemplate
       pageTitle="Create New Action"
       breadcrumbs={breadcrumbs}
       steps={steps}
