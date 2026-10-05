@@ -75,7 +75,6 @@ function AppContent() {
           <Route path="/actions/:actionId/jobs/new" element={<JobCreation />} />
           <Route path="/actions/:actionId/jobs/:jobId" element={<JobDetail />} />
           <Route path="/jobs" element={<JobSummary />} />
-          <Route path="/jobs/new" element={<JobCreation />} />
           <Route path="/jobs/:jobId" element={<JobDetail />} />
         </Routes>
       </main>
