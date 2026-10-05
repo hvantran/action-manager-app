@@ -122,7 +122,7 @@ const ActionCard = React.memo(function ActionCard({
   };
 
   const handlePermanentDeleteConfirm = () => {
-    ActionAPI.deleteAction(action.hash, restClient, () => {
+    ActionAPI.permanentDeleteAction(action.hash, restClient, () => {
       setDeleteDialogOpen(false);
       if (onStatusChange) onStatusChange();
       else if (onRefresh) onRefresh();
