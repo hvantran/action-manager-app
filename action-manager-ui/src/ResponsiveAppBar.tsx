@@ -51,7 +51,8 @@ export default function PrimarySearchAppBar({
       APP_ENVIRONMENT_VARIABLES.REACT_APP_GATEWAY_URL ||
       APP_ENVIRONMENT_VARIABLES.REACT_APP_ACTION_MANAGER_BACKEND_URL?.replace('/api/action-manager', '') ||
       'http://localhost:6081';
-    window.location.href = `${gatewayBaseUrl}/logout`;
+    const redirectUri = encodeURIComponent(window.location.origin);
+    window.location.href = `${gatewayBaseUrl}/logout?redirect_uri=${redirectUri}`;
   };
 
   const platformApps: AppSwitcherItem[] = [
