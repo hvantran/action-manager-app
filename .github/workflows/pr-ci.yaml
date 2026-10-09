@@ -15,7 +15,34 @@ permissions:
   pull-requests: write
 
 jobs:
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      ui: ${{ steps.filter.outputs.ui }}
+    steps:
+      - name: Filter Changed Paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          token: ${{ secrets.ACCESS_TOKEN || github.token }}
+          filters: |
+            backend:
+              - 'action-manager-backend/**'
+              - 'pom.xml'
+              - '.github/workflows/**'
+            ui:
+              - 'action-manager-ui/**'
+              - '.github/workflows/**'
+
   build-backend:
+    name: Build Backend
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     
@@ -57,6 +84,9 @@ jobs:
         run: mvn test -f action-manager-backend/pom.xml -B
   
   build-ui:
+    name: Build UI
+    needs: changes
+    if: ${{ needs.changes.outputs.ui == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     
