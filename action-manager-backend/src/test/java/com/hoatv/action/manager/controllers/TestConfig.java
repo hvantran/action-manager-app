@@ -11,6 +11,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,7 +24,13 @@ import org.springframework.security.web.SecurityFilterChain;
     SecurityFilterAutoConfiguration.class,
     UserDetailsServiceAutoConfiguration.class
 })
-@ComponentScan(basePackages = {"com.hoatv.action.manager.controllers", "com.hoatv.springboot.common.advices"})
+@ComponentScan(
+    basePackages = {"com.hoatv.action.manager.controllers", "com.hoatv.springboot.common.advices"},
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = SecurityTestConfig.class
+    )
+)
 public class TestConfig {
 
     @MockBean

@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,7 +21,8 @@ import org.springframework.security.web.SecurityFilterChain;
     KafkaAutoConfiguration.class,
     MongoDataAutoConfiguration.class
 })
-@ComponentScan(basePackages = {"com.hoatv.action.manager.controllers"})
+@Import(ActionControllerV1.class)
+@ComponentScan(basePackages = {"com.hoatv.springboot.common.advices"})
 @EnableWebSecurity
 @EnableMethodSecurity  // Enable @PreAuthorize
 public class SecurityTestConfig {

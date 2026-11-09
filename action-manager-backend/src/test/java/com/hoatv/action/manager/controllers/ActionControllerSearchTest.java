@@ -39,7 +39,7 @@ import com.hoatv.action.manager.services.JobManagerStatistics;
  * Related to Story #195: Action search functionality
  */
 @WebMvcTest(ActionControllerV1.class)
-@ContextConfiguration(classes = TestConfig.class)
+@ContextConfiguration(classes = SecurityTestConfig.class)
 @DisplayName("Action Search API Tests")
 class ActionControllerSearchTest {
 

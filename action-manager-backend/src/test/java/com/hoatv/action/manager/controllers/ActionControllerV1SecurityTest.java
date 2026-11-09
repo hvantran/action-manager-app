@@ -47,7 +47,7 @@ class ActionControllerV1SecurityTest {
                 .param("search", "test")
                 .param("pageIndex", "0")
                 .param("pageSize", "10"))
-                                .andExpect(status().isInternalServerError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
