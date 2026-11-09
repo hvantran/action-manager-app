@@ -100,9 +100,6 @@ public final class JobTransformer {
             String jobId = jobDocument.getHash();
             Optional<JobResultDocument> jobExecutionResultDocument =
                     jobResultDocuments.stream().filter(p -> p.getJobId().equals(jobId)).findFirst();
-            if (jobExecutionResultDocument.isEmpty()) {
-                return null;
-            }
             Supplier<JobResultDocument> defaultJobResult = () -> JobResultDocument.builder().build();
             JobResultDocument jobStat = jobExecutionResultDocument.orElseGet(defaultJobResult);
             String jobState = Objects.isNull(jobStat.getJobState()) ? "" : jobStat.getJobState().name();
@@ -110,13 +107,13 @@ public final class JobTransformer {
             long elapsedTimeAsLong = jobStat.getElapsedTime();
             String elapsedTimeString = DurationFormatUtils.formatDuration(elapsedTimeAsLong, "HH:mm:ss.S");
             String elapsedTime = elapsedTimeAsLong == 0 ? "" : elapsedTimeString;
+            String documentStatus = Objects.isNull(jobDocument.getJobStatus()) ? "" : jobDocument.getJobStatus().name();
             return JobOverviewDTO.builder()
                     .name(jobDocument.getJobName())
                     .hash(jobId)
                     .jobState(jobState)
                     .jobExecutionStatus(jobStatus)
-                    .status(jobDocument.getJobStatus().name())
-                    .jobExecutionStatus(jobStat.getJobExecutionStatus().name())
+                    .status(documentStatus)
                     .isSchedule(jobDocument.isScheduled())
                     .startedAt(jobStat.getStartedAt())
                     .updatedAt(jobStat.getUpdatedAt())

@@ -149,4 +149,36 @@ class JobManagerServiceImplTest {
         verify(jobDocumentRepository).findJobByActionIdAndJobNameContainingIgnoreCase(
             eq(actionId), eq(trimmedSearchText), eq(pageRequest));
     }
+
+    @Test
+    void testGetJobsFromActionWhenJobHasNoExecutionResult() {
+        String actionId = "action123";
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        JobDocument jobDocument = JobDocument.builder()
+                .hash("job123")
+                .jobName("test-job")
+                .jobStatus(com.hoatv.action.manager.collections.JobStatus.ACTIVE)
+                .actionId(actionId)
+                .isScheduled(false)
+                .build();
+        Page<JobDocument> jobPage = new PageImpl<>(List.of(jobDocument), pageRequest, 1);
+
+        when(jobDocumentRepository.findJobByActionId(eq(actionId), eq(pageRequest)))
+                .thenReturn(jobPage);
+        when(jobExecutionResultDocumentRepository.findByJobIdIn(any()))
+                .thenReturn(Collections.emptyList());
+        when(kafkaConsumerStatusService.hasActiveConsumer(eq("test-job")))
+                .thenReturn(false);
+
+        Page<JobOverviewDTO> result = jobManagerService.getJobsFromAction(actionId, pageRequest, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        JobOverviewDTO jobOverviewDTO = result.getContent().get(0);
+        assertNotNull(jobOverviewDTO);
+        assertEquals("test-job", jobOverviewDTO.getName());
+        assertEquals("ACTIVE", jobOverviewDTO.getStatus());
+        assertEquals("", jobOverviewDTO.getJobExecutionStatus());
+        assertEquals("", jobOverviewDTO.getJobState());
+    }
 }
